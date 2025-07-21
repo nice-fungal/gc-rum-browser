@@ -27,9 +27,7 @@ import {
 
 import { trackInitialViewMetrics } from './trackInitialViewTimings'
 // import { trackCommonViewMetrics } from './trackCommonViewMetrics'
-import { trackViewEventCounts } from './trackViewEventCounts'
-import { trackSoftNavigationMetrics } from './trackSoftNavigationMetrics'
-import { getSelectorFromElement } from '../actions/getSelectorsFromElement'
+// import { trackViewEventCounts } from './trackViewEventCounts'
 export var THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export var SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 export var KEEP_TRACKING_AFTER_VIEW_DELAY = 5 * ONE_MINUTE
@@ -342,14 +340,13 @@ function newView(
         }
   var stopInitialViewMetricsTracking = _trackInitialViewTimings.stop
   var initialViewMetrics = _trackInitialViewTimings.initialViewMetrics
-  var navigationType = fallbackNavigationType
-  var _trackViewEventCounts = trackViewEventCounts(
-    lifeCycle,
-    id,
-    scheduleViewUpdate
-  )
-  var stopEventCountsTracking = _trackViewEventCounts.stop
-  var eventCounts = _trackViewEventCounts.eventCounts
+  // var _trackViewEventCounts = trackViewEventCounts(
+  //   lifeCycle,
+  //   id,
+  //   scheduleViewUpdate
+  // )
+  // var stopEventCountsTracking = _trackViewEventCounts.stop
+  // var eventCounts = _trackViewEventCounts.eventCounts
 
   // Session keep alive
   var keepAliveIntervalId = setInterval(
@@ -449,7 +446,7 @@ function newView(
       ),
       isActive: endClocks === undefined,
       sessionIsActive: sessionIsActive,
-      eventCounts: eventCounts
+      eventCounts: {},
     })
   }
   var result = {
@@ -488,7 +485,7 @@ function newView(
     },
     stop: function () {
       stopInitialViewMetricsTracking()
-      stopEventCountsTracking()
+      // stopEventCountsTracking()
       // stopINPTracking()
       stopObservable.notify()
     },
