@@ -14,9 +14,9 @@ import {
 } from '@cloudcare/browser-core'
 import { createDOMMutationObservable } from '../domain/domMutationObservable.js'
 import { createLocationChangeObservable } from '../domain/locationChangeObservable'
-import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
-import { startLongAnimationFrameCollection } from '../domain/rumEventsCollection/longTask/longAnimationFrameCollection'
-import { RumPerformanceEntryType } from '../domain/performanceObservable'
+// import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
+// import { startLongAnimationFrameCollection } from '../domain/rumEventsCollection/longTask/longAnimationFrameCollection'
+// import { RumPerformanceEntryType } from '../domain/performanceObservable'
 import { startActionCollection } from '../domain/rumEventsCollection/actions/actionCollection'
 import { startRumBatch } from '../transport/startRumBatch'
 // import { startRumEventBridge } from '../transport/startRumEventBridge'
@@ -153,20 +153,20 @@ export function startRum(
     )
     cleanupTasks.unshift(webSocketCollection.stop)
   }
-  if (
-    PerformanceObserver.supportedEntryTypes &&
-    PerformanceObserver.supportedEntryTypes.includes(
-      RumPerformanceEntryType.LONG_ANIMATION_FRAME
-    )
-  ) {
-    var longAnimationFrameCollection = startLongAnimationFrameCollection(
-      lifeCycle,
-      configuration
-    )
-    cleanupTasks.push(longAnimationFrameCollection.stop)
-  } else {
-    startLongTaskCollection(lifeCycle, configuration)
-  }
+  // if (
+  //   PerformanceObserver.supportedEntryTypes &&
+  //   PerformanceObserver.supportedEntryTypes.includes(
+  //     RumPerformanceEntryType.LONG_ANIMATION_FRAME
+  //   )
+  // ) {
+  //   var longAnimationFrameCollection = startLongAnimationFrameCollection(
+  //     lifeCycle,
+  //     configuration
+  //   )
+  //   cleanupTasks.push(longAnimationFrameCollection.stop)
+  // } else {
+  //   startLongTaskCollection(lifeCycle, configuration)
+  // }
 
   var _startErrorCollection = startErrorCollection(
     lifeCycle,
