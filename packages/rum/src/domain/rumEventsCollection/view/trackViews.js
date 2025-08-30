@@ -60,7 +60,7 @@ export function trackViews(
   ) {
     var newlyCreatedView = newView(
       lifeCycle,
-      domMutationObservable,
+      'domMutationObservable',
       configuration,
       location,
       loadingType,

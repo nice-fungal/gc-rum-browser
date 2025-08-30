@@ -31,7 +31,7 @@ export function startViewCollection(
   return trackViews(
     location,
     lifeCycle,
-    domMutationObservable,
+    'domMutationObservable',
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
