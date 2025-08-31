@@ -5,12 +5,12 @@ import {
   validateAndBuildConfiguration,
   validatePostRequestRequireParamsConfiguration,
   isArray,
-  TraceType,
+  // TraceType,
   isNullUndefinedDefaultValue,
   DefaultPrivacyLevel,
   objectHasValue,
   isMatchOption,
-  catchUserErrors,
+  // catchUserErrors,
   getOrigin,
   each,
   isNumber,
@@ -290,39 +290,35 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
     {
       applicationId: initConfiguration.applicationId,
       actionNameAttribute: initConfiguration.actionNameAttribute,
-      enablePrivacyForActionName: isNullUndefinedDefaultValue(
-        initConfiguration.enablePrivacyForActionName,
-        false
-      ),
-      sessionReplaySampleRate: isNullUndefinedDefaultValue(
-        initConfiguration.sessionReplaySampleRate,
-        100
-      ),
+      // sessionReplaySampleRate: isNullUndefinedDefaultValue(
+      //   initConfiguration.sessionReplaySampleRate,
+      //   100
+      // ),
       sessionOnErrorSampleRate: isNullUndefinedDefaultValue(
         initConfiguration.sessionOnErrorSampleRate,
         0
       ),
-      sessionReplayOnErrorSampleRate: isNullUndefinedDefaultValue(
-        initConfiguration.sessionReplayOnErrorSampleRate,
-        0
-      ),
-      tracingSampleRate: isNullUndefinedDefaultValue(
-        initConfiguration.tracingSampleRate,
-        100
-      ),
-      allowedTracingUrls: [], // allowedTracingUrls,
-      injectTraceHeader:
-        initConfiguration.injectTraceHeader &&
-        catchUserErrors(
-          initConfiguration.injectTraceHeader,
-          'injectTraceHeader threw an error:'
-        ),
-      generateTraceId:
-        initConfiguration.generateTraceId &&
-        catchUserErrors(
-          initConfiguration.generateTraceId,
-          'generateTraceId threw an error:'
-        ),
+      // sessionReplayOnErrorSampleRate: isNullUndefinedDefaultValue(
+      //   initConfiguration.sessionReplayOnErrorSampleRate,
+      //   0
+      // ),
+      // tracingSampleRate: isNullUndefinedDefaultValue(
+      //   initConfiguration.tracingSampleRate,
+      //   100
+      // ),
+      // allowedTracingUrls: [], // allowedTracingUrls,
+      // injectTraceHeader:
+      //   initConfiguration.injectTraceHeader &&
+      //   catchUserErrors(
+      //     initConfiguration.injectTraceHeader,
+      //     'injectTraceHeader threw an error:'
+      //   ),
+      // generateTraceId:
+      //   initConfiguration.generateTraceId &&
+      //   catchUserErrors(
+      //     initConfiguration.generateTraceId,
+      //     'generateTraceId threw an error:'
+      //   ),
       excludedActivityUrls: isNullUndefinedDefaultValue(
         initConfiguration.excludedActivityUrls,
         []
@@ -338,84 +334,23 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
         ) !== -1,
       enableLongAnimationFrame: !!initConfiguration.enableLongAnimationFrame,
       trackViewsManually: !!initConfiguration.trackViewsManually,
-      plugins: initConfiguration.plugins || [],
-      sessionReplayWebGL: initConfiguration.sessionReplayWebGL,
-      replayCanvasEnabled: !!initConfiguration.replayCanvasEnabled,
-      replayCanvasMode: replayCanvasMode,
-      replayCanvasSampling: replayCanvasSampling,
-      replayCanvasQuality: isNullUndefinedDefaultValue(
-        replayCanvasQualityPreset
-          ? replayCanvasQualityPreset.quality
-          : initConfiguration.replayCanvasQuality,
-        0.4
-      ),
-      replayCanvasMimeType: isNullUndefinedDefaultValue(
-        initConfiguration.replayCanvasMimeType,
-        'image/webp'
-      ),
-      replayCanvasMaxCanvasSize: isNullUndefinedDefaultValue(
-        initConfiguration.replayCanvasMaxCanvasSize,
-        1280
-      ),
-      replayCanvasMaxEncodedBytes: isNullUndefinedDefaultValue(
-        initConfiguration.replayCanvasMaxEncodedBytes,
-        40000
-      ),
-      replayCanvasMaxConcurrentEncodes: isNullUndefinedDefaultValue(
-        initConfiguration.replayCanvasMaxConcurrentEncodes,
-        1
-      ),
-      replayCanvasAutoInterval: replayCanvasAutoInterval,
-      replayCanvasAutoCooldown: replayCanvasAutoCooldown,
-      replayCanvasAutoUnchangedBackoff: isNullUndefinedDefaultValue(
-        initConfiguration.replayCanvasAutoUnchangedBackoff,
-        replayCanvasQualityPreset
-          ? replayCanvasQualityPreset.autoUnchangedBackoff
-          : 3000
-      ),
-      replayCanvasAutoFailureBackoff: isNullUndefinedDefaultValue(
-        initConfiguration.replayCanvasAutoFailureBackoff,
-        replayCanvasQualityPreset
-          ? replayCanvasQualityPreset.autoFailureBackoff
-          : 5000
-      ),
-      replayCanvasAutoMaxPerRun: isNullUndefinedDefaultValue(
-        initConfiguration.replayCanvasAutoMaxPerRun,
-        replayCanvasQualityPreset
-          ? replayCanvasQualityPreset.autoMaxPerRun
-          : 2
-      ),
-      replayCanvasFlushImmediately: isNullUndefinedDefaultValue(
-        initConfiguration.replayCanvasFlushImmediately,
-        replayCanvasMode === 'manual'
-      ),
-      traceType: isNullUndefinedDefaultValue(
-        initConfiguration.traceType,
-        TraceType.DDTRACE
-      ),
-      traceId128Bit: !!initConfiguration.traceId128Bit,
+      // traceType: isNullUndefinedDefaultValue(
+      //   initConfiguration.traceType,
+      //   TraceType.DDTRACE
+      // ),
+      // traceId128Bit: !!initConfiguration.traceId128Bit,
       defaultPrivacyLevel: objectHasValue(
         DefaultPrivacyLevel,
         initConfiguration.defaultPrivacyLevel
       )
         ? initConfiguration.defaultPrivacyLevel
         : DefaultPrivacyLevel.MASK_USER_INPUT,
-      shouldMaskNode:
-        initConfiguration.shouldMaskNode &&
-        catchUserErrors(
-          initConfiguration.shouldMaskNode,
-          'shouldMaskNode threw an error:'
-        ),
-      shouldRecordCanvas:
-        initConfiguration.shouldRecordCanvas &&
-        function (canvas) {
-          try {
-            return initConfiguration.shouldRecordCanvas(canvas)
-          } catch (error) {
-            display.error('shouldRecordCanvas threw an error:', error)
-            return false
-          }
-        }
+      // shouldMaskNode:
+      //   initConfiguration.shouldMaskNode &&
+      //   catchUserErrors(
+      //     initConfiguration.shouldMaskNode,
+      //     'shouldMaskNode threw an error:'
+      //   )
     },
     baseConfiguration,
     buildEnv
