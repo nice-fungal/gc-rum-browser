@@ -3,19 +3,18 @@ import {
   createContextManager,
   CustomerDataType,
   clocksNow,
-  ActionType,
-  ResourceType,
-  deepClone,
+  // ActionType,
+  // deepClone,
   createHandlingStack,
   sanitizeUser,
   checkUser,
-  callMonitored,
+  // callMonitored,
   assign,
   monitor,
   storeContextManager,
   createIdentityEncoder,
   // addTelemetryUsage,
-  sanitize,
+  // sanitize,
   createCustomerDataTrackerManager,
   CustomerDataCompressionStatus,
   displayAlreadyInitializedError,
@@ -172,11 +171,11 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
     const sanitizedOptions =
       typeof options === 'object' ? options : { name: options }
     strategy.startView(sanitizedOptions)
-    if (sanitizedOptions.context) {
-      customerDataTrackerManager
-        .getOrCreateTracker(CustomerDataType.View)
-        .updateCustomerData(sanitizedOptions.context)
-    }
+    // if (sanitizedOptions.context) {
+    //   customerDataTrackerManager
+    //     .getOrCreateTracker(CustomerDataType.View)
+    //     .updateCustomerData(sanitizedOptions.context)
+    // }
     // addTelemetryUsage({ feature: 'start-view' })
   })
 
@@ -188,50 +187,50 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
     init: monitor(function (initConfiguration) {
       strategy.init(initConfiguration, rumPublicApi)
     }),
-    setViewName: monitor((name) => {
-      strategy.setViewName(name)
-      // addTelemetryUsage({ feature: 'set-view-name' })
-    }),
+    // setViewName: monitor((name) => {
+    //   strategy.setViewName(name)
+    //   // addTelemetryUsage({ feature: 'set-view-name' })
+    // }),
 
-    setViewContext: monitor((context) => {
-      strategy.setViewContext(context)
-      // addTelemetryUsage({ feature: 'set-view-context' })
-    }),
+    // setViewContext: monitor((context) => {
+    //   strategy.setViewContext(context)
+    //   // addTelemetryUsage({ feature: 'set-view-context' })
+    // }),
 
-    setViewContextProperty: monitor((key, value) => {
-      strategy.setViewContextProperty(key, value)
-      // addTelemetryUsage({ feature: 'set-view-context-property' })
-    }),
+    // setViewContextProperty: monitor((key, value) => {
+    //   strategy.setViewContextProperty(key, value)
+    //   // addTelemetryUsage({ feature: 'set-view-context-property' })
+    // }),
 
-    getViewContext: monitor(() => {
-      // addTelemetryUsage({ feature: 'set-view-context-property' })
-      return strategy.getViewContext()
-    }),
+    // getViewContext: monitor(() => {
+    //   // addTelemetryUsage({ feature: 'set-view-context-property' })
+    //   return strategy.getViewContext()
+    // }),
     // /** @deprecated: use setGlobalContextProperty instead */
     // addRumGlobalContext: monitor(function (key, value) {
     //   globalContextManager.setContextProperty(key, value)
     //   addTelemetryUsage({ feature: 'set-global-context' })
     // }),
-    setGlobalContextProperty: monitor(function (key, value) {
-      globalContextManager.setContextProperty(key, value)
-      // addTelemetryUsage({ feature: 'set-global-context' })
-    }),
+    // setGlobalContextProperty: monitor(function (key, value) {
+    //   globalContextManager.setContextProperty(key, value)
+    //   // addTelemetryUsage({ feature: 'set-global-context' })
+    // }),
 
     // /** @deprecated: use removeGlobalContextProperty instead */
     // removeRumGlobalContext: monitor(function (key) {
     //   return globalContextManager.removeContextProperty(key)
     // }),
-    removeGlobalContextProperty: monitor(function (key) {
-      return globalContextManager.removeContextProperty(key)
-    }),
+    // removeGlobalContextProperty: monitor(function (key) {
+    //   return globalContextManager.removeContextProperty(key)
+    // }),
 
     // /** @deprecated: use getGlobalContext instead */
     // getRumGlobalContext: monitor(function () {
     //   return getGlobalContext()
     // }),
-    getGlobalContext: monitor(function () {
-      return getGlobalContext()
-    }),
+    // getGlobalContext: monitor(function () {
+    //   return globalContextManager.getContext()
+    // }),
 
     // /** @deprecated: use setGlobalContext instead */
     // setRumGlobalContext: monitor(function (context) {
@@ -243,39 +242,20 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
       // addTelemetryUsage({ feature: 'set-global-context' })
     }),
 
-    clearGlobalContext: monitor(function () {
-      return globalContextManager.clearContext()
-    }),
-    resetVisitorId: monitor(function () {
-      visitorId.reset()
-      addTelemetryUsage({ feature: 'reset-visitor-id' })
-    }),
+    // clearGlobalContext: monitor(function () {
+    //   return globalContextManager.clearContext()
+    // }),
 
-    getInitConfiguration: monitor(function () {
-      return deepClone(strategy.initConfiguration)
-    }),
-    getRemoteConfiguration: monitor(function (callback) {
-      return strategy.getRemoteConfiguration(callback)
-    }),
-    getInternalContext: monitor(function (startTime) {
-      return strategy.getInternalContext(startTime)
-    }),
-    addDebugSession: monitor(function (id) {}),
-    clearDebugSession: monitor(function () {}),
-    getDebugSession: monitor(function () {}),
-    addResource: monitor(function (context) {
-      const handlingStack = createHandlingStack()
-      callMonitored(function () {
-        strategy.addResource({
-          context: sanitize(context),
-          startClocks: clocksNow(),
-          type: ResourceType.CUSTOM,
-          handlingStack: handlingStack
-        })
-        addTelemetryUsage({ feature: 'add-resource' })
-      })
-    }),
-    addTypeAction: monitor(function (name, type, context) {
+    // getInitConfiguration: monitor(function () {
+    //   return deepClone(strategy.initConfiguration)
+    // }),
+    // getInternalContext: monitor(function (startTime) {
+    //   return strategy.getInternalContext(startTime)
+    // }),
+    // addDebugSession: monitor(function (id) {}),
+    // clearDebugSession: monitor(function () {}),
+    // getDebugSession: monitor(function () {}),
+    addAction: monitor(function (name, context) {
       const handlingStack = createHandlingStack()
 
       callMonitored(function () {
@@ -304,53 +284,53 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
         // addTelemetryUsage({ feature: 'add-action' })
       })
     }),
-    addError: monitor(function (error, context) {
-      var handlingStack = createHandlingStack()
-      callMonitored(function () {
-        strategy.addError({
-          error, // Do not sanitize error here, it is needed unserialized by computeRawError()
-          handlingStack,
-          context: sanitize(context),
-          startClocks: clocksNow()
-        })
-        // addTelemetryUsage({ feature: 'add-error' })
-      })
-    }),
-    addTiming: monitor(function (name, time) {
-      strategy.addTiming(sanitize(name), time)
-    }),
+    // addError: monitor(function (error, context) {
+    //   var handlingStack = createHandlingStack()
+    //   callMonitored(function () {
+    //     strategy.addError({
+    //       error, // Do not sanitize error here, it is needed unserialized by computeRawError()
+    //       handlingStack,
+    //       context: sanitize(context),
+    //       startClocks: clocksNow()
+    //     })
+    //     // addTelemetryUsage({ feature: 'add-error' })
+    //   })
+    // }),
+    // addTiming: monitor(function (name, time) {
+    //   strategy.addTiming(sanitize(name), time)
+    // }),
     setUser: monitor(function (newUser) {
       if (checkUser(newUser)) {
         userContextManager.setContext(sanitizeUser(newUser))
       }
       // addTelemetryUsage({ feature: 'set-user' })
     }),
-    getUser: monitor(function () {
-      return userContextManager.getContext()
-    }),
-    setUserProperty: monitor(function (key, property) {
-      var newUser = {}
-      newUser[key] = property
-      var sanitizedProperty = sanitizeUser(newUser)[key]
-      userContextManager.setContextProperty(key, sanitizedProperty)
-      // addTelemetryUsage({ feature: 'set-user' })
-    }),
-    removeUserProperty: monitor(function (key) {
-      return userContextManager.removeContextProperty(key)
-    }),
+    // getUser: monitor(function () {
+    //   return userContextManager.getContext()
+    // }),
+    // setUserProperty: monitor(function (key, property) {
+    //   var newUser = {}
+    //   newUser[key] = property
+    //   var sanitizedProperty = sanitizeUser(newUser)[key]
+    //   userContextManager.setContextProperty(key, sanitizedProperty)
+    //   // addTelemetryUsage({ feature: 'set-user' })
+    // }),
+    // removeUserProperty: monitor(function (key) {
+    //   return userContextManager.removeContextProperty(key)
+    // }),
 
     // /** @deprecated: renamed to clearUser */
     // removeUser: monitor(function () {
     //   return userContextManager.clearContext()
     // }),
-    clearUser: monitor(function () {
-      return userContextManager.clearContext()
-    }),
-    startView: startView,
-    stopSession: monitor(function () {
-      strategy.stopSession()
-      // addTelemetryUsage({ feature: 'stop-session' })
-    }),
+    // clearUser: monitor(function () {
+    //   return userContextManager.clearContext()
+    // }),
+    // startView: startView,
+    // stopSession: monitor(function () {
+    //   strategy.stopSession()
+    //   // addTelemetryUsage({ feature: 'stop-session' })
+    // }),
     // startSessionReplayRecording: monitor(function (options) {
     //   recorderApi.start(options)
     //   addTelemetryUsage({
