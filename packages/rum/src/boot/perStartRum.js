@@ -11,9 +11,8 @@ import {
   addTelemetryConfiguration,
   initFetchObservable,
   deepClone,
-  fetchAndApplyRemoteConfiguration,
-  getEventBridge,
-  getType
+  // fetchAndApplyRemoteConfiguration,
+  getEventBridge
 } from '@cloudcare/browser-core'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
 import { getPluginsTelemetry, validatePlugins } from '../domain/plugins'
@@ -177,15 +176,7 @@ export function createPreStartStrategy(
         !!initConfiguration.plugins &&
         initConfiguration.trackViewsManually === true
       if (initConfiguration.remoteConfiguration) {
-        fetchAndApplyRemoteConfiguration(
-          initConfiguration,
-          function (remoteInitConfiguration, remoteConfiguration) {
-            if (pluginsRequireManualViewTracking) {
-              remoteInitConfiguration.trackViewsManually = true
-            }
-            doInit(remoteInitConfiguration, remoteConfiguration)
-          }
-        )
+        // fetchAndApplyRemoteConfiguration(initConfiguration, doInit)
       } else {
         doInit(initConfiguration)
       }
