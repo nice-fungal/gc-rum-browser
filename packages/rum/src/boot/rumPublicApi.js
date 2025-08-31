@@ -34,20 +34,18 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
   if (options === undefined) {
     options = {}
   }
-  var startVisitorIdImpl = options.startVisitorId || startVisitorId
-  const customerDataTrackerManager = createCustomerDataTrackerManager(
-    CustomerDataCompressionStatus.Unknown
-  )
-  const resourceTrackerManager = createResourceTrackerManager()
+  // const customerDataTrackerManager = createCustomerDataTrackerManager(
+  //   CustomerDataCompressionStatus.Unknown
+  // )
   const globalContextManager = createContextManager('global', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(
-      CustomerDataType.GlobalContext
-    )
+    // customerDataTracker: customerDataTrackerManager.getOrCreateTracker(
+    //   CustomerDataType.GlobalContext
+    // )
   })
   const userContextManager = createContextManager('user', {
-    customerDataTracker: customerDataTrackerManager.getOrCreateTracker(
-      CustomerDataType.User
-    ),
+    // customerDataTracker: customerDataTrackerManager.getOrCreateTracker(
+    //   CustomerDataType.User
+    // ),
     propertiesConfig: {
       id: { type: 'string' },
       name: { type: 'string' },
@@ -126,15 +124,15 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
           CustomerDataType.User
         )
       }
-      customerDataTrackerManager.setCompressionStatus(
-        compressionWorker
-          ? CustomerDataCompressionStatus.Enabled
-          : CustomerDataCompressionStatus.Disabled
-      )
+      // customerDataTrackerManager.setCompressionStatus(
+      //   deflateWorker
+      //     ? CustomerDataCompressionStatus.Enabled
+      //     : CustomerDataCompressionStatus.Disabled
+      // )
       var startRumResult = startRumImpl(
         configuration,
         recorderApi,
-        customerDataTrackerManager,
+        'customerDataTrackerManager',
         getCommonContext,
         initialViewOptions,
         compressionWorker && options.createCompressionEncoder
