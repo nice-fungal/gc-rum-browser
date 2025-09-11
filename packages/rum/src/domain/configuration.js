@@ -19,9 +19,7 @@ import {
   ExperimentalFeature
 } from '@cloudcare/browser-core'
 import { buildEnv } from '../boot/buildEnv'
-import { isTracingOption } from '../domain/tracing/tracer'
-import { validatePlugins } from './plugins'
-import { DEFAULT_VISITOR_ID_TTL_HOURS } from './visitorId'
+// import { isTracingOption } from '../domain/tracing/tracer'
 
 var REPLAY_CANVAS_QUALITY_PRESETS = {
   low: {
@@ -166,16 +164,10 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
     )
     return
   }
-  var allowedTracingUrls = validateAndBuildTracingOptions(initConfiguration)
-  if (!allowedTracingUrls) {
-    return
-  }
-  var visitorId = validateAndBuildVisitorIdConfiguration(
-    initConfiguration.visitorId
-  )
-  if (!visitorId) {
-    return
-  }
+  // var allowedTracingUrls = validateAndBuildTracingOptions(initConfiguration)
+  // if (!allowedTracingUrls) {
+  //   return
+  // }
   //   if (initConfiguration.allowedTracingOrigins !== undefined) {
   //     if (!isArray(initConfiguration.allowedTracingOrigins)) {
   //       display.error('Allowed Tracing Origins should be an array')
@@ -188,13 +180,13 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
   //       return
   //     }
   //   }
-  if (
-    initConfiguration.tracingSampleRate !== undefined &&
-    !isPercentage(initConfiguration.tracingSampleRate)
-  ) {
-    display.error('Tracing Sample Rate should be a number between 0 and 100')
-    return
-  }
+  // if (
+  //   initConfiguration.tracingSampleRate !== undefined &&
+  //   !isPercentage(initConfiguration.tracingSampleRate)
+  // ) {
+  //   display.error('Tracing Sample Rate should be a number between 0 and 100')
+  //   return
+  // }
   if (
     initConfiguration.excludedActivityUrls !== undefined &&
     !isArray(initConfiguration.excludedActivityUrls)
@@ -318,10 +310,7 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
         initConfiguration.tracingSampleRate,
         100
       ),
-      allowTraceHeaderWithoutSession:
-        !!initConfiguration.allowTraceHeaderWithoutSession,
-      allowedTracingUrls: allowedTracingUrls,
-      visitorId: visitorId,
+      allowedTracingUrls: [], // allowedTracingUrls,
       injectTraceHeader:
         initConfiguration.injectTraceHeader &&
         catchUserErrors(
