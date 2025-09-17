@@ -640,24 +640,7 @@ var MethodLibrary = {
       browserMajor: _this.browserMajor
     }
   }),
-  getGeoPosition: monitor(function (callback) {
-    var navigator = getNavigator()
-    navigator &&
-      navigator.geolocation &&
-      navigator.geolocation.getCurrentPosition(
-        // 位置获取成功
-        function (position) {
-          callback(position)
-        },
-        // 位置获取失败
-        function (error) {
-          display.warn(error)
-        }
-      )
-  })
 }
-
-MethodLibrary.getGeoPostion = MethodLibrary.getGeoPosition
 
 export function getDeviceInfo() {
   const browserWindow = getBrowserWindow()
