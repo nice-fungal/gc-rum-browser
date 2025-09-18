@@ -29,8 +29,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 // import { startRequestCollection } from '../domain/requestCollection'
-import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
-import { startWebSocketCollection } from '../domain/rumEventsCollection/resource/webSocketCollection'
+// import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 
 export function startRum(
   configuration,
@@ -136,23 +135,12 @@ export function startRum(
   )
   cleanupTasks.push(stopViewCollection)
 
-  const _startResourceCollection = startResourceCollection(
-    lifeCycle,
-    configuration,
-    pageStateHistory,
-    undefined,
-    undefined,
-    resourceTrackerManager
-  )
-  var addResource = _startResourceCollection.addResource
-  cleanupTasks.push(_startResourceCollection.stop)
-  if (configuration.trackWebSockets) {
-    var webSocketCollection = startWebSocketCollection(
-      lifeCycle,
-      viewContexts
-    )
-    cleanupTasks.unshift(webSocketCollection.stop)
-  }
+  // const _startResourceCollection = startResourceCollection(
+  //   lifeCycle,
+  //   configuration,
+  //   pageStateHistory
+  // )
+  // cleanupTasks.push(_startResourceCollection.stop)
   // if (
   //   PerformanceObserver.supportedEntryTypes &&
   //   PerformanceObserver.supportedEntryTypes.includes(
