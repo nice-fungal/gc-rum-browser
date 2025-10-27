@@ -6,7 +6,7 @@ import {
   RumEventType,
   startBatchWithReplica
 } from '@cloudcare/browser-core'
-import { EncoderStreamId } from '../domain/encoderStreamId'
+// import { EncoderStreamId } from '../domain/encoderStreamId'
 export function startRumBatch(
   configuration,
   lifeCycle,
@@ -33,6 +33,7 @@ export function startRumBatch(
       endpoint: configuration.rumEndpoint,
       request,
       encoder: rumEncoder,
+      // encoder: createEncoder(2), // DeflateEncoderStreamId.RUM
       encoderFallback: rumEncoder.isAsync
         ? createIdentityEncoder
         : undefined

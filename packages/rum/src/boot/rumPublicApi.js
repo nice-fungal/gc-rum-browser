@@ -148,13 +148,13 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
           : createIdentityEncoder,
         resourceTrackerManager
       )
-      recorderApi.onRumStart(
-        startRumResult.lifeCycle,
-        configuration,
-        startRumResult.session,
-        startRumResult.viewContexts,
-        compressionWorker
-      )
+      // recorderApi.onRumStart(
+      //   startRumResult.lifeCycle,
+      //   configuration,
+      //   startRumResult.session,
+      //   startRumResult.viewContexts,
+      //   deflateWorker
+      // )
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
@@ -351,39 +351,15 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
       strategy.stopSession()
       addTelemetryUsage({ feature: 'stop-session' })
     }),
-    startSession: monitor(function (options) {
-      strategy.startSession(options)
-      addTelemetryUsage({
-        feature: 'start-session',
-        sessionSampleRate: options && options.sessionSampleRate
-      })
-    }),
-    setForcedSession: monitor(function () {
-      strategy.setForcedSession()
-      addTelemetryUsage({ feature: 'set-forced-session' })
-    }),
-    createResourceTrackerId: monitor(function () {
-      return resourceTrackerManager.createTrackerId()
-    }),
-    setResourceContext: monitor(function (trackerId, context) {
-      return resourceTrackerManager.setResourceContext(
-        trackerId,
-        sanitize(context)
-      )
-    }),
-    appendResourceContext: monitor(function (trackerId, context) {
-      return resourceTrackerManager.appendResourceContext(
-        trackerId,
-        sanitize(context)
-      )
-    }),
-    finishResource: monitor(function (trackerId) {
-      return resourceTrackerManager.finishResource(trackerId)
-    }),
-    getResource: monitor(function (trackerId) {
-      return resourceTrackerManager.getResource(trackerId)
-    })
-  }, recorderPublicApi))
+    // startSessionReplayRecording: monitor(function (options) {
+    //   recorderApi.start(options)
+    //   addTelemetryUsage({
+    //     feature: 'start-session-replay-recording',
+    //     force: options && options.force
+    //   })
+    // }),
+    // stopSessionReplayRecording: monitor(recorderApi.stop)
+  })
   return rumPublicApi
 }
 function createPostStartStrategy(preStartStrategy, startRumResult) {
