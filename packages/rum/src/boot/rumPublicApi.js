@@ -112,7 +112,7 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
       }
     }),
     getCommonContext,
-    function (configuration, compressionWorker, initialViewOptions) {
+    function doStartRum(configuration, compressionWorker, initialViewOptions) {
       if (configuration.storeContextsToLocal) {
         storeContextManager(
           configuration,
