@@ -60,7 +60,7 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
       resourceTrackerManager: resourceTrackerManager
     }),
     getCommonContext,
-    function (configuration, deflateWorker, initialViewOptions) {
+    function doStartRum(configuration, deflateWorker, initialViewOptions) {
       if (configuration.storeContextsToLocal) {
         storeContextManager(
           configuration,
