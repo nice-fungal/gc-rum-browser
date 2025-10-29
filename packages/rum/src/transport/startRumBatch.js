@@ -98,7 +98,7 @@ export function startRumBatch(
       rumEventSubscription.unsubscribe()
       initialViewSubscription.unsubscribe()
       forcedViewSubscription.unsubscribe()
-      telemetrySubscription.unsubscribe()
+      // telemetrySubscription.unsubscribe()
       batch.stop()
       if (immediateViewBatch) {
         immediateViewBatch.stop()

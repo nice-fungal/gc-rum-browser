@@ -478,11 +478,8 @@ function newView(
         endClocks: endClocks
       })
       clearInterval(keepAliveIntervalId)
-      if (replayRecordingStateSubscription) {
-        replayRecordingStateSubscription.unsubscribe()
-      }
-      setViewEnd(endClocks.relative)
-      stopCommonViewMetricsTracking()
+      // setViewEnd(endClocks.relative)
+      // stopCommonViewMetricsTracking()
       pageMayExitSubscription.unsubscribe()
       triggerViewUpdate()
       setTimeout(function () {
