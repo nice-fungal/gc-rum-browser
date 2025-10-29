@@ -1,7 +1,8 @@
 import { getGlobalObject } from '../init'
 
 function getEventBridgeGlobal() {
-  return getGlobalObject().FTWebViewJavascriptBridge
+  // return getGlobalObject().FTWebViewJavascriptBridge
+  return null;
 }
 export function getEventBridge() {
   var eventBridgeGlobal = getEventBridgeGlobal()
@@ -10,42 +11,42 @@ export function getEventBridge() {
     return
   }
 
-  return {
-    getVisitorId() {
-      if (typeof eventBridgeGlobal.getVisitorid === 'function') {
-        return eventBridgeGlobal.getVisitorid()
-      }
-    },
-    getCapabilities() {
-      return JSON.parse(
-        (eventBridgeGlobal.getCapabilities &&
-          eventBridgeGlobal.getCapabilities()) ||
-          '[]'
-      )
-    },
-    getPrivacyLevel() {
-      return (
-        eventBridgeGlobal.getPrivacyLevel && eventBridgeGlobal.getPrivacyLevel()
-      )
-    },
-    getAllowedWebViewHosts() {
-      return JSON.parse(
-        (eventBridgeGlobal.getAllowedWebViewHosts &&
-          eventBridgeGlobal.getAllowedWebViewHosts()) ||
-          '[]'
-      )
-    },
-    send(eventType, event, viewId) {
-      const view = viewId ? { id: viewId } : undefined
-      try {
-        eventBridgeGlobal.sendEvent(
-          JSON.stringify({ name: eventType, data: event, view })
-        )
-      } catch (e) {
-        // unload postmessage error
-      }
-    }
-  }
+  // return {
+  //   getVisitorId() {
+  //     if (typeof eventBridgeGlobal.getVisitorid === 'function') {
+  //       return eventBridgeGlobal.getVisitorid()
+  //     }
+  //   },
+  //   getCapabilities() {
+  //     return JSON.parse(
+  //       (eventBridgeGlobal.getCapabilities &&
+  //         eventBridgeGlobal.getCapabilities()) ||
+  //         '[]'
+  //     )
+  //   },
+  //   getPrivacyLevel() {
+  //     return (
+  //       eventBridgeGlobal.getPrivacyLevel && eventBridgeGlobal.getPrivacyLevel()
+  //     )
+  //   },
+  //   getAllowedWebViewHosts() {
+  //     return JSON.parse(
+  //       (eventBridgeGlobal.getAllowedWebViewHosts &&
+  //         eventBridgeGlobal.getAllowedWebViewHosts()) ||
+  //         '[]'
+  //     )
+  //   },
+  //   send(eventType, event, viewId) {
+  //     const view = viewId ? { id: viewId } : undefined
+  //     try {
+  //       eventBridgeGlobal.sendEvent(
+  //         JSON.stringify({ name: eventType, data: event, view })
+  //       )
+  //     } catch (e) {
+  //       // unload postmessage error
+  //     }
+  //   }
+  // }
 }
 export const BridgeCapability = {
   RECORDS: 'records'

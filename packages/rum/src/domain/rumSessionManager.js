@@ -5,11 +5,8 @@ import {
   noop,
   Observable,
   timeStampNow,
-  bridgeSupports,
-  BridgeCapability,
-  SESSION_NOT_TRACKED,
-  display,
-  isPercentage
+  // bridgeSupports,
+  BridgeCapability
 } from '@cloudcare/browser-core'
 
 export var RUM_SESSION_KEY = 'rum'
@@ -154,33 +151,6 @@ export function startRumSessionManager(configuration, lifeCycle) {
  * It needs to be a premium plan in order to get long tasks
  */
 export function startRumSessionManagerStub() {
-  var session = {
-    id: '00000000-aaaa-0000-aaaa-000000000000',
-    isErrorSession: false,
-    sessionErrorTimestamp: 0,
-    sessionReplayAllowed: bridgeSupports(BridgeCapability.RECORDS)
-      ? true
-      : false,
-    errorSessionReplayAllowed: false,
-    sessionHasError: false,
-    isSessionForced: false
-  }
-  return {
-    findTrackedSession: function () {
-      return session
-    },
-    expire: noop,
-    keepSessionAlive: noop,
-    startSession: noop,
-    expireObservable: new Observable(),
-    setErrorForSession: function () {
-      session.sessionErrorTimestamp = timeStampNow()
-      session.sessionHasError = true
-      session.isErrorSession = true
-      session.errorSessionReplayAllowed = true
-    },
-    setForcedSession: noop
-  }
 }
 
 function applyStartSessionOptions(configuration, options) {
