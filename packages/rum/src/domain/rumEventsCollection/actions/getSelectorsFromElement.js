@@ -1,4 +1,5 @@
 import { cssEscape, isNodeShadowRoot } from '@cloudcare/browser-core'
+import { STABLE_ATTRIBUTES } from './__constants'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './getActionNameFromElement'
 
 /**

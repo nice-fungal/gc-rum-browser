@@ -8,6 +8,7 @@ import {
   getParentElement,
   isNodeShadowRoot
 } from '@cloudcare/browser-core'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './__constants';
 import {
   getNodePrivacyLevel,
   shouldMaskNode
