@@ -152,6 +152,7 @@ export function startRumAssembly(
             id: configuration.applicationId
           },
           device: resolvedDeviceInfo,
+          webview: {},
           env: configuration.env || '',
           service: viewContext.service || configuration.service || 'browser',
           version: viewContext.version || configuration.version || '',
@@ -229,6 +230,12 @@ export function startRumAssembly(
           serverRumEvent.device = extend2Lev(
             serverRumEvent.device,
             commonContext.context.device
+          )
+        }
+        if (!isEmptyObject(commonContext.context.webview)) {
+          serverRumEvent.webview = extend2Lev(
+            serverRumEvent.webview,
+            commonContext.context.webview
           )
         }
         if (!isEmptyObject(commonContext.user)) {
