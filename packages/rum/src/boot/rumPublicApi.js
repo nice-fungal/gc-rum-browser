@@ -93,13 +93,13 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
           : createIdentityEncoder,
         resourceTrackerManager
       )
-      recorderApi.onRumStart(
-        startRumResult.lifeCycle,
-        configuration,
-        startRumResult.session,
-        startRumResult.viewContexts,
-        deflateWorker
-      )
+      // recorderApi.onRumStart(
+      //   startRumResult.lifeCycle,
+      //   configuration,
+      //   startRumResult.session,
+      //   startRumResult.viewContexts,
+      //   deflateWorker
+      // )
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
@@ -286,18 +286,18 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
       strategy.setForcedSession()
       addTelemetryUsage({ feature: 'set-forced-session' })
     }),
-    startSessionReplayRecording: monitor(function (options) {
-      recorderApi.start(options)
-      addTelemetryUsage({
-        feature: 'start-session-replay-recording',
-        force: options && options.force
-      })
-    }),
-    isRecording: monitor(function () {
-      return recorderApi.isRecording()
-    }),
-    stopSessionReplayRecording: monitor(recorderApi.stop),
-    takeSubsequentFullSnapshot: monitor(recorderApi.takeSubsequentFullSnapshot),
+    // startSessionReplayRecording: monitor(function (options) {
+    //   recorderApi.start(options)
+    //   addTelemetryUsage({
+    //     feature: 'start-session-replay-recording',
+    //     force: options && options.force
+    //   })
+    // }),
+    // isRecording: monitor(function () {
+    //   return recorderApi.isRecording()
+    // }),
+    // stopSessionReplayRecording: monitor(recorderApi.stop),
+    // takeSubsequentFullSnapshot: monitor(recorderApi.takeSubsequentFullSnapshot),
     snapshotCanvas: monitor(function (canvas, options) {
       return recorderApi.snapshotCanvas(canvas, options)
     }),
