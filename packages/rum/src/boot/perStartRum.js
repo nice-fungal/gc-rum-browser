@@ -7,12 +7,12 @@ import {
   noop,
   timeStampNow,
   clocksNow,
-  assign,
+  // assign,
   // addTelemetryConfiguration,
   initFetchObservable,
-  deepClone,
+  // deepClone,
   // fetchAndApplyRemoteConfiguration,
-  getEventBridge,
+  // getEventBridge,
   // getType
 } from '@cloudcare/browser-core'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
