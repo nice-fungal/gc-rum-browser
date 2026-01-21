@@ -25,7 +25,7 @@ export function createPreStartStrategy(
 ) {
   var ignoreInitIfSyntheticsWillInjectRum =
     rumPublicApiOptions.ignoreInitIfSyntheticsWillInjectRum
-  var startCompressionWorker = rumPublicApiOptions.startCompressionWorker
+  // var startCompressionWorker = rumPublicApiOptions.startCompressionWorker
   var overrideInitConfiguration = rumPublicApiOptions.overrideInitConfiguration
   var bufferApiCalls = createBoundedBuffer()
   // var remoteConfigrationCallbacks = createBoundedBuffer()
@@ -113,26 +113,26 @@ export function createPreStartStrategy(
       return
     }
 
-    if (
-      configuration.compressIntakeRequests &&
-      !configuration.sendContentTypeByJson &&
-      !eventBridgeAvailable &&
-      startCompressionWorker
-    ) {
-      compressionWorker = startCompressionWorker(
-        configuration,
-        'RUM',
-        // Worker initialization can fail asynchronously, especially in Firefox where even CSP
-        // issues are reported asynchronously. For now, the SDK will continue its execution even if
-        // data won't be sent to Datadog. We could improve this behavior in the future.
-        noop
-      )
-      if (!compressionWorker) {
-        // The compression worker starter should have logged an error message explaining the issue
-        initializationPending = false
-        return
-      }
-    }
+    // if (
+    //   configuration.compressIntakeRequests &&
+    //   !configuration.sendContentTypeByJson &&
+    //   !eventBridgeAvailable &&
+    //   startCompressionWorker
+    // ) {
+    //   compressionWorker = startCompressionWorker(
+    //     configuration,
+    //     'RUM',
+    //     // Worker initialization can fail asynchronously, especially in Firefox where even CSP
+    //     // issues are reported asynchronously. For now, the SDK will continue its execution even if
+    //     // data won't be sent to Datadog. We could improve this behavior in the future.
+    //     noop
+    //   )
+    //   if (!compressionWorker) {
+    //     // The compression worker starter should have logged an error message explaining the issue
+    //     initializationPending = false
+    //     return
+    //   }
+    // }
 
     cachedConfiguration = configuration
     initializationPending = false

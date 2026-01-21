@@ -109,7 +109,7 @@ function computePerformanceViewDetails(navigationTimings) {
 }
 
 function processViewUpdate(view, configuration, recorderApi, pageStateHistory) {
-  var replayStats = recorderApi.getReplayStats(view.id)
+  // var replayStats = recorderApi.getReplayStats(view.id)
   var pageStates = pageStateHistory.findAll(
     view.startClocks.relative,
     view.duration
@@ -117,7 +117,7 @@ function processViewUpdate(view, configuration, recorderApi, pageStateHistory) {
   var viewEvent = {
     _gc: {
       document_version: view.documentVersion,
-      replay_stats: replayStats,
+      // replay_stats: replayStats,
       page_states: pageStates,
       view_update_time: view.documentVersion
     },
@@ -219,7 +219,7 @@ function processViewUpdate(view, configuration, recorderApi, pageStateHistory) {
         }
       : undefined,
     session: {
-      has_replay: replayStats ? true : undefined,
+      // has_replay: replayStats ? true : undefined,
       is_active: view.sessionIsActive ? undefined : false
     },
     privacy: {

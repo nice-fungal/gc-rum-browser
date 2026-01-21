@@ -148,13 +148,13 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
           : createIdentityEncoder,
         resourceTrackerManager
       )
-      recorderApi.onRumStart(
-        startRumResult.lifeCycle,
-        configuration,
-        startRumResult.session,
-        startRumResult.viewContexts,
-        compressionWorker
-      )
+      // recorderApi.onRumStart(
+      //   startRumResult.lifeCycle,
+      //   configuration,
+      //   startRumResult.session,
+      //   startRumResult.viewContexts,
+      //   compressionWorker
+      // )
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
@@ -180,9 +180,9 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
     addTelemetryUsage({ feature: 'start-view' })
   })
 
-  const recorderPublicApi = options.makeRecorderPublicApi
-    ? options.makeRecorderPublicApi(recorderApi)
-    : {}
+  // const recorderPublicApi = options.makeRecorderPublicApi
+  //   ? options.makeRecorderPublicApi(recorderApi)
+  //   : {}
 
   var rumPublicApi = makePublicApi(assign({
     init: monitor(function (initConfiguration) {
@@ -383,7 +383,7 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
     getResource: monitor(function (trackerId) {
       return resourceTrackerManager.getResource(trackerId)
     })
-  }, recorderPublicApi))
+  }, { /* recorderPublicApi */ }))
   return rumPublicApi
 }
 function createPostStartStrategy(preStartStrategy, startRumResult) {
