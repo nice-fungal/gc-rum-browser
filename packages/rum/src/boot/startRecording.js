@@ -2,7 +2,7 @@ import {
   timeStampNow,
   createHttpRequest,
   LifeCycleEventType,
-  addTelemetryDebug,
+  // addTelemetryDebug,
   ONE_SECOND,
   canUseEventBridge,
   assign
@@ -32,9 +32,9 @@ export function startRecording(
   var replaySegmentFlushCount = 0
   var reportError = function (error) {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error: error })
-    addTelemetryDebug('Error reported to customer', {
-      'error.message': error.message
-    })
+    // addTelemetryDebug('Error reported to customer', {
+    //   'error.message': error.message
+    // })
   }
 
   var replayRequest =
