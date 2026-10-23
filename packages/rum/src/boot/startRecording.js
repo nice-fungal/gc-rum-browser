@@ -4,7 +4,8 @@ import {
   LifeCycleEventType,
   addTelemetryDebug,
   ONE_SECOND,
-  canUseEventBridge
+  canUseEventBridge,
+  assign
 } from '@cloudcare/browser-core'
 import { record } from '../domain/replay/record'
 import { startRecordBridge } from '../domain/replay/startRecordBridge'
@@ -16,6 +17,7 @@ import { RecordType } from '../types'
 import { deleteOldestStats } from '../domain/replay/replayStats'
 /* How long to wait for error checkouts */
 export const BUFFER_CHECKOUT_TIME = 60 * ONE_SECOND
+var REPLAY_SEGMENT_FLUSH_HISTORY_LIMIT = 10
 export function startRecording(
   lifeCycle,
   configuration,
@@ -25,6 +27,9 @@ export function startRecording(
   httpRequest
 ) {
   var cleanupTasks = []
+  var lastReplaySegmentFlushForDebug
+  var replaySegmentFlushHistoryForDebug = []
+  var replaySegmentFlushCount = 0
   var reportError = function (error) {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error: error })
     addTelemetryDebug('Error reported to customer', {
@@ -53,7 +58,24 @@ export function startRecording(
       viewContexts,
       replayRequest,
       encoder,
-      isRecordErrorSessionReplay
+      isRecordErrorSessionReplay,
+      {
+        onSegmentFlushed: function (segmentFlush) {
+          replaySegmentFlushCount += 1
+          lastReplaySegmentFlushForDebug =
+            cloneReplaySegmentFlushForDebug(
+              segmentFlush,
+              replaySegmentFlushCount
+            )
+          replaySegmentFlushHistoryForDebug.push(lastReplaySegmentFlushForDebug)
+          if (
+            replaySegmentFlushHistoryForDebug.length >
+            REPLAY_SEGMENT_FLUSH_HISTORY_LIMIT
+          ) {
+            replaySegmentFlushHistoryForDebug.shift()
+          }
+        }
+      }
     )
     addRecord = segmentCollection.addRecord
     let flushBufferSegment = segmentCollection.flushBufferSegment
@@ -92,18 +114,45 @@ export function startRecording(
     _record = record({
       emit: wrappedEmit,
       configuration: configuration,
-      lifeCycle: lifeCycle
+      lifeCycle: lifeCycle,
+      sessionManager: sessionManager
     })
   } else {
     ;({ addRecord } = startRecordBridge(viewContexts))
     _record = record({
       emit: addRecord,
       configuration: configuration,
-      lifeCycle: lifeCycle
+      lifeCycle: lifeCycle,
+      sessionManager: sessionManager
     })
   }
   cleanupTasks.push(_record.stop)
   var takeSubsequentFullSnapshot = _record.takeSubsequentFullSnapshot
+  var snapshotCanvas = _record.snapshotCanvas
+  var getSerializedNodeIdForDebug = _record.getSerializedNodeIdForDebug
+  var getLastAutoCanvasSnapshotResultForDebug =
+    _record.getLastAutoCanvasSnapshotResultForDebug
+  var getAutoCanvasSnapshotDebugHistoryForDebug =
+    _record.getAutoCanvasSnapshotDebugHistoryForDebug
+  var getLastCanvasMutationForDebug = _record.getLastCanvasMutationForDebug
+  var getCanvasMutationHistoryForDebug =
+    _record.getCanvasMutationHistoryForDebug
+  var getReplayPerformanceForDebug = function () {
+    return cloneReplayPerformanceForDebug(
+      _record.getReplayPerformanceForDebug
+        ? _record.getReplayPerformanceForDebug()
+        : undefined,
+      replaySegmentFlushCount
+    )
+  }
+  var getLastReplaySegmentFlushForDebug = function () {
+    return cloneReplaySegmentFlushForDebug(lastReplaySegmentFlushForDebug)
+  }
+  var getReplaySegmentFlushHistoryForDebug = function () {
+    return replaySegmentFlushHistoryForDebug.map(function (segmentFlush) {
+      return cloneReplaySegmentFlushForDebug(segmentFlush)
+    })
+  }
   var flushMutations = _record.flushMutations
   var subscribeViewEnded = lifeCycle.subscribe(
     LifeCycleEventType.VIEW_ENDED,
@@ -130,6 +179,46 @@ export function startRecording(
         task()
       })
     },
-    takeSubsequentFullSnapshot: takeSubsequentFullSnapshot
+    takeSubsequentFullSnapshot: takeSubsequentFullSnapshot,
+    snapshotCanvas: snapshotCanvas,
+    getSerializedNodeIdForDebug: getSerializedNodeIdForDebug,
+    getLastAutoCanvasSnapshotResultForDebug:
+      getLastAutoCanvasSnapshotResultForDebug,
+    getAutoCanvasSnapshotDebugHistoryForDebug:
+      getAutoCanvasSnapshotDebugHistoryForDebug,
+    getLastCanvasMutationForDebug: getLastCanvasMutationForDebug,
+    getCanvasMutationHistoryForDebug: getCanvasMutationHistoryForDebug,
+    getLastReplaySegmentFlushForDebug: getLastReplaySegmentFlushForDebug,
+    getReplaySegmentFlushHistoryForDebug:
+      getReplaySegmentFlushHistoryForDebug,
+    getReplayPerformanceForDebug: getReplayPerformanceForDebug
   }
+}
+
+function cloneReplaySegmentFlushForDebug(segmentFlush, sequence) {
+  if (!segmentFlush) {
+    return segmentFlush
+  }
+
+  return {
+    sequence: typeof sequence === 'number' ? sequence : segmentFlush.sequence,
+    creationReason: segmentFlush.creationReason,
+    flushReason: segmentFlush.flushReason,
+    recordsCount: segmentFlush.recordsCount,
+    recordCountsByType: assign({}, segmentFlush.recordCountsByType),
+    start: segmentFlush.start,
+    end: segmentFlush.end,
+    indexInView: segmentFlush.indexInView,
+    rawBytesCount: segmentFlush.rawBytesCount
+  }
+}
+
+function cloneReplayPerformanceForDebug(stats, replaySegmentFlushCount) {
+  if (!stats && typeof replaySegmentFlushCount === 'undefined') {
+    return undefined
+  }
+
+  return assign({}, stats || {}, {
+    replaySegmentFlushCount: replaySegmentFlushCount || 0
+  })
 }

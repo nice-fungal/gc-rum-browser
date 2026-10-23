@@ -12,9 +12,10 @@ import {
   RumEventType,
   LifeCycleEventType,
   toServerDuration,
-  createTaskQueue
+  createTaskQueue,
+  addTelemetryError
 } from '@cloudcare/browser-core'
-import { matchRequestResourceEntry } from './matchRequestResourceEntry'
+import { createRequestResourceEntryMatcher } from './matchRequestResourceEntry'
 import {
   computePerformanceResourceDetails,
   computeResourceEntryDuration,
@@ -38,7 +39,8 @@ export function startResourceCollection(
   configuration,
   pageStateHistory,
   taskQueue,
-  retrieveInitialDocumentResourceTimingImpl
+  retrieveInitialDocumentResourceTimingImpl,
+  resourceTrackerManager
 ) {
   if (taskQueue === undefined) {
     taskQueue = createTaskQueue()
@@ -47,9 +49,15 @@ export function startResourceCollection(
     retrieveInitialDocumentResourceTimingImpl =
       retrieveInitialDocumentResourceTiming
   }
+  if (resourceTrackerManager) {
+    resourceTrackerManager.setFlushTrackedResource(function (rawEvent) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+    })
+  }
+  var requestResourceEntryMatcher = createRequestResourceEntryMatcher()
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, function (request) {
     handleResource(function () {
-      return processRequest(request, pageStateHistory)
+      return processRequest(request, pageStateHistory, requestResourceEntryMatcher)
     })
   })
   var performanceResourceSubscription = createPerformanceObservable(
@@ -82,9 +90,24 @@ export function startResourceCollection(
   })
   function handleResource(computeRawEvent) {
     taskQueue.push(function () {
-      const rawEvent = computeRawEvent()
-      if (rawEvent) {
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+      try {
+        const rawEvent = computeRawEvent()
+        if (rawEvent) {
+          if (
+            resourceTrackerManager &&
+            rawEvent.domainContext &&
+            rawEvent.domainContext.resourceTrackerId &&
+            resourceTrackerManager.trackRequestResource(
+              rawEvent.domainContext.resourceTrackerId,
+              rawEvent
+            )
+          ) {
+            return
+          }
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+        }
+      } catch (error) {
+        addTelemetryError(error)
       }
     })
   }
@@ -103,8 +126,8 @@ export function startResourceCollection(
   }
 }
 
-function processRequest(request, pageStateHistory) {
-  var matchingTiming = matchRequestResourceEntry(request)
+function processRequest(request, pageStateHistory, requestResourceEntryMatcher) {
+  var matchingTiming = requestResourceEntryMatcher.matchRequestResourceEntry(request)
   var startClocks = matchingTiming
     ? relativeToClocks(matchingTiming.startTime)
     : request.startClocks
@@ -161,7 +184,8 @@ function processRequest(request, pageStateHistory) {
       requestInit: request.init,
       error: request.error,
       isAborted: request.isAborted,
-      handlingStack: request.handlingStack
+      handlingStack: request.handlingStack,
+      resourceTrackerId: getResourceTrackerIdFromRequest(request)
     }
   }
 }
@@ -265,4 +289,39 @@ function computeResourceEntryTracingInfo(entry) {
  */
 function discardZeroStatus(statusCode) {
   return statusCode === 0 ? undefined : statusCode
+}
+
+function getResourceTrackerIdFromRequest(request) {
+  return getHeaderValue(request.requestHeaderContexts, 'x-rum-resource-id')
+}
+
+function getHeaderValue(headers, key) {
+  if (!headers || !key) {
+    return undefined
+  }
+
+  var normalizedKey = String(key).toLowerCase()
+
+  if (typeof headers.get === 'function') {
+    return headers.get(key) || headers.get(normalizedKey) || undefined
+  }
+
+  if (Array.isArray(headers)) {
+    for (var i = 0; i < headers.length; i += 1) {
+      var headerEntry = headers[i]
+      if (
+        Array.isArray(headerEntry) &&
+        String(headerEntry[0]).toLowerCase() === normalizedKey
+      ) {
+        return headerEntry[1]
+      }
+    }
+    return undefined
+  }
+
+  for (var headerKey in headers) {
+    if (String(headerKey).toLowerCase() === normalizedKey) {
+      return headers[headerKey]
+    }
+  }
 }
