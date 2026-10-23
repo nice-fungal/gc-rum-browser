@@ -3,6 +3,6 @@
   "version": "0.0.0",
   "devDependencies": {
     "@cloudcare/browser-core": "3.3.4",
-    "@cloudcare/browser-rum": "3.3.4"
+    "@cloudcare/browser-rum": "3.3.5"
   }
 }
