@@ -142,6 +142,17 @@
             }
         }
         return flag;
+    }, matchList = function(list, value, useStartsWith) {
+        return void 0 === useStartsWith && (useStartsWith = !1), some(list, (function(item) {
+            try {
+                if ("function" == typeof item) return item(value);
+                if (item instanceof RegExp) return item.test(value);
+                if ("string" == typeof item) return useStartsWith ? startsWith(value, item) : item === value;
+            } catch (e) {
+                display.error(e);
+            }
+            return !1;
+        }));
     }, cssEscape = function(str) {
         return str += "", window.CSS && window.CSS.escape ? window.CSS.escape(str) : str.replace(/([\0-\x1f\x7f]|^-?\d)|^-$|[^\x80-\uFFFF\w-]/g, (function(ch, asCodePoint) {
             return asCodePoint ? "\0" === ch ? "�" : ch.slice(0, -1) + "\\" + ch.charCodeAt(ch.length - 1).toString(16) + " " : "\\" + ch;
@@ -551,7 +562,7 @@
         userAgent: VariableLibrary.navigator.userAgent || "",
         timeZone: MethodLibrary.getTimeZone()
     });
-    var deviceInfo = _deviceInfo, DOM_EVENT_BEFORE_UNLOAD = "beforeunload", DOM_EVENT_CLICK = "click", DOM_EVENT_KEY_DOWN = "keydown", DOM_EVENT_LOAD = "load", DOM_EVENT_POP_STATE = "popstate", DOM_EVENT_SCROLL = "scroll", DOM_EVENT_TOUCH_START = "touchstart", DOM_EVENT_VISIBILITY_CHANGE = "visibilitychange", DOM_EVENT_PAGE_SHOW = "pageshow", DOM_EVENT_FREEZE = "freeze", DOM_EVENT_RESUME = "resume", DOM_EVENT_DOM_CONTENT_LOADED = "DOMContentLoaded", DOM_EVENT_POINTER_DOWN = "pointerdown", DOM_EVENT_POINTER_UP = "pointerup", DOM_EVENT_POINTER_CANCEL = "pointercancel", DOM_EVENT_HASH_CHANGE = "hashchange", DOM_EVENT_PAGE_HIDE = "pagehide", DOM_EVENT_MOUSE_DOWN = "mousedown", DOM_EVENT_FOCUS = "focus", DOM_EVENT_BLUR = "blur", DOM_EVENT_RESIZE = "resize", DOM_EVENT_SECURITY_POLICY_VIOLATION = "securitypolicyviolation", DOM_EVENT_STORAGE = "storage", ResourceType_DOCUMENT = "document", ResourceType_XHR = "xhr", ResourceType_BEACON = "beacon", ResourceType_FETCH = "fetch", ResourceType_CSS = "css", ResourceType_JS = "js", ResourceType_IMAGE = "image", ResourceType_FONT = "font", ResourceType_MEDIA = "media", ResourceType_OTHER = "other", ResourceType_CUSTOM = "custom", ActionType_CLICK = "click", ActionType_CUSTOM = "custom", RumEventType = {
+    var deviceInfo = _deviceInfo, DOM_EVENT_BEFORE_UNLOAD = "beforeunload", DOM_EVENT_CLICK = "click", DOM_EVENT_KEY_DOWN = "keydown", DOM_EVENT_LOAD = "load", DOM_EVENT_POP_STATE = "popstate", DOM_EVENT_SCROLL = "scroll", DOM_EVENT_TOUCH_START = "touchstart", DOM_EVENT_VISIBILITY_CHANGE = "visibilitychange", DOM_EVENT_PRERENDERING_CHANGE = "prerenderingchange", DOM_EVENT_PAGE_SHOW = "pageshow", DOM_EVENT_FREEZE = "freeze", DOM_EVENT_RESUME = "resume", DOM_EVENT_DOM_CONTENT_LOADED = "DOMContentLoaded", DOM_EVENT_POINTER_DOWN = "pointerdown", DOM_EVENT_POINTER_UP = "pointerup", DOM_EVENT_POINTER_CANCEL = "pointercancel", DOM_EVENT_HASH_CHANGE = "hashchange", DOM_EVENT_PAGE_HIDE = "pagehide", DOM_EVENT_MOUSE_DOWN = "mousedown", DOM_EVENT_FOCUS = "focus", DOM_EVENT_BLUR = "blur", DOM_EVENT_RESIZE = "resize", DOM_EVENT_SECURITY_POLICY_VIOLATION = "securitypolicyviolation", DOM_EVENT_STORAGE = "storage", ResourceType_DOCUMENT = "document", ResourceType_XHR = "xhr", ResourceType_BEACON = "beacon", ResourceType_FETCH = "fetch", ResourceType_CSS = "css", ResourceType_JS = "js", ResourceType_IMAGE = "image", ResourceType_FONT = "font", ResourceType_MEDIA = "media", ResourceType_OTHER = "other", ResourceType_CUSTOM = "custom", ActionType_CLICK = "click", ActionType_CUSTOM = "custom", RumEventType = {
         ACTION: "action",
         ERROR: "error",
         LONG_TASK: "long_task",
@@ -1033,15 +1044,65 @@
     function LifeCycle() {
         this.callbacks = {};
     }
+    function _arrayWithHoles(r) {
+        if (Array.isArray(r)) return r;
+    }
+    function _arrayLikeToArray(r, a) {
+        (null == a || a > r.length) && (a = r.length);
+        for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+        return n;
+    }
+    function _unsupportedIterableToArray(r, a) {
+        if (r) {
+            if ("string" == typeof r) return _arrayLikeToArray(r, a);
+            var t = {}.toString.call(r).slice(8, -1);
+            return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+        }
+    }
+    function _nonIterableRest() {
+        throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+    }
+    function _toArray(r) {
+        return _arrayWithHoles(r) || function(r) {
+            if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+        }(r) || _unsupportedIterableToArray(r) || _nonIterableRest();
+    }
+    function _slicedToArray(r, e) {
+        return _arrayWithHoles(r) || function(r, l) {
+            var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+            if (null != t) {
+                var e, n, i, u, a = [], f = !0, o = !1;
+                try {
+                    if (i = (t = t.call(r)).next, 0 === l) {
+                        if (Object(t) !== t) return;
+                        f = !1;
+                    } else for (;!(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0) ;
+                } catch (r) {
+                    o = !0, n = r;
+                } finally {
+                    try {
+                        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+                    } finally {
+                        if (o) throw n;
+                    }
+                }
+                return a;
+            }
+        }(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+    }
     function limitModification(object, modifiableFieldPaths, modifier) {
         const clone = deepClone(object), result = modifier(clone);
         return objectEntries(modifiableFieldPaths).forEach((_ref => {
-            let [fieldPath, fieldType] = _ref;
+            let _ref2 = _slicedToArray(_ref, 2), fieldPath = _ref2[0], fieldType = _ref2[1];
             return setValueAtPath(object, clone, fieldPath.split(/\.|(?=\[\])/), fieldType);
         })), result;
     }
     function setValueAtPath(object, clone, pathSegments, fieldType) {
-        const [field, ...restPathSegments] = pathSegments;
+        const _pathSegments = _toArray(pathSegments), field = _pathSegments[0], restPathSegments = function(r, a) {
+            (null == a || a > r.length) && (a = r.length);
+            for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+            return n;
+        }(_pathSegments).slice(1);
         if ("[]" !== field) {
             if (isValidObject(object) && isValidObject(clone)) return restPathSegments.length > 0 ? setValueAtPath(object[field], clone[field], restPathSegments, fieldType) : void function(object, field, value, fieldType) {
                 const newType = getType(value);
@@ -1204,7 +1265,7 @@
         }(sessionString) && sessionString.split("&").forEach((function(entry) {
             const matches = SESSION_ENTRY_REGEXP.exec(entry);
             if (null !== matches) {
-                const [, key, value] = matches;
+                const _matches = _slicedToArray(matches, 3), key = _matches[1], value = _matches[2];
                 session[key] = value;
             }
         })), session;
@@ -1314,12 +1375,12 @@
     let ongoingOperations;
     function processSessionStoreOperations(operations, sessionStoreStrategy) {
         let numberOfRetries = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : 0;
-        const {isLockEnabled: isLockEnabled, persistSession: persistSession, expireSession: expireSession} = sessionStoreStrategy, persistWithLock = function(session) {
+        const isLockEnabled = sessionStoreStrategy.isLockEnabled, persistSession = sessionStoreStrategy.persistSession, expireSession = sessionStoreStrategy.expireSession, persistWithLock = function(session) {
             return persistSession(tools_assign({}, session, {
                 lock: currentLock
             }));
         }, retrieveStore = function() {
-            const _sessionStoreStrategy = sessionStoreStrategy.retrieveSession(), {lock: lock} = _sessionStoreStrategy;
+            const _sessionStoreStrategy = sessionStoreStrategy.retrieveSession(), lock = _sessionStoreStrategy.lock;
             return {
                 session: _objectWithoutProperties(_sessionStoreStrategy, _excluded),
                 lock: lock && !isLockExpired(lock) ? lock : void 0
@@ -1359,7 +1420,7 @@
         return UUID() + "--" + timeStampNow();
     }
     function isLockExpired(lock) {
-        const [, timeStamp] = lock.split("--");
+        const timeStamp = _slicedToArray(lock.split("--"), 2)[1];
         return !timeStamp || tools_elapsed(Number(timeStamp), timeStampNow()) > 1e3;
     }
     function selectSessionStoreStrategyType(initConfiguration) {
@@ -1387,7 +1448,7 @@
             persistSession: persistInLocalStorage,
             retrieveSession: retrieveSessionFromLocalStorage,
             expireSession: expireSessionFromLocalStorage
-        }, {expireSession: expireSession} = sessionStoreStrategy, watchSessionTimeoutId = timer_setInterval((function() {
+        }, expireSession = sessionStoreStrategy.expireSession, watchSessionTimeoutId = timer_setInterval((function() {
             processSessionStoreOperations({
                 process: function(sessionState) {
                     return isSessionInExpiredState(sessionState) ? {
@@ -1399,14 +1460,14 @@
         }), 1e3);
         let sessionCache;
         startSession();
-        const {throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession} = throttle((function() {
+        const _throttle = throttle((function() {
             processSessionStoreOperations({
                 process: function(sessionState) {
                     if (isSessionInNotStartedState(sessionState)) return;
                     const synchronizedSession = synchronizeSession(sessionState);
                     return function(sessionState) {
                         if (isSessionInNotStartedState(sessionState)) return !1;
-                        const {trackingType: trackingType, isTracked: isTracked} = computeSessionState(sessionState[productKey]);
+                        const _computeSessionState = computeSessionState(sessionState[productKey]), trackingType = _computeSessionState.trackingType, isTracked = _computeSessionState.isTracked;
                         sessionState[productKey] = trackingType, delete sessionState.isExpired, isTracked && !sessionState.id && (sessionState.id = UUID(), 
                         sessionState.created = String(dateNow()));
                     }(synchronizedSession), synchronizedSession;
@@ -1417,7 +1478,7 @@
                     }(sessionState), sessionCache = sessionState;
                 }
             }, sessionStoreStrategy);
-        }), 1e3);
+        }), 1e3), throttledExpandOrRenewSession = _throttle.throttled, cancelExpandOrRenewSession = _throttle.cancel;
         function synchronizeSession(sessionState) {
             return isSessionInExpiredState(sessionState) && (sessionState = {
                 isExpired: "1"
@@ -1913,17 +1974,17 @@
             expireObservable.notify(), sessionContextHistory.closeActive(tools_relativeNow());
         })), sessionStore.expandOrRenewSession(), sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative), 
         function(expandOrRenewSession) {
-            const {stop: stop} = addEventListeners(window, [ DOM_EVENT_CLICK, DOM_EVENT_TOUCH_START, DOM_EVENT_KEY_DOWN, DOM_EVENT_SCROLL ], expandOrRenewSession, {
+            const stop = addEventListeners(window, [ DOM_EVENT_CLICK, DOM_EVENT_TOUCH_START, DOM_EVENT_KEY_DOWN, DOM_EVENT_SCROLL ], expandOrRenewSession, {
                 capture: !0,
                 passive: !0
-            });
+            }).stop;
             stopCallbacks.push(stop);
         }((function() {
             sessionStore.expandOrRenewSession();
         })), function(expandSession) {
             const expandSessionWhenVisible = function() {
                 "visible" === document.visibilityState && expandSession();
-            }, {stop: stop} = addEventListener(document, DOM_EVENT_VISIBILITY_CHANGE, expandSessionWhenVisible);
+            }, stop = addEventListener(document, DOM_EVENT_VISIBILITY_CHANGE, expandSessionWhenVisible).stop;
             stopCallbacks.push(stop);
             const visibilityCheckInterval = timer_setInterval(expandSessionWhenVisible, 6e4);
             stopCallbacks.push((function() {
@@ -1932,9 +1993,9 @@
         }((function() {
             return sessionStore.expandSession();
         })), function(cb) {
-            const {stop: stop} = addEventListener(window, DOM_EVENT_RESUME, cb, {
+            const stop = addEventListener(window, DOM_EVENT_RESUME, cb, {
                 capture: !0
-            });
+            }).stop;
             stopCallbacks.push(stop);
         }((function() {
             sessionStore.restartSession();
@@ -2256,7 +2317,7 @@
         };
     }
     function createFlushController(_ref) {
-        let {messagesLimit: messagesLimit, bytesLimit: bytesLimit, durationLimit: durationLimit, pageExitObservable: pageExitObservable, sessionExpireObservable: sessionExpireObservable} = _ref;
+        let messagesLimit = _ref.messagesLimit, bytesLimit = _ref.bytesLimit, durationLimit = _ref.durationLimit, pageExitObservable = _ref.pageExitObservable, sessionExpireObservable = _ref.sessionExpireObservable;
         var durationLimitTimeoutId, pageExitSubscription = pageExitObservable.subscribe((function(event) {
             return flush(event.reason);
         })), sessionExpireSubscription = sessionExpireObservable.subscribe((function() {
@@ -2312,15 +2373,15 @@
         })(o);
     }
     function toPropertyKey(t) {
-        var i = function(t, r) {
+        var i = function(t, e) {
             if ("object" != _typeof(t) || !t) return t;
-            var e = t[Symbol.toPrimitive];
-            if (void 0 !== e) {
-                var i = e.call(t, r || "default");
+            var r;
+            if ("undefined" != typeof Symbol && void 0 !== (r = t[Symbol.toPrimitive])) {
+                var i = r.call(t, e || "default");
                 if ("object" != _typeof(i)) return i;
                 throw new TypeError("@@toPrimitive must return a primitive value.");
             }
-            return ("string" === r ? String : Number)(t);
+            return ("string" === e ? String : Number)(t);
         }(t, "string");
         return "symbol" == _typeof(i) ? i : i + "";
     }
@@ -2354,12 +2415,18 @@
             }
             return e;
         }({}, context);
-        for (const [key, {required: required, type: type}] of Object.entries(propertiesConfig)) "string" === type && key in newContext && (newContext[key] = String(newContext[key])), 
-        required && !(key in context) && display.warn("The property ".concat(key, " of ").concat(name, " context is required; context will not be sent to the intake."));
+        for (const _ref of Object.entries(propertiesConfig)) {
+            var _ref2 = _slicedToArray(_ref, 2);
+            const key = _ref2[0];
+            var _ref2$ = _ref2[1];
+            const required = _ref2$.required;
+            "string" === _ref2$.type && key in newContext && (newContext[key] = String(newContext[key])), 
+            required && !(key in context) && display.warn("The property ".concat(key, " of ").concat(name, " context is required; context will not be sent to the intake."));
+        }
         return newContext;
     }
     function createContextManager() {
-        let name = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : "", {customerDataTracker: customerDataTracker, propertiesConfig: propertiesConfig = {}} = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : {}, context = {};
+        let name = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : "", _ref3 = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : {}, customerDataTracker = _ref3.customerDataTracker, _ref3$propertiesConfi = _ref3.propertiesConfig, propertiesConfig = void 0 === _ref3$propertiesConfi ? {} : _ref3$propertiesConfi, context = {};
         const changeObservable = new Observable, contextManager = {
             getContext: () => deepClone(context),
             setContext: newContext => {
@@ -2404,9 +2471,9 @@
     const CustomerDataCompressionStatus_Unknown = 0, CustomerDataCompressionStatus_Enabled = 1, CustomerDataCompressionStatus_Disabled = 2;
     function createCustomerDataTracker(checkCustomerDataLimit) {
         let bytesCountCache = 0;
-        const {throttled: computeBytesCountThrottled, cancel: cancelComputeBytesCount} = throttle((context => {
+        const _throttle = throttle((context => {
             bytesCountCache = computeBytesCount(jsonStringify_jsonStringify(context)), checkCustomerDataLimit();
-        }), 200), resetBytesCount = () => {
+        }), 200), computeBytesCountThrottled = _throttle.throttled, cancelComputeBytesCount = _throttle.cancel, resetBytesCount = () => {
             cancelComputeBytesCount(), bytesCountCache = 0;
         };
         return {
@@ -2477,7 +2544,7 @@
     function startRumSessionManager(configuration, lifeCycle) {
         var sessionManager = startSessionManager(configuration, "rum", (function(rawTrackingType) {
             return function(configuration, rawTrackingType) {
-                const {sessionSampleRate: sessionSampleRate, sessionOnErrorSampleRate: sessionOnErrorSampleRate, sessionReplaySampleRate: sessionReplaySampleRate, sessionReplayOnErrorSampleRate: sessionReplayOnErrorSampleRate} = configuration, isSession = performDraw(sessionSampleRate), isErrorSession = performDraw(sessionOnErrorSampleRate), isSessionReplay = performDraw(sessionReplaySampleRate), isErrorSessionReplay = performDraw(sessionReplayOnErrorSampleRate);
+                const sessionSampleRate = configuration.sessionSampleRate, sessionOnErrorSampleRate = configuration.sessionOnErrorSampleRate, sessionReplaySampleRate = configuration.sessionReplaySampleRate, sessionReplayOnErrorSampleRate = configuration.sessionReplayOnErrorSampleRate, isSession = performDraw(sessionSampleRate), isErrorSession = performDraw(sessionOnErrorSampleRate), isSessionReplay = performDraw(sessionReplaySampleRate), isErrorSessionReplay = performDraw(sessionReplayOnErrorSampleRate);
                 var trackingType;
                 !function(trackingType) {
                     return trackingType === RumTrackingType_NOT_TRACKED || trackingType === RumTrackingType_TRACKED_WITH_ERROR_SESSION_AND_WITHOUT_SESSION_REPLAY || trackingType === RumTrackingType_TRACKED_WITH_ERROR_SESSION_AND_WITH_ERROR_SESSION_REPLAY || trackingType === RumTrackingType_TRACKED_WITH_ERROR_SESSION_AND_WITH_SESSION_REPLAY || trackingType === RumTrackingType_TRACKED_WITH_SESSION_AND_WITHOUT_SESSION_REPLAY || trackingType === RumTrackingType_TRACKED_WITH_SESSION_AND_WITH_ERROR_SESSION_REPLAY || trackingType === RumTrackingType_TRACKED_WITH_SESSION_AND_WITH_SESSION_REPLAY;
@@ -2493,7 +2560,7 @@
         })), sessionManager.renewObservable.subscribe((function() {
             lifeCycle.notify(LifeCycleEventType_SESSION_RENEWED);
         })), sessionManager.sessionStateUpdateObservable.subscribe((_ref => {
-            let {previousState: previousState, newState: newState} = _ref;
+            let previousState = _ref.previousState, newState = _ref.newState;
             if (!previousState.hasError && newState.hasError) {
                 const sessionEntity = sessionManager.findSession();
                 sessionEntity && (sessionEntity.hasError = !0, sessionEntity.ets = newState.ets || timeStampNow());
@@ -2573,12 +2640,15 @@
                 var observer = new MutationObserver(monitor((function() {
                     return observable.notify();
                 })));
-                return observer.observe(document, {
-                    attributes: !0,
-                    characterData: !0,
-                    childList: !0,
-                    subtree: !0
-                }), function() {
+                try {
+                    observer.observe(document, {
+                        attributes: !0,
+                        characterData: !0,
+                        childList: !0,
+                        subtree: !0
+                    });
+                } catch (err) {}
+                return function() {
                     return observer.disconnect();
                 };
             }
@@ -2863,7 +2933,7 @@
                 return function(pageStateEntries, eventStartTime, maxPageStateEntriesSelectable) {
                     if (0 === pageStateEntries.length) return;
                     return pageStateEntries.slice(-maxPageStateEntriesSelectable).reverse().map((_ref => {
-                        let {state: state, startTime: startTime} = _ref;
+                        let state = _ref.state, startTime = _ref.startTime;
                         return {
                             state: state,
                             start: toServerDuration(tools_elapsed(eventStartTime, startTime))
@@ -3361,11 +3431,11 @@
         }));
     }
     function trackFirstHidden(viewStart, eventTarget) {
-        if (void 0 === eventTarget && (eventTarget = window), "hidden" === document.visibilityState) return {
+        if (void 0 === eventTarget && (eventTarget = window), "hidden" === document.visibilityState && !document.prerendering) return {
             getTimeStamp: () => 0,
             stop: tools_noop
         };
-        if (supportPerformanceTimingEvent(RumPerformanceEntryType_VISIBILITY_STATE)) {
+        if (supportPerformanceTimingEvent(RumPerformanceEntryType_VISIBILITY_STATE) && !document.prerendering) {
             const firstHiddenEntry = performance.getEntriesByType(RumPerformanceEntryType_VISIBILITY_STATE).filter((entry => "hidden" === entry.name)).find((entry => entry.startTime >= viewStart.relative));
             if (firstHiddenEntry) return {
                 getTimeStamp: () => firstHiddenEntry.startTime,
@@ -3373,12 +3443,12 @@
             };
         }
         let timeStamp = 1 / 0;
-        const {stop: stop} = addEventListeners(eventTarget, [ DOM_EVENT_PAGE_HIDE, DOM_EVENT_VISIBILITY_CHANGE ], (event => {
+        const stop = addEventListeners(eventTarget, [ DOM_EVENT_PAGE_HIDE, DOM_EVENT_VISIBILITY_CHANGE, DOM_EVENT_PRERENDERING_CHANGE ], (event => {
             event.type !== DOM_EVENT_PAGE_HIDE && "hidden" !== document.visibilityState || (timeStamp = event.timeStamp, 
             stop());
         }), {
             capture: !0
-        });
+        }).stop;
         return {
             getTimeStamp: function() {
                 return timeStamp;
@@ -3547,7 +3617,7 @@
                 timer_clearTimeout(maxDurationTimeoutId), pageActivitySubscription.unsubscribe();
             };
             function complete(event) {
-                hasCompleted || (stop(), pageActivityEndCallback(event));
+                hasCompleted || (stop && stop(), pageActivityEndCallback(event));
             }
             return {
                 stop: stop
@@ -3585,18 +3655,7 @@
         }(lifeCycle, domMutationObservable, configuration), pageActivityEndCallback, maxDuration);
     }
     function isExcludedUrl(configuration, requestUrl) {
-        return list = configuration.excludedActivityUrls, value = requestUrl, void 0 === useStartsWith && (useStartsWith = !1), 
-        some(list, (function(item) {
-            try {
-                if ("function" == typeof item) return item(value);
-                if (item instanceof RegExp) return item.test(value);
-                if ("string" == typeof item) return useStartsWith ? startsWith(value, item) : item === value;
-            } catch (e) {
-                display.error(e);
-            }
-            return !1;
-        }));
-        var list, value, useStartsWith;
+        return matchList(configuration.excludedActivityUrls, requestUrl);
     }
     function trackCumulativeLayoutShift(configuration, viewStart, callback) {
         if (!isLayoutShiftSupported()) return {
@@ -4539,7 +4598,9 @@
             },
             getInternalContext: tools_noop,
             stopSession: tools_noop,
-            setForcedSession: tools_noop,
+            setForcedSession: function() {
+                bufferApiCalls.add((startRumResult => startRumResult.setForcedSession()));
+            },
             addTiming: function(name, time) {
                 void 0 === time && (time = timeStampNow()), bufferApiCalls.add((function(startRumResult) {
                     startRumResult.addTiming(name, time);
@@ -4655,7 +4716,10 @@
                     init: function(initConfiguration) {
                         displayAlreadyInitializedError("DATAFLUX_RUM", initConfiguration);
                     },
-                    initConfiguration: preStartStrategy.getInitConfiguration()
+                    initConfiguration: preStartStrategy.getInitConfiguration(),
+                    getRemoteConfiguration: function(callback) {
+                        preStartStrategy.getRemoteConfiguration(callback);
+                    }
                 }, startRumResult);
             }(strategy, startRumResult), startRumResult;
         }));
@@ -4942,7 +5006,7 @@
             };
         }(lifeCycle, configuration, location, session, userSession, pageStateHistory, locationChangeObservable, 0, getCommonContext, reportError), viewContexts = _startRumEventCollection.viewContexts, urlContexts = _startRumEventCollection.urlContexts, actionContexts = _startRumEventCollection.actionContexts, stopRumEventCollection = _startRumEventCollection.stop, addAction = _startRumEventCollection.addAction;
         cleanupTasks.push(stopRumEventCollection);
-        const {addTiming: addTiming, startView: startView, setViewName: setViewName, setViewContext: setViewContext, setViewContextProperty: setViewContextProperty, getViewContext: getViewContext, stop: stopViewCollection} = startViewCollection(lifeCycle, configuration, location, domMutationObservable, locationChangeObservable, pageStateHistory, 0, initialViewOptions);
+        const _startViewCollection = startViewCollection(lifeCycle, configuration, location, domMutationObservable, locationChangeObservable, pageStateHistory, 0, initialViewOptions), addTiming = _startViewCollection.addTiming, startView = _startViewCollection.startView, setViewName = _startViewCollection.setViewName, setViewContext = _startViewCollection.setViewContext, setViewContextProperty = _startViewCollection.setViewContextProperty, getViewContext = _startViewCollection.getViewContext, stopViewCollection = _startViewCollection.stop;
         cleanupTasks.push(stopViewCollection);
         const _startResourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory);
         var addResource = _startResourceCollection.addResource;

@@ -1888,6 +1888,7 @@ var DOM_EVENT = {
   TOUCH_END: 'touchend',
   TOUCH_MOVE: 'touchmove',
   VISIBILITY_CHANGE: 'visibilitychange',
+  PRERENDERING_CHANGE: 'prerenderingchange',
   PAGE_SHOW: 'pageshow',
   FREEZE: 'freeze',
   RESUME: 'resume',
@@ -2915,7 +2916,7 @@ function isIllegalInvocationError(error, methodName) {
   error.message.includes("'".concat(methodName, "' called on an object that does not implement interface EventTarget.")) ||
   // firefox
   error.message.includes("Can only call EventTarget.".concat(methodName, " on instances of EventTarget")) // safari
-  ;
+;
 }
 function withOriginalOrZoneJsPatchedMethod(eventTarget, methodName, cb) {
   // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
@@ -3074,14 +3075,102 @@ LifeCycle.prototype = {
     };
   }
 };
+;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/arrayWithHoles.js
+function _arrayWithHoles(r) {
+  if (Array.isArray(r)) return r;
+}
+
+;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/iterableToArray.js
+function _iterableToArray(r) {
+  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+}
+
+;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/arrayLikeToArray.js
+function _arrayLikeToArray(r, a) {
+  (null == a || a > r.length) && (a = r.length);
+  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+  return n;
+}
+
+;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/unsupportedIterableToArray.js
+
+function _unsupportedIterableToArray(r, a) {
+  if (r) {
+    if ("string" == typeof r) return _arrayLikeToArray(r, a);
+    var t = {}.toString.call(r).slice(8, -1);
+    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+  }
+}
+
+;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/nonIterableRest.js
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+
+;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/toArray.js
+
+
+
+
+function _toArray(r) {
+  return _arrayWithHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableRest();
+}
+
+;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/iterableToArrayLimit.js
+function _iterableToArrayLimit(r, l) {
+  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+  if (null != t) {
+    var e,
+      n,
+      i,
+      u,
+      a = [],
+      f = !0,
+      o = !1;
+    try {
+      if (i = (t = t.call(r)).next, 0 === l) {
+        if (Object(t) !== t) return;
+        f = !1;
+      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+    } catch (r) {
+      o = !0, n = r;
+    } finally {
+      try {
+        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
+      } finally {
+        if (o) throw n;
+      }
+    }
+    return a;
+  }
+}
+
+;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/slicedToArray.js
+
+
+
+
+function _slicedToArray(r, e) {
+  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+}
+
 ;// CONCATENATED MODULE: ../core/esm/helper/limitModification.js
+
+
+function limitModification_arrayLikeToArray(r, a) {
+  (null == a || a > r.length) && (a = r.length);
+  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+  return n;
+}
 
 
 function limitModification(object, modifiableFieldPaths, modifier) {
   const clone = deepClone(object);
   const result = modifier(clone);
   objectEntries(modifiableFieldPaths).forEach(_ref => {
-    let [fieldPath, fieldType] = _ref;
+    let _ref2 = _slicedToArray(_ref, 2),
+      fieldPath = _ref2[0],
+      fieldType = _ref2[1];
     return (
       // Traverse both object and clone simultaneously up to the path and apply the modification from the clone to the original object when the type is valid
       setValueAtPath(object, clone, fieldPath.split(/\.|(?=\[\])/), fieldType)
@@ -3090,7 +3179,9 @@ function limitModification(object, modifiableFieldPaths, modifier) {
   return result;
 }
 function setValueAtPath(object, clone, pathSegments, fieldType) {
-  const [field, ...restPathSegments] = pathSegments;
+  const _pathSegments = _toArray(pathSegments),
+    field = _pathSegments[0],
+    restPathSegments = limitModification_arrayLikeToArray(_pathSegments).slice(1);
   if (field === '[]') {
     if (Array.isArray(object) && Array.isArray(clone)) {
       object.forEach((item, i) => setValueAtPath(item, clone[i], restPathSegments, fieldType));
@@ -3528,6 +3619,7 @@ const SessionPersistence = {
 ;// CONCATENATED MODULE: ../core/esm/session/sessionState.js
 
 
+
 const SESSION_ENTRY_REGEXP = /^([a-zA-Z]+)=([a-z0-9-]+)$/;
 const SESSION_ENTRY_SEPARATOR = '&';
 const EXPIRED = '1';
@@ -3562,7 +3654,9 @@ function toSessionState(sessionString) {
     sessionString.split(SESSION_ENTRY_SEPARATOR).forEach(function (entry) {
       const matches = SESSION_ENTRY_REGEXP.exec(entry);
       if (matches !== null) {
-        const [, key, value] = matches;
+        const _matches = _slicedToArray(matches, 3),
+          key = _matches[1],
+          value = _matches[2];
         session[key] = value;
       }
     });
@@ -3687,6 +3781,7 @@ function _objectWithoutProperties(e, t) {
 
 ;// CONCATENATED MODULE: ../core/esm/session/sessionStoreOperations.js
 
+
 const _excluded = ["lock"];
 
 
@@ -3703,11 +3798,9 @@ const bufferedOperations = [];
 let ongoingOperations;
 function processSessionStoreOperations(operations, sessionStoreStrategy) {
   let numberOfRetries = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-  const {
-    isLockEnabled,
-    persistSession,
-    expireSession
-  } = sessionStoreStrategy;
+  const isLockEnabled = sessionStoreStrategy.isLockEnabled,
+    persistSession = sessionStoreStrategy.persistSession,
+    expireSession = sessionStoreStrategy.expireSession;
   const persistWithLock = function (session) {
     return persistSession(tools_assign({}, session, {
       lock: currentLock
@@ -3715,9 +3808,7 @@ function processSessionStoreOperations(operations, sessionStoreStrategy) {
   };
   const retrieveStore = function () {
     const _sessionStoreStrategy = sessionStoreStrategy.retrieveSession(),
-      {
-        lock
-      } = _sessionStoreStrategy,
+      lock = _sessionStoreStrategy.lock,
       session = _objectWithoutProperties(_sessionStoreStrategy, _excluded);
     return {
       session,
@@ -3810,7 +3901,9 @@ function createLock() {
   return UUID() + LOCK_SEPARATOR + timeStampNow();
 }
 function isLockExpired(lock) {
-  const [, timeStamp] = lock.split(LOCK_SEPARATOR);
+  const _lock$split = lock.split(LOCK_SEPARATOR),
+    _lock$split2 = _slicedToArray(_lock$split, 2),
+    timeStamp = _lock$split2[1];
   return !timeStamp || tools_elapsed(Number(timeStamp), timeStampNow()) > LOCK_EXPIRATION_DELAY;
 }
 ;// CONCATENATED MODULE: ../core/esm/session/sessionStore.js
@@ -3865,33 +3958,30 @@ function startSessionStore(sessionStoreStrategyType, productKey, computeSessionS
   const expireObservable = new Observable();
   const sessionStateUpdateObservable = new Observable();
   const sessionStoreStrategy = sessionStoreStrategyType.type === SessionPersistence.COOKIE ? initCookieStrategy(sessionStoreStrategyType.cookieOptions) : initLocalStorageStrategy();
-  const {
-    expireSession
-  } = sessionStoreStrategy;
+  const expireSession = sessionStoreStrategy.expireSession;
   const watchSessionTimeoutId = timer_setInterval(watchSession, STORAGE_POLL_DELAY);
   let sessionCache;
   startSession();
-  const {
-    throttled: throttledExpandOrRenewSession,
-    cancel: cancelExpandOrRenewSession
-  } = throttle(function () {
-    processSessionStoreOperations({
-      process: function (sessionState) {
-        if (isSessionInNotStartedState(sessionState)) {
-          return;
+  const _throttle = throttle(function () {
+      processSessionStoreOperations({
+        process: function (sessionState) {
+          if (isSessionInNotStartedState(sessionState)) {
+            return;
+          }
+          const synchronizedSession = synchronizeSession(sessionState);
+          expandOrRenewSessionState(synchronizedSession);
+          return synchronizedSession;
+        },
+        after: function (sessionState) {
+          if (isSessionStarted(sessionState) && !hasSessionInCache()) {
+            renewSessionInCache(sessionState);
+          }
+          sessionCache = sessionState;
         }
-        const synchronizedSession = synchronizeSession(sessionState);
-        expandOrRenewSessionState(synchronizedSession);
-        return synchronizedSession;
-      },
-      after: function (sessionState) {
-        if (isSessionStarted(sessionState) && !hasSessionInCache()) {
-          renewSessionInCache(sessionState);
-        }
-        sessionCache = sessionState;
-      }
-    }, sessionStoreStrategy);
-  }, STORAGE_POLL_DELAY);
+      }, sessionStoreStrategy);
+    }, STORAGE_POLL_DELAY),
+    throttledExpandOrRenewSession = _throttle.throttled,
+    cancelExpandOrRenewSession = _throttle.cancel;
   function expandSession() {
     processSessionStoreOperations({
       process: function (sessionState) {
@@ -3946,10 +4036,9 @@ function startSessionStore(sessionStoreStrategyType, productKey, computeSessionS
     if (isSessionInNotStartedState(sessionState)) {
       return false;
     }
-    const {
-      trackingType,
-      isTracked
-    } = computeSessionState(sessionState[productKey]);
+    const _computeSessionState = computeSessionState(sessionState[productKey]),
+      trackingType = _computeSessionState.trackingType,
+      isTracked = _computeSessionState.isTracked;
     sessionState[productKey] = trackingType;
     delete sessionState.isExpired;
     if (isTracked && !sessionState.id) {
@@ -4750,12 +4839,11 @@ function stopSessionManager() {
   stopCallbacks = [];
 }
 function trackActivity(expandOrRenewSession) {
-  const {
-    stop
-  } = addEventListeners(window, [DOM_EVENT.CLICK, DOM_EVENT.TOUCH_START, DOM_EVENT.KEY_DOWN, DOM_EVENT.SCROLL], expandOrRenewSession, {
-    capture: true,
-    passive: true
-  });
+  const _addEventListeners = addEventListeners(window, [DOM_EVENT.CLICK, DOM_EVENT.TOUCH_START, DOM_EVENT.KEY_DOWN, DOM_EVENT.SCROLL], expandOrRenewSession, {
+      capture: true,
+      passive: true
+    }),
+    stop = _addEventListeners.stop;
   stopCallbacks.push(stop);
 }
 function trackVisibility(expandSession) {
@@ -4764,9 +4852,8 @@ function trackVisibility(expandSession) {
       expandSession();
     }
   };
-  const {
-    stop
-  } = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible);
+  const _addEventListener = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible),
+    stop = _addEventListener.stop;
   stopCallbacks.push(stop);
   const visibilityCheckInterval = timer_setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY);
   stopCallbacks.push(function () {
@@ -4774,11 +4861,10 @@ function trackVisibility(expandSession) {
   });
 }
 function trackResume(cb) {
-  const {
-    stop
-  } = addEventListener(window, DOM_EVENT.RESUME, cb, {
-    capture: true
-  });
+  const _addEventListener2 = addEventListener(window, DOM_EVENT.RESUME, cb, {
+      capture: true
+    }),
+    stop = _addEventListener2.stop;
   stopCallbacks.push(stop);
 }
 ;// CONCATENATED MODULE: ../core/esm/transport/sendWithRetryStrategy.js
@@ -5377,13 +5463,11 @@ function formatPayloadFromEncoder(encoderResult, sendContentTypeByJson) {
  * but relies on invariants described in each method documentation to keep a coherent state.
  */
 function createFlushController(_ref) {
-  let {
-    messagesLimit,
-    bytesLimit,
-    durationLimit,
-    pageExitObservable,
-    sessionExpireObservable
-  } = _ref;
+  let messagesLimit = _ref.messagesLimit,
+    bytesLimit = _ref.bytesLimit,
+    durationLimit = _ref.durationLimit,
+    pageExitObservable = _ref.pageExitObservable,
+    sessionExpireObservable = _ref.sessionExpireObservable;
   var pageExitSubscription = pageExitObservable.subscribe(function (event) {
     return flush(event.reason);
   });
@@ -5554,9 +5638,13 @@ function getEventBridge() {
   //   },
   //   send(eventType, event, viewId) {
   //     const view = viewId ? { id: viewId } : undefined
-  //     eventBridgeGlobal.sendEvent(
-  //       JSON.stringify({ name: eventType, data: event, view })
-  //     )
+  //     try {
+  //       eventBridgeGlobal.sendEvent(
+  //         JSON.stringify({ name: eventType, data: event, view })
+  //       )
+  //     } catch (e) {
+  //       // unload postmessage error
+  //     }
   //   }
   // }
 }
@@ -5632,15 +5720,15 @@ function _typeof(o) {
 
 ;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/toPrimitive.js
 
-function toPrimitive(t, r) {
+function toPrimitive(t, e) {
   if ("object" != _typeof(t) || !t) return t;
-  var e = t[Symbol.toPrimitive];
-  if (void 0 !== e) {
-    var i = e.call(t, r || "default");
+  var r;
+  if ("undefined" != typeof Symbol && void 0 !== (r = t[Symbol.toPrimitive])) {
+    var i = r.call(t, e || "default");
     if ("object" != _typeof(i)) return i;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-  return ("string" === r ? String : Number)(t);
+  return ("string" === e ? String : Number)(t);
 }
 
 ;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/toPropertyKey.js
@@ -5663,6 +5751,7 @@ function _defineProperty(e, r, t) {
 }
 
 ;// CONCATENATED MODULE: ../core/esm/helper/serialisation/contextManager.js
+
 
 function ownKeys(e, r) {
   var t = Object.keys(e);
@@ -5691,10 +5780,12 @@ function _objectSpread(e) {
 
 function ensureProperties(context, propertiesConfig, name) {
   const newContext = _objectSpread({}, context);
-  for (const [key, {
-    required,
-    type
-  }] of Object.entries(propertiesConfig)) {
+  for (const _ref of Object.entries(propertiesConfig)) {
+    var _ref2 = _slicedToArray(_ref, 2);
+    const key = _ref2[0];
+    var _ref2$ = _ref2[1];
+    const required = _ref2$.required;
+    const type = _ref2$.type;
     /**
      * Ensure specified properties are strings as defined here:
      */
@@ -5709,10 +5800,10 @@ function ensureProperties(context, propertiesConfig, name) {
 }
 function createContextManager() {
   let name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-  let {
-    customerDataTracker,
-    propertiesConfig = {}
-  } = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  let _ref3 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+    customerDataTracker = _ref3.customerDataTracker,
+    _ref3$propertiesConfi = _ref3.propertiesConfig,
+    propertiesConfig = _ref3$propertiesConfi === void 0 ? {} : _ref3$propertiesConfi;
   let context = {};
   const changeObservable = new Observable();
   const contextManager = {
@@ -5879,13 +5970,12 @@ function createCustomerDataTracker(checkCustomerDataLimit) {
 
   // Throttle the bytes computation to minimize the impact on performance.
   // Especially useful if the user call context APIs synchronously multiple times in a row
-  const {
-    throttled: computeBytesCountThrottled,
-    cancel: cancelComputeBytesCount
-  } = throttle(context => {
-    bytesCountCache = computeBytesCount(jsonStringify_jsonStringify(context));
-    checkCustomerDataLimit();
-  }, BYTES_COMPUTATION_THROTTLING_DELAY);
+  const _throttle = throttle(context => {
+      bytesCountCache = computeBytesCount(jsonStringify_jsonStringify(context));
+      checkCustomerDataLimit();
+    }, BYTES_COMPUTATION_THROTTLING_DELAY),
+    computeBytesCountThrottled = _throttle.throttled,
+    cancelComputeBytesCount = _throttle.cancel;
   const resetBytesCount = () => {
     cancelComputeBytesCount();
     bytesCountCache = 0;
@@ -6096,10 +6186,8 @@ function startRumSessionManager(configuration, lifeCycle) {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED);
   });
   sessionManager.sessionStateUpdateObservable.subscribe(_ref => {
-    let {
-      previousState,
-      newState
-    } = _ref;
+    let previousState = _ref.previousState,
+      newState = _ref.newState;
     if (!previousState.hasError && newState.hasError) {
       const sessionEntity = sessionManager.findSession();
       if (sessionEntity) {
@@ -6188,12 +6276,10 @@ function startRumSessionManagerStub() {
   // }
 }
 function computeSessionState(configuration, rawTrackingType) {
-  const {
-    sessionSampleRate,
-    sessionOnErrorSampleRate,
-    sessionReplaySampleRate,
-    sessionReplayOnErrorSampleRate
-  } = configuration;
+  const sessionSampleRate = configuration.sessionSampleRate,
+    sessionOnErrorSampleRate = configuration.sessionOnErrorSampleRate,
+    sessionReplaySampleRate = configuration.sessionReplaySampleRate,
+    sessionReplayOnErrorSampleRate = configuration.sessionReplayOnErrorSampleRate;
   const isSession = performDraw(sessionSampleRate);
   const isErrorSession = performDraw(sessionOnErrorSampleRate);
   const isSessionReplay = performDraw(sessionReplaySampleRate);
@@ -6293,12 +6379,14 @@ function createDOMMutationObservable() {
     var observer = new MutationObserver(monitor(function () {
       return observable.notify();
     }));
-    observer.observe(document, {
-      attributes: true,
-      characterData: true,
-      childList: true,
-      subtree: true
-    });
+    try {
+      observer.observe(document, {
+        attributes: true,
+        characterData: true,
+        childList: true,
+        subtree: true
+      });
+    } catch (err) {}
     return function () {
       return observer.disconnect();
     };
@@ -6883,10 +6971,8 @@ function processPageStates(pageStateEntries, eventStartTime, maxPageStateEntries
     return;
   }
   return pageStateEntries.slice(-maxPageStateEntriesSelectable).reverse().map(_ref => {
-    let {
-      state,
-      startTime
-    } = _ref;
+    let state = _ref.state,
+      startTime = _ref.startTime;
     return {
       state,
       start: toServerDuration(tools_elapsed(eventStartTime, startTime))
@@ -7877,7 +7963,7 @@ function waitAfterLoadEvent(callback) {
  * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
  * multiple values, only the most recent one should be used.
  * Documentation: https://web.dev/lcp/
- * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getLCP.ts
+ * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/onLCP.ts
  */
 // It happens in some cases like sleep mode or some browser implementations
 var LCP_MAXIMUM_DELAY = 10 * ONE_MINUTE;
@@ -7930,13 +8016,13 @@ function trackFirstHidden(viewStart, eventTarget) {
   if (typeof eventTarget === 'undefined') {
     eventTarget = window;
   }
-  if (document.visibilityState === 'hidden') {
+  if (document.visibilityState === 'hidden' && !document.prerendering) {
     return {
       getTimeStamp: () => 0,
       stop: tools_noop
     };
   }
-  if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+  if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE) && !document.prerendering) {
     const firstHiddenEntry = performance.getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE).filter(entry => entry.name === 'hidden').find(entry => entry.startTime >= viewStart.relative);
     if (firstHiddenEntry) {
       return {
@@ -7946,16 +8032,15 @@ function trackFirstHidden(viewStart, eventTarget) {
     }
   }
   let timeStamp = Infinity;
-  const {
-    stop
-  } = addEventListeners(eventTarget, [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE], event => {
-    if (event.type === DOM_EVENT.PAGE_HIDE || document.visibilityState === 'hidden') {
-      timeStamp = event.timeStamp;
-      stop();
-    }
-  }, {
-    capture: true
-  });
+  const _addEventListeners = addEventListeners(eventTarget, [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.PRERENDERING_CHANGE], event => {
+      if (event.type === DOM_EVENT.PAGE_HIDE || document.visibilityState === 'hidden') {
+        timeStamp = event.timeStamp;
+        stop();
+      }
+    }, {
+      capture: true
+    }),
+    stop = _addEventListeners.stop;
   return {
     getTimeStamp: function () {
       return timeStamp;
@@ -8174,7 +8259,7 @@ function doWaitPageActivityEnd(pageActivityObservable, pageActivityEndCallback, 
     if (hasCompleted) {
       return;
     }
-    stop();
+    stop && stop();
     pageActivityEndCallback(event);
   }
   return {
@@ -9191,7 +9276,19 @@ function injectHeadersIfTracingAllowed(configuration, context, sessionManager, i
   //   configuration.tracingSampleRate
   // )
 
-  // if (!traceSampled) return
+  const session = sessionManager.findTrackedSession();
+  if (!session) {
+    return;
+  }
+  var tracingOption = find(configuration.allowedTracingUrls, function (tracingOption) {
+    return matchList([tracingOption.match], context.url, true);
+  });
+  if (!tracingOption) {
+    return;
+  }
+  const traceSampled = isTraceSampled(session.id, configuration.tracingSampleRate);
+
+  //   if (!traceSampled) return
   // var tracer,
   //   traceType = tracingOption.traceType
   // switch (traceType) {
@@ -9712,15 +9809,14 @@ function startRum(configuration, recorderApi, customerDataTrackerManager, getCom
   //     }
   //   }
   // })
-  const {
-    addTiming,
-    startView,
-    setViewName,
-    setViewContext,
-    setViewContextProperty,
-    getViewContext,
-    stop: stopViewCollection
-  } = startViewCollection(lifeCycle, configuration, location, domMutationObservable, locationChangeObservable, pageStateHistory, recorderApi, initialViewOptions);
+  const _startViewCollection = startViewCollection(lifeCycle, configuration, location, domMutationObservable, locationChangeObservable, pageStateHistory, recorderApi, initialViewOptions),
+    addTiming = _startViewCollection.addTiming,
+    startView = _startViewCollection.startView,
+    setViewName = _startViewCollection.setViewName,
+    setViewContext = _startViewCollection.setViewContext,
+    setViewContextProperty = _startViewCollection.setViewContextProperty,
+    getViewContext = _startViewCollection.getViewContext,
+    stopViewCollection = _startViewCollection.stop;
   cleanupTasks.push(stopViewCollection);
   const _startResourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory);
   var addResource = _startResourceCollection.addResource;
@@ -10011,8 +10107,6 @@ function validateAndBuildTracingOptions(initConfiguration) {
 ;// CONCATENATED MODULE: ./src/boot/perStartRum.js
 
 
-// import { getType } from '@cloudcare/browser-core/src/helper/tools'
-
 function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRum) {
   var ignoreInitIfSyntheticsWillInjectRum = rumPublicApiOptions.ignoreInitIfSyntheticsWillInjectRum;
   // var startDeflateWorker = rumPublicApiOptions.startDeflateWorker
@@ -10136,7 +10230,9 @@ function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRu
     // },
     getInternalContext: tools_noop,
     stopSession: tools_noop,
-    setForcedSession: tools_noop,
+    setForcedSession: function () {
+      bufferApiCalls.add(startRumResult => startRumResult.setForcedSession());
+    },
     addTiming: function (name, time) {
       if (time === undefined) {
         time = timeStampNow();
@@ -10452,7 +10548,10 @@ function createPostStartStrategy(preStartStrategy, startRumResult) {
     init: function (initConfiguration) {
       displayAlreadyInitializedError('DATAFLUX_RUM', initConfiguration);
     },
-    initConfiguration: preStartStrategy.getInitConfiguration()
+    initConfiguration: preStartStrategy.getInitConfiguration(),
+    getRemoteConfiguration: function (callback) {
+      preStartStrategy.getRemoteConfiguration(callback);
+    }
   }, startRumResult);
 }
 ;// CONCATENATED MODULE: ./src/boot/rum.entry.js
