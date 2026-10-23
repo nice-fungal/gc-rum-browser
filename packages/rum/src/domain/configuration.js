@@ -13,10 +13,12 @@ import {
   catchUserErrors,
   getOrigin,
   each,
-  isNumber
+  isNumber,
+  ExperimentalFeature
 } from '@cloudcare/browser-core'
 import { buildEnv } from '../boot/buildEnv'
 import { isTracingOption } from '../domain/tracing/tracer'
+import { validatePlugins } from './plugins'
 
 var REPLAY_CANVAS_QUALITY_PRESETS = {
   low: {
@@ -119,6 +121,9 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
     !isArray(initConfiguration.excludedActivityUrls)
   ) {
     display.error('Excluded Activity Urls should be an array')
+    return
+  }
+  if (!validatePlugins(initConfiguration.plugins)) {
     return
   }
   if (
@@ -291,8 +296,14 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
       replayCanvasWorkerUrl: initConfiguration.replayCanvasWorkerUrl,
       compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
       trackUserInteractions: trackUserInteractions,
+      trackWebSockets:
+        isArray(initConfiguration.enableExperimentalFeatures) &&
+        initConfiguration.enableExperimentalFeatures.indexOf(
+          ExperimentalFeature.TRACK_WEBSOCKETS
+        ) !== -1,
       enableLongAnimationFrame: !!initConfiguration.enableLongAnimationFrame,
       trackViewsManually: !!initConfiguration.trackViewsManually,
+      plugins: initConfiguration.plugins || [],
       replayCanvasEnabled: !!initConfiguration.replayCanvasEnabled,
       replayCanvasMode: replayCanvasMode,
       replayCanvasSampling: replayCanvasSampling,
@@ -385,6 +396,7 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
     buildEnv
   )
 }
+
 /**
  * Handles allowedTracingUrls and processes legacy allowedTracingOrigins
  */
