@@ -24,12 +24,13 @@ export function createPreStartStrategy(
 ) {
   var ignoreInitIfSyntheticsWillInjectRum =
     rumPublicApiOptions.ignoreInitIfSyntheticsWillInjectRum
-  var startDeflateWorker = rumPublicApiOptions.startDeflateWorker
+  var startCompressionWorker = rumPublicApiOptions.startCompressionWorker
+  var overrideInitConfiguration = rumPublicApiOptions.overrideInitConfiguration
   var bufferApiCalls = createBoundedBuffer()
   var remoteConfigrationCallbacks = createBoundedBuffer()
   var firstStartViewCall
 
-  var deflateWorker
+  var compressionWorker
 
   var cachedInitConfiguration
   var cachedConfiguration
@@ -58,7 +59,7 @@ export function createPreStartStrategy(
 
     var startRumResult = doStartRum(
       cachedConfiguration,
-      deflateWorker,
+      compressionWorker,
       initialViewOptions
     )
 
@@ -69,6 +70,9 @@ export function createPreStartStrategy(
     var eventBridgeAvailable = canUseEventBridge()
     if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
+    }
+    if (overrideInitConfiguration) {
+      initConfiguration = overrideInitConfiguration(initConfiguration)
     }
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
@@ -96,9 +100,9 @@ export function createPreStartStrategy(
       configuration.compressIntakeRequests &&
       !configuration.sendContentTypeByJson &&
       !eventBridgeAvailable &&
-      startDeflateWorker
+      startCompressionWorker
     ) {
-      deflateWorker = startDeflateWorker(
+      compressionWorker = startCompressionWorker(
         configuration,
         'RUM',
         // Worker initialization can fail asynchronously, especially in Firefox where even CSP
@@ -106,8 +110,8 @@ export function createPreStartStrategy(
         // data won't be sent to Datadog. We could improve this behavior in the future.
         noop
       )
-      if (!deflateWorker) {
-        // `startDeflateWorker` should have logged an error message explaining the issue
+      if (!compressionWorker) {
+        // The compression worker starter should have logged an error message explaining the issue
         return
       }
     }
