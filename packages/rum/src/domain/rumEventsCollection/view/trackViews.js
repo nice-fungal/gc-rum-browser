@@ -144,7 +144,7 @@ export function trackViews(
     forcedSessionSubscription = lifeCycle.subscribe(
       LifeCycleEventType.SESSION_FORCED,
       function () {
-        currentView.update()
+        currentView.update({ isForcedSessionUpdate: true })
       }
     )
 
@@ -422,13 +422,14 @@ function newView(
     throttled()
   }
 
-  function triggerViewUpdate() {
+  function triggerViewUpdate(options) {
     cancelScheduleViewUpdate()
     triggerBeforeViewUpdate()
     documentVersion += 1
     var currentEnd =
       endClocks === undefined ? timeStampNow() : endClocks.timeStamp
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      isForcedSessionUpdate: Boolean(options && options.isForcedSessionUpdate),
       customTimings: customTimings,
       documentVersion: documentVersion,
       id: id,

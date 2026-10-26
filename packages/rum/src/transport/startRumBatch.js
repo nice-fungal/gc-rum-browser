@@ -25,8 +25,8 @@ export function startRumBatch(
     reportError
   )
   const flushRequestObservable = new Observable()
-  let initialViewBatch
-  let initialViewEncoder
+  let immediateViewBatch
+  let immediateViewEncoder
   const batch = startBatchWithReplica(
     configuration,
     {
@@ -51,34 +51,39 @@ export function startRumBatch(
       }
     }
   )
+  function sendImmediateView(event, reason) {
+    if (!immediateViewBatch) {
+      immediateViewEncoder = createEncoder(EncoderStreamId.RUM_INITIAL_VIEW)
+      immediateViewBatch = startBatchWithReplica(
+        configuration,
+        {
+          request,
+          encoder: immediateViewEncoder,
+          encoderFallback: immediateViewEncoder.isAsync
+            ? createIdentityEncoder
+            : undefined,
+          flushRequestObservable
+        },
+        reportError,
+        // The regular batch already owns the exit copy. Do not promote an
+        // older first version from this encoder's journal on the same exit.
+        new Observable(),
+        sessionExpireObservable
+      )
+    }
+    // Send initial and forced-session Views separately. The normal batch retains
+    // each View's latest version for its original deadline and exit beacon,
+    // including rapid routes whose first fetches have not completed yet.
+    immediateViewBatch.upsert(event, event.view.id)
+    flushRequestObservable.notify(reason)
+  }
   const initialViewSubscription = lifeCycle.subscribe(
     LifeCycleEventType.RUM_VIEW_FIRST_COLLECTED,
-    function (event) {
-      if (!initialViewBatch) {
-        initialViewEncoder = createEncoder(EncoderStreamId.RUM_INITIAL_VIEW)
-        initialViewBatch = startBatchWithReplica(
-          configuration,
-          {
-            request,
-            encoder: initialViewEncoder,
-            encoderFallback: initialViewEncoder.isAsync
-              ? createIdentityEncoder
-              : undefined,
-            flushRequestObservable
-          },
-          reportError,
-          // The regular batch already owns the exit copy. Do not promote an
-          // older first version from this encoder's journal on the same exit.
-          new Observable(),
-          sessionExpireObservable
-        )
-      }
-      // Send the first eligible version separately. The normal batch retains
-      // each View's latest version for its original deadline and exit beacon,
-      // including rapid routes whose first fetches have not completed yet.
-      initialViewBatch.upsert(event, event.view.id)
-      flushRequestObservable.notify('view_created')
-    }
+    event => sendImmediateView(event, 'view_created')
+  )
+  const forcedViewSubscription = lifeCycle.subscribe(
+    LifeCycleEventType.RUM_VIEW_FORCED_COLLECTED,
+    event => sendImmediateView(event, 'session_forced')
   )
   const telemetrySubscription = telemetryEventObservable.subscribe(function (event) {
     batch.add(event)
@@ -90,12 +95,13 @@ export function startRumBatch(
     stop: function () {
       rumEventSubscription.unsubscribe()
       initialViewSubscription.unsubscribe()
+      forcedViewSubscription.unsubscribe()
       telemetrySubscription.unsubscribe()
       batch.stop()
-      if (initialViewBatch) {
-        initialViewBatch.stop()
-        if (initialViewEncoder.stop) {
-          initialViewEncoder.stop()
+      if (immediateViewBatch) {
+        immediateViewBatch.stop()
+        if (immediateViewEncoder.stop) {
+          immediateViewEncoder.stop()
         }
       }
     }

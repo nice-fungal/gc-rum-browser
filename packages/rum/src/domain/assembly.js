@@ -252,15 +252,22 @@ export function startRumAssembly(
             LifeCycleEventType.RUM_EVENT_COLLECTED,
             serverRumEvent
           )
-          if (
-            serverRumEvent.type === RumEventType.VIEW &&
-            !collectedViews.has(viewContext)
-          ) {
-            collectedViews.add(viewContext)
-            lifeCycle.notify(
-              LifeCycleEventType.RUM_VIEW_FIRST_COLLECTED,
-              serverRumEvent
-            )
+          if (serverRumEvent.type === RumEventType.VIEW) {
+            if (!collectedViews.has(viewContext)) {
+              collectedViews.add(viewContext)
+              lifeCycle.notify(
+                LifeCycleEventType.RUM_VIEW_FIRST_COLLECTED,
+                serverRumEvent
+              )
+            } else if (data.isForcedSessionUpdate) {
+              // A sampled View may already have been sent before the user was
+              // identified. Deliver this activation update without flushing
+              // unrelated events or waiting for the regular batch deadline.
+              lifeCycle.notify(
+                LifeCycleEventType.RUM_VIEW_FORCED_COLLECTED,
+                serverRumEvent
+              )
+            }
           }
         }
       }
