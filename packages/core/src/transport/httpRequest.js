@@ -1,11 +1,13 @@
 import {
   drainQueuedPayloads,
   getPendingPayloadsBytesCount,
+  isPayloadValid,
   newRetryState,
   sendWithRetryStrategy
 } from './sendWithRetryStrategy'
 import { addEventListener } from '../browser/addEventListener'
 import { monitor } from '../helper/monitor'
+import { WeakSet } from '../helper/polyfills'
 import { addTelemetryError } from '../telemetry/telemetry'
 /**
  * Use POST request without content type to:
@@ -33,6 +35,7 @@ export function createHttpRequest(
     retryMaxSize = -1
   }
   var retryState = newRetryState(retryMaxSize)
+  var exitAcceptedPayloads = new WeakSet()
   var sendStrategyForRetry = function (payload, onResponse) {
     return fetchStrategyWithFallback(endpointUrl, payload, onResponse)
   }
@@ -44,6 +47,36 @@ export function createHttpRequest(
       endpointUrl,
       reportError
     )
+  }
+
+  function sendOnExitWithBudget(bytesBudget, currentPayload) {
+    var sentBytesCount = 0
+    function trySend(payload) {
+      var exitBytesCount = getExitBytesCount(payload)
+      if (
+        sentBytesCount + exitBytesCount > bytesBudget ||
+        !trySendBeacon(endpointUrl, bytesLimit, payload)
+      ) {
+        return false
+      }
+      sentBytesCount += exitBytesCount
+      exitAcceptedPayloads.add(payload)
+      return true
+    }
+    drainQueuedPayloads(retryState, trySend)
+    if (
+      currentPayload &&
+      isPayloadValid(currentPayload) &&
+      !exitAcceptedPayloads.has(currentPayload) &&
+      !retryState.$rPayloadSequenceByPayload.has(currentPayload)
+    ) {
+      if (hasPendingRetryPayloads(retryState) || !trySend(currentPayload)) {
+        // Keep the regular transport and its ordered retry queue as the owner
+        // when beacon cannot accept this payload. Do not lose the current tail.
+        sendWithRetry(currentPayload)
+      }
+    }
+    return sentBytesCount
   }
 
   return {
@@ -73,25 +106,11 @@ export function createHttpRequest(
         return
       }
 
-      // Replay explicitly provides a shared unload budget. Its regular fetches
-      // may have been held behind the retry strategy's bandwidth gate, so
-      // promote them before the final tail while preserving their order.
-      var exitPayloads = drainQueuedPayloads(retryState)
-      var currentPayloadIndex = exitPayloads.indexOf(payload)
-      if (currentPayloadIndex === -1) {
-        currentPayloadIndex = exitPayloads.length
-        exitPayloads.push(payload)
-      }
-      var delivery = sendPayloadsOnExit(
-        endpointUrl,
-        bytesLimit,
-        exitPayloads,
-        bytesBudget
-      )
-
+      var sentBytesCount = sendOnExitWithBudget(bytesBudget, payload)
       return {
-        $rBytesCount: delivery[0],
-        $rCurrentPayloadSent: currentPayloadIndex < delivery[1]
+        $rBytesCount: sentBytesCount,
+        $rCurrentPayloadSent: exitAcceptedPayloads.has(payload),
+        $rPending: retryState.$rPayloadSequenceByPayload.has(payload)
       }
     },
     // Session Replay calls this explicitly on UNLOADING so retry payloads are
@@ -108,17 +127,12 @@ export function createHttpRequest(
         }
       }
 
-      var exitPayloads = drainQueuedPayloads(retryState)
-      var delivery = sendPayloadsOnExit(
-        endpointUrl,
-        bytesLimit,
-        exitPayloads,
-        bytesBudget
-      )
-
+      var sentBytesCount = sendOnExitWithBudget(bytesBudget)
+      var pending = hasPendingRetryPayloads(retryState)
       return {
-        $rBytesCount: delivery[0],
-        $rAllPayloadsSent: delivery[1] === exitPayloads.length
+        $rBytesCount: sentBytesCount,
+        $rAllPayloadsSent: !pending,
+        $rPending: pending
       }
     },
     $rPendingBytes: function () {
@@ -134,28 +148,6 @@ function hasPendingRetryPayloads(retryState) {
   )
 }
 
-function sendPayloadsOnExit(
-  endpointUrl,
-  bytesLimit,
-  payloads,
-  bytesBudget
-) {
-  var sentBytesCount = 0
-  var sentPayloadCount = 0
-  for (; sentPayloadCount < payloads.length; sentPayloadCount += 1) {
-    var payload = payloads[sentPayloadCount]
-    var exitBytesCount = getExitBytesCount(payload)
-    if (sentBytesCount + exitBytesCount > bytesBudget) {
-      // Replay segments form an ordered dependency chain. Once an older
-      // payload cannot fit, never skip it to send a later dependent tail.
-      break
-    }
-    sendBeaconStrategy(endpointUrl, bytesLimit, payload)
-    sentBytesCount += exitBytesCount
-  }
-  return [sentBytesCount, sentPayloadCount]
-}
-
 function getExitBytesCount(payload) {
   var bytesCount =
     payload && typeof payload.$rExitBytesCount === 'number'
@@ -167,6 +159,12 @@ function getExitBytesCount(payload) {
 }
 
 function sendBeaconStrategy(endpointUrl, bytesLimit, payload) {
+  if (!trySendBeacon(endpointUrl, bytesLimit, payload)) {
+    sendXHR(addBatchPrecision(endpointUrl, payload.encoding), payload)
+  }
+}
+
+function trySendBeacon(endpointUrl, bytesLimit, payload) {
   var data = payload.data
   var bytesCount = payload.bytesCount
   var url = addBatchPrecision(endpointUrl, payload.encoding)
@@ -185,13 +183,13 @@ function sendBeaconStrategy(endpointUrl, bytesLimit, payload) {
       var isQueued = navigator.sendBeacon(url, beaconData)
 
       if (isQueued) {
-        return
+        return true
       }
     } catch (e) {
       reportBeaconError(e)
     }
   }
-  sendXHR(url, payload)
+  return false
 }
 var hasReportedBeaconError = false
 

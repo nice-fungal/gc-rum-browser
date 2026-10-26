@@ -452,7 +452,10 @@ export function doStartSegmentCollection(
         unloadingDeliveryBytesRemaining - deliveryResult.$rBytesCount,
         0
       )
-      if (deliveryResult.$rAllPayloadsSent === false) {
+      if (
+        deliveryResult.$rAllPayloadsSent === false &&
+        !deliveryResult.$rPending
+      ) {
         // Replay segments are ordered. If an older queued payload does not fit,
         // no current tail may overtake it.
         unloadingDeliveryBudgetExhausted = true
@@ -518,10 +521,7 @@ export function doStartSegmentCollection(
       encoderResult.outputBytesCount +
       SEGMENT_FORM_DATA_ESTIMATED_OVERHEAD
     if (shouldUseExitTransport && unloadingTransportLatched) {
-      if (
-        unloadingDeliveryBudgetExhausted ||
-        estimatedDeliveryBytesCount > unloadingDeliveryBytesRemaining
-      ) {
+      if (unloadingDeliveryBudgetExhausted) {
         unloadingDeliveryBudgetExhausted = true
         reportDroppedRecord(
           'page_exit_delivery_budget',
@@ -573,7 +573,10 @@ export function doStartSegmentCollection(
               exitDeliveryResult.$rBytesCount,
             0
           )
-          if (!exitDeliveryResult.$rCurrentPayloadSent) {
+          if (
+            !exitDeliveryResult.$rCurrentPayloadSent &&
+            !exitDeliveryResult.$rPending
+          ) {
             unloadingDeliveryBudgetExhausted = true
             reportDroppedRecord(
               'page_exit_delivery_budget',
@@ -583,7 +586,10 @@ export function doStartSegmentCollection(
         } else {
           // Preserve compatibility with injected transports that predate the
           // aggregate-budget result contract.
-          unloadingDeliveryBytesRemaining -= estimatedDeliveryBytesCount
+          unloadingDeliveryBytesRemaining = Math.max(
+            unloadingDeliveryBytesRemaining - estimatedDeliveryBytesCount,
+            0
+          )
         }
       }
     } else {
@@ -1356,13 +1362,11 @@ export function doStartSegmentCollection(
         } else {
           flushSegment('encoder_backpressure')
         }
-        // See the synchronous incremental rejection rationale above. Full
-        // snapshots and non-incremental baseline records retain the existing
-        // recovery semantics.
-        if (
-          record.type !== RecordType.IncrementalSnapshot &&
-          !isTimeAnchor
-        ) {
+        // Later records may be waiting behind a large FullSnapshot write.
+        // Their temporary rejection must not invalidate that already-admitted
+        // baseline. The recorder retries them after the encoder drains;
+        // Meta/Focus within an atomic baseline use rejectBaselineTransaction.
+        if (record.type === RecordType.FullSnapshot) {
           failBaselineGeneration(
             addResult.$rGeneration,
             record.type === RecordType.FullSnapshot

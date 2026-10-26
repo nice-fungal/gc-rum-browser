@@ -38,10 +38,11 @@ export function createSegment(options) {
     previouslySerializedRecordData
   ) {
     const prefix = metadata.records_count === 0 ? '{"records":[' : ','
+    const isFullSnapshot = record.type === RecordType.FullSnapshot
     var preflightResult = preflightRecordSerialization(
       record,
       prefix,
-      pendingRawBytesLimit
+      isFullSnapshot ? undefined : pendingRawBytesLimit
     )
     if (preflightResult) {
       return preflightResult
@@ -80,6 +81,7 @@ export function createSegment(options) {
 
     if (
       pendingRawBytesLimit !== undefined &&
+      !isFullSnapshot &&
       rawRecordBytesCount > pendingRawBytesLimit
     ) {
       return {
@@ -122,7 +124,9 @@ export function createSegment(options) {
       : 0
     if (
       pendingRawBytesLimit !== undefined &&
-      pendingRawBytesCount + rawRecordBytesCount > pendingRawBytesLimit
+      (isFullSnapshot
+        ? pendingRawBytesCount >= pendingRawBytesLimit
+        : pendingRawBytesCount + rawRecordBytesCount > pendingRawBytesLimit)
     ) {
       return {
         status: 'encoder_backpressure',
@@ -218,23 +222,26 @@ function preflightFullSnapshotAdmission(
   if (!record || record.type !== RecordType.FullSnapshot) {
     return
   }
-  var knownApproxBytes = getKnownReplayRecordApproxBytes(record)
-  if (typeof knownApproxBytes !== 'number') {
-    return
-  }
-  var approximateRawBytes = prefix.length * 2 + knownApproxBytes
   var pendingRawBytesCount = encoder.getPendingRawBytesCount
     ? encoder.getPendingRawBytesCount()
     : 0
   if (
     pendingRawBytesLimit !== undefined &&
-    pendingRawBytesCount + approximateRawBytes > pendingRawBytesLimit
+    pendingRawBytesCount >= pendingRawBytesLimit
   ) {
     return {
       status: 'encoder_backpressure',
-      estimatedBytesCount: approximateRawBytes
+      estimatedBytesCount: pendingRawBytesCount
     }
   }
+  // Like Datadog, admit a complete FullSnapshot into the asynchronous encoder.
+  // The watermark limits existing backlog, not the size of one atomic record.
+  // If that write exceeds the watermark, later admissions wait for it to drain.
+  var knownApproxBytes = getKnownReplayRecordApproxBytes(record)
+  if (typeof knownApproxBytes !== 'number') {
+    return
+  }
+  var approximateRawBytes = prefix.length * 2 + knownApproxBytes
   if (
     bytesLimit !== undefined &&
     recordsCount > 0 &&

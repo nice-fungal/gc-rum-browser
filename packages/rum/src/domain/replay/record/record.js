@@ -28,8 +28,7 @@ import {
   SerializationContextStatus,
   getSerializedNodeApproxBytes,
   SERIALIZATION_MAX_NODE_COUNT,
-  SERIALIZATION_MAX_APPROX_BYTES,
-  FULL_SNAPSHOT_SERIALIZATION_MAX_APPROX_BYTES,
+  SERIALIZATION_MAX_APPROX_BYTES
 } from './serialize'
 import { initInputObserver, initObservers } from './observers'
 
@@ -1958,10 +1957,11 @@ export function record(options) {
       serializerTask.processedNodeCount + SERIALIZATION_MAX_NODE_COUNT,
       FULL_SNAPSHOT_SERIALIZATION_MAX_NODE_COUNT
     )
-    var maxApproxBytes = Math.min(
-      serializerTask.approxBytes + SERIALIZATION_MAX_APPROX_BYTES,
-      FULL_SNAPSHOT_SERIALIZATION_MAX_APPROX_BYTES
-    )
+    // The byte watermark yields traversal work; it must not reject an entire
+    // baseline just because its DOM and complete CSS exceed the encoder's
+    // backlog watermark. Keep advancing until the snapshot is complete.
+    var maxApproxBytes =
+      serializerTask.approxBytes + SERIALIZATION_MAX_APPROX_BYTES
     var completed = serializerTask.advance(
       deadline,
       maxNodeCount,
@@ -1974,10 +1974,7 @@ export function record(options) {
         (serializerTask.isMaxDepthReached ||
           serializerTask.isMaxNodeComplexityReached ||
           (serializerTask.isMaxNodeCountReached &&
-            maxNodeCount >= FULL_SNAPSHOT_SERIALIZATION_MAX_NODE_COUNT) ||
-          (serializerTask.isMaxApproxBytesReached &&
-            maxApproxBytes >=
-              FULL_SNAPSHOT_SERIALIZATION_MAX_APPROX_BYTES))
+            maxNodeCount >= FULL_SNAPSHOT_SERIALIZATION_MAX_NODE_COUNT))
     }
   }
 
@@ -2021,7 +2018,6 @@ export function record(options) {
     // result from an earlier record: only the segment/encoder result for this
     // exact baseline may classify its rejection as transient backpressure.
     lastEmitWasLocallyBackpressured = false
-    var timestamp = baselineRecords[0].timestamp
     var fullSnapshotAccepted
     if (rawEmitBaseline) {
       fullSnapshotAccepted = rawEmitBaseline(baselineRecords) !== false
@@ -2037,13 +2033,6 @@ export function record(options) {
     fullSnapshotWasPublished = true
     currentFullSnapshotPublicationToken.$rPublished = true
 
-    if (window.visualViewport) {
-      rawEmit({
-        data: getVisualViewport(),
-        type: RecordType.VisualViewport,
-        timestamp: timestamp
-      })
-    }
     if (__BUILD_ENV__REPLAY_DEBUG_ENABLED__) {
       updateReplayPerformanceStats({
         fullSnapshotCount: 1,
@@ -2051,6 +2040,18 @@ export function record(options) {
       })
     }
     return true
+  }
+
+  function emitFullSnapshotViewport(timestamp) {
+    if (window.visualViewport) {
+      // Call after leaving the previous replay tree so encoder backpressure
+      // retains this record on the new baseline's normal retry queue.
+      emit({
+        data: getVisualViewport(),
+        type: RecordType.VisualViewport,
+        timestamp: timestamp
+      })
+    }
   }
 
   function invalidateFullSnapshotCanvasBaseline() {
@@ -2230,6 +2231,7 @@ export function record(options) {
       serializerTask.serializedNode
     )
     if (emitFullSnapshot(baselineRecords, fullSnapshotStartedAt)) {
+      emitFullSnapshotViewport(timestamp)
       return { status: 'completed' }
     }
     if (wasLastEmitBackpressured()) {
@@ -3312,6 +3314,7 @@ export function record(options) {
     resetPreviousReplayTreeRecords()
     previousReplayTreeAdmissionActive = false
     captureRecordsAgainstPreviousReplayTree = false
+    emitFullSnapshotViewport(baselineRecords[0].timestamp)
     flushDeferredRecords()
     if (!suppressRecordsUntilFullSnapshot && !recordStopped) {
       takeFullSnapshotCanvasBaseline()
