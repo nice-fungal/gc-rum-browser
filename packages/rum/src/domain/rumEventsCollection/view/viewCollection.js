@@ -238,6 +238,7 @@ function processViewUpdate(view, configuration, recorderApi, pageStateHistory) {
     )
   })
   return {
+    isForcedSessionUpdate: view.isForcedSessionUpdate,
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,
     domainContext: {
