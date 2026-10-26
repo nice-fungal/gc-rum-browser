@@ -14,11 +14,14 @@ import {
   getOrigin,
   each,
   isNumber,
+  isString,
+  getType,
   ExperimentalFeature
 } from '@cloudcare/browser-core'
 import { buildEnv } from '../boot/buildEnv'
 import { isTracingOption } from '../domain/tracing/tracer'
 import { validatePlugins } from './plugins'
+import { DEFAULT_VISITOR_ID_TTL_HOURS } from './visitorId'
 
 var REPLAY_CANVAS_QUALITY_PRESETS = {
   low: {
@@ -59,6 +62,65 @@ var POSITIVE_REPLAY_CANVAS_OPTIONS = [
   ['replayCanvasAutoUnchangedBackoff', 'Auto Unchanged Backoff'],
   ['replayCanvasAutoFailureBackoff', 'Auto Failure Backoff'],
   ['replayCanvasAutoMaxPerRun', 'Auto Max Per Run']
+]
+
+var HTTP_HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9a-z]+$/
+var FORBIDDEN_VISITOR_ID_HEADERS = [
+  'b3',
+  'traceparent',
+  'tracestate',
+  'uber-trace-id',
+  'sw8',
+  'x-gc-trace-id',
+  'x-gc-span-id',
+  'x-rum-resource-id'
+]
+var FORBIDDEN_VISITOR_ID_HEADER_FRAGMENTS = [
+  'authorization',
+  'authentication',
+  'api-key',
+  'api_key',
+  'apikey',
+  'auth-token',
+  'auth_token',
+  'access-token',
+  'access_token',
+  'session-token',
+  'session_token',
+  'refresh-token',
+  'refresh_token',
+  'id-token',
+  'id_token',
+  'security-token',
+  'security_token',
+  'csrf',
+  'xsrf',
+  'jwt',
+  'signature'
+]
+var FORBIDDEN_REQUEST_HEADERS = [
+  'accept-charset',
+  'accept-encoding',
+  'access-control-request-headers',
+  'access-control-request-method',
+  'authorization',
+  'connection',
+  'content-length',
+  'cookie',
+  'cookie2',
+  'date',
+  'dnt',
+  'expect',
+  'host',
+  'keep-alive',
+  'origin',
+  'permissions-policy',
+  'referer',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+  'via'
 ]
 
 function getReplayCanvasQualityPreset(value) {
@@ -106,6 +168,12 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
   }
   var allowedTracingUrls = validateAndBuildTracingOptions(initConfiguration)
   if (!allowedTracingUrls) {
+    return
+  }
+  var visitorId = validateAndBuildVisitorIdConfiguration(
+    initConfiguration.visitorId
+  )
+  if (!visitorId) {
     return
   }
   //   if (initConfiguration.allowedTracingOrigins !== undefined) {
@@ -253,6 +321,7 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
       allowTraceHeaderWithoutSession:
         !!initConfiguration.allowTraceHeaderWithoutSession,
       allowedTracingUrls: allowedTracingUrls,
+      visitorId: visitorId,
       injectTraceHeader:
         initConfiguration.injectTraceHeader &&
         catchUserErrors(
@@ -361,6 +430,91 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
     },
     baseConfiguration,
     buildEnv
+  )
+}
+
+export function validateAndBuildVisitorIdConfiguration(visitorId) {
+  if (visitorId === undefined) {
+    return { enabled: false }
+  }
+  if (getType(visitorId) !== 'object') {
+    display.error('Visitor ID configuration should be an object')
+    return
+  }
+  if (
+    visitorId.enabled !== undefined &&
+    typeof visitorId.enabled !== 'boolean'
+  ) {
+    display.error('Visitor ID enabled should be a boolean')
+    return
+  }
+  if (visitorId.enabled !== true) {
+    return { enabled: false }
+  }
+  if (!isValidVisitorIdHeader(visitorId.header)) {
+    display.error(
+      'Visitor ID header should be a lowercase, writable HTTP header name and must not overlap authentication, CSRF, signature, tracing, or SDK resource tracking headers'
+    )
+    return
+  }
+  if (
+    !isArray(visitorId.match) ||
+    visitorId.match.length === 0 ||
+    visitorId.match.some(function (matchOption) {
+      return (
+        !isMatchOption(matchOption) ||
+        (isString(matchOption) && matchOption.length === 0)
+      )
+    })
+  ) {
+    display.error(
+      'Visitor ID match should be a non-empty array of strings, RegExp values, or functions'
+    )
+    return
+  }
+  if (
+    visitorId.ttlHours !== undefined &&
+    (!isNumber(visitorId.ttlHours) ||
+      !isFinite(visitorId.ttlHours) ||
+      visitorId.ttlHours <= 0)
+  ) {
+    display.error('Visitor ID TTL should be a positive number of hours')
+    return
+  }
+
+  return {
+    enabled: true,
+    header: visitorId.header,
+    match: visitorId.match.slice(),
+    ttlHours: isNullUndefinedDefaultValue(
+      visitorId.ttlHours,
+      DEFAULT_VISITOR_ID_TTL_HOURS
+    )
+  }
+}
+
+function isValidVisitorIdHeader(header) {
+  if (
+    !isString(header) ||
+    header !== header.toLowerCase() ||
+    !HTTP_HEADER_NAME_PATTERN.test(header)
+  ) {
+    return false
+  }
+  if (
+    header.indexOf('proxy-') === 0 ||
+    header.indexOf('sec-') === 0 ||
+    header.indexOf('x-datadog-') === 0 ||
+    header.indexOf('x-b3-') === 0 ||
+    FORBIDDEN_VISITOR_ID_HEADER_FRAGMENTS.some(function (fragment) {
+      return header.indexOf(fragment) !== -1
+    })
+  ) {
+    return false
+  }
+  return (
+    FORBIDDEN_REQUEST_HEADERS.indexOf(header) === -1 &&
+    FORBIDDEN_VISITOR_ID_HEADERS.indexOf(header) === -1
   )
 }
 

@@ -59,11 +59,32 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
   var state = {
     $rStatus: RecorderStatus.Stopped
   }
+  var retryOnView = false
   var nextRecordingToken = 0
   var unloadRecoveryGeneration = 0
   var replayDeflateWorkerController = createDeflateWorkerController()
   var getReplayWorkerStatus = function () {
     return replayDeflateWorkerController.getStatus()
+  }
+
+  function isRecordingInProgress() {
+    return state.$rStatus >= RecorderStatus.Starting
+  }
+
+  function keepRecordingIntent(options, shouldRetryOnView) {
+    retryOnView = shouldRetryOnView
+    state = {
+      $rStatus: RecorderStatus.IntentToStart,
+      $rOptions: options
+    }
+    notifyRecordingState(false)
+  }
+
+  function keepRecordingIntentAfterFailure(options) {
+    // `force` has already updated the current session before recorder startup.
+    // Reusing it while recovering would force the session again for every
+    // failed View instead of only retrying the recorder.
+    keepRecordingIntent(options && options.force ? undefined : options, true)
   }
 
   function reconcileStoppedRecordingState() {
@@ -72,16 +93,12 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
       state.$rIsStopped &&
       state.$rIsStopped()
     ) {
-      state = { $rStatus: RecorderStatus.Stopped }
-      notifyRecordingState(false)
+      keepRecordingIntentAfterFailure(state.$rOptions)
     }
   }
 
   var startStrategy = function (options) {
-    state = {
-      $rStatus: RecorderStatus.IntentToStart,
-      $rOptions: options
-    }
+    keepRecordingIntent(options)
   }
   var stopStrategy = function () {
     unloadRecoveryGeneration += 1
@@ -105,26 +122,17 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
       compressionWorker
     ) {
       lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, function () {
-        if (
-          state.$rStatus === RecorderStatus.Starting ||
-          state.$rStatus === RecorderStatus.Started
-        ) {
+        if (isRecordingInProgress()) {
           var options = state.$rOptions
           stopStrategy()
-          state = {
-            $rStatus: RecorderStatus.IntentToStart,
-            $rOptions: options
-          }
+          keepRecordingIntent(options)
         }
       })
       lifeCycle.subscribe(
         LifeCycleEventType.PAGE_EXITED,
         function (pageExitEvent) {
           if (pageExitEvent.reason === PageExitReason.UNLOADING) {
-            var shouldRecoverCanceledUnload =
-              state.$rStatus === RecorderStatus.IntentToStart ||
-              state.$rStatus === RecorderStatus.Starting ||
-              state.$rStatus === RecorderStatus.Started
+            var shouldRecoverCanceledUnload = state.$rStatus
             var recoveryOptions =
               state.$rOptions && state.$rOptions.force
                 ? undefined
@@ -152,6 +160,12 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
           startStrategy(state.$rOptions)
         }
       })
+      lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, function () {
+        reconcileStoppedRecordingState()
+        if (state.$rStatus === RecorderStatus.IntentToStart && retryOnView) {
+          startStrategy(state.$rOptions)
+        }
+      })
       if (sessionManager.sessionStateUpdateObservable) {
         sessionManager.sessionStateUpdateObservable.subscribe(function ({
           previousState,
@@ -169,28 +183,41 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
       var cachedDeflateEncoder
       var replayWorker = compressionWorker
       var replayWorkerOwnership = compressionWorker ? 'shared' : 'none'
-      function handleDeflateWorkerFailure() {
-        var failedDeflateEncoder = cachedDeflateEncoder
-        cachedDeflateEncoder = undefined
-        stopStrategy()
-        if (failedDeflateEncoder) {
-          failedDeflateEncoder.stop()
-        }
-        if (replayWorkerOwnership === 'owned') {
-          replayWorker = undefined
-          replayWorkerOwnership = 'none'
-          replayDeflateWorkerController.reset()
-        } else if (replayWorkerOwnership === 'shared') {
-          // The compression worker belongs to the RUM transport. A replay
-          // stream failure must not terminate or reset that shared worker.
-          // Detach replay from it so an explicit restart can fall back to an
-          // isolated worker instead of remaining disabled for the whole page.
-          replayWorker = undefined
-          replayWorkerOwnership = 'none'
-        }
-      }
+      var activeDeflateFailure
       function getOrCreateDeflateEncoder() {
         if (!cachedDeflateEncoder) {
+          var handleDeflateWorkerFailure = function () {
+            if (activeDeflateFailure !== handleDeflateWorkerFailure) {
+              return
+            }
+            activeDeflateFailure = undefined
+            var shouldRetry = isRecordingInProgress()
+            var recoveryOptions = state.$rOptions
+            var failedDeflateEncoder = cachedDeflateEncoder
+            cachedDeflateEncoder = undefined
+            if (shouldRetry) {
+              stopStrategy()
+            }
+            if (failedDeflateEncoder) {
+              failedDeflateEncoder.stop()
+            }
+            if (replayWorkerOwnership === 'owned') {
+              replayWorker = undefined
+              replayWorkerOwnership = 'none'
+              replayDeflateWorkerController.reset()
+            } else if (replayWorkerOwnership === 'shared') {
+              // The compression worker belongs to the RUM transport. A replay
+              // stream failure must not terminate or reset that shared worker.
+              // Detach replay from it so a retry can fall back to an isolated
+              // worker instead of remaining disabled for the whole page.
+              replayWorker = undefined
+              replayWorkerOwnership = 'none'
+            }
+            if (shouldRetry) {
+              keepRecordingIntentAfterFailure(recoveryOptions)
+            }
+          }
+          activeDeflateFailure = handleDeflateWorkerFailure
           if (!replayWorker) {
             // Mark ownership before start(): worker creation can fail
             // synchronously and invoke the failure callback before start()
@@ -221,10 +248,7 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
       }
       startStrategy = function (options) {
         reconcileStoppedRecordingState()
-        if (
-          state.$rStatus === RecorderStatus.Starting ||
-          state.$rStatus === RecorderStatus.Started
-        ) {
+        if (isRecordingInProgress()) {
           if (options && options.force) {
             sessionManager.setForcedSession()
           }
@@ -239,10 +263,7 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
         }
         var session = sessionManager.findTrackedSession()
         if (!session || !session.sessionReplayAllowed) {
-          state = {
-            $rStatus: RecorderStatus.IntentToStart,
-            $rOptions: options
-          }
+          keepRecordingIntent(options)
           return
         }
 
@@ -262,9 +283,7 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
           }
           var deflateEncoder = getOrCreateDeflateEncoder()
           if (!deflateEncoder) {
-            state = {
-              $rStatus: RecorderStatus.Stopped
-            }
+            keepRecordingIntentAfterFailure(options)
             return
           }
           try {
@@ -277,12 +296,10 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
               undefined,
               function () {
                 if (
-                  (state.$rStatus === RecorderStatus.Starting ||
-                    state.$rStatus === RecorderStatus.Started) &&
+                  isRecordingInProgress() &&
                   state.$rToken === recordingToken
                 ) {
-                  state = { $rStatus: RecorderStatus.Stopped }
-                  notifyRecordingState(false)
+                  keepRecordingIntentAfterFailure(options)
                 }
               }
             )
@@ -294,9 +311,7 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
               return
             }
             if (recordingImpl.isStopped && recordingImpl.isStopped()) {
-              state = {
-                $rStatus: RecorderStatus.Stopped
-              }
+              keepRecordingIntentAfterFailure(options)
               return
             }
             state = {
@@ -336,13 +351,12 @@ export function makeRecorderApi(startRecordingImpl, createDeflateWorkerImpl) {
               state.$rStatus === RecorderStatus.Starting &&
               state.$rToken === recordingToken
             ) {
-              state = { $rStatus: RecorderStatus.Stopped }
+              keepRecordingIntentAfterFailure(options)
             }
             if (
               cachedDeflateEncoder === deflateEncoder &&
               !(
-                (state.$rStatus === RecorderStatus.Starting ||
-                  state.$rStatus === RecorderStatus.Started) &&
+                isRecordingInProgress() &&
                 state.$rToken !== recordingToken
               )
             ) {

@@ -19,17 +19,23 @@ import {
   createCustomerDataTrackerManager,
   CustomerDataCompressionStatus,
   displayAlreadyInitializedError,
-  getType
+  getType,
+  noop
 } from '@cloudcare/browser-core'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './perStartRum'
 import { createResourceTrackerManager } from '../domain/rumEventsCollection/resource/resourceTrackerManager'
+import {
+  startVisitorId,
+  VISITOR_ID_CONTEXT_KEY
+} from '../domain/visitorId'
 var RUM_STORAGE_KEY = 'rum'
 export function makeRumPublicApi(startRumImpl, recorderApi, options) {
   if (options === undefined) {
     options = {}
   }
+  var startVisitorIdImpl = options.startVisitorId || startVisitorId
   const customerDataTrackerManager = createCustomerDataTrackerManager(
     CustomerDataCompressionStatus.Unknown
   )
@@ -49,12 +55,32 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
       email: { type: 'string' }
     }
   })
+  var visitorId = {
+    getId: noop,
+    reset: noop,
+    stop: noop
+  }
+  function getGlobalContext() {
+    var context = globalContextManager.getContext()
+    var currentVisitorId = visitorId.getId()
+    if (currentVisitorId) {
+      context[VISITOR_ID_CONTEXT_KEY] = currentVisitorId
+    }
+    return context
+  }
   function getCommonContext() {
-    return buildCommonContext(
+    var commonContext = buildCommonContext(
       globalContextManager,
       userContextManager,
       recorderApi
     )
+    var currentVisitorId = visitorId.getId()
+    if (currentVisitorId) {
+      commonContext.context[VISITOR_ID_CONTEXT_KEY] = currentVisitorId
+      // Keep the SDK value separate from customer fields in buffered snapshots.
+      commonContext.visitorId = currentVisitorId
+    }
+    return commonContext
   }
   let strategy
   function addPluginError(providedError) {
@@ -79,6 +105,10 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
           rum: publicApi,
           initConfiguration: initConfiguration
         })
+      },
+      onConfigurationReady: function (configuration) {
+        visitorId.stop()
+        visitorId = startVisitorIdImpl(configuration)
       }
     }),
     getCommonContext,
@@ -197,10 +227,10 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
 
     /** @deprecated: use getGlobalContext instead */
     getRumGlobalContext: monitor(function () {
-      return globalContextManager.getContext()
+      return getGlobalContext()
     }),
     getGlobalContext: monitor(function () {
-      return globalContextManager.getContext()
+      return getGlobalContext()
     }),
 
     /** @deprecated: use setGlobalContext instead */
@@ -215,6 +245,10 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
 
     clearGlobalContext: monitor(function () {
       return globalContextManager.clearContext()
+    }),
+    resetVisitorId: monitor(function () {
+      visitorId.reset()
+      addTelemetryUsage({ feature: 'reset-visitor-id' })
     }),
 
     getInitConfiguration: monitor(function () {

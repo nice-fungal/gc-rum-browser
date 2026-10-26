@@ -243,6 +243,9 @@ function processRequest(request, pageStateHistory, requestResourceEntryMatcher) 
     tracingInfo,
     correspondingTimingOverrides
   )
+  if (request.visitorId) {
+    resourceEvent.context = { visitor_id: request.visitorId }
+  }
   return {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
