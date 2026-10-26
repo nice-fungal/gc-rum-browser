@@ -188,8 +188,20 @@ export function startRumAssembly(
           {},
           commonContext.context,
           viewContext.context,
-          customerContext
+          customerContext,
+          rawRumEvent.context
         )
+        if (configuration.visitorId && configuration.visitorId.enabled) {
+          var visitorId =
+            (rawRumEvent.type === RumEventType.RESOURCE &&
+              rawRumEvent.context &&
+              rawRumEvent.context.visitor_id) ||
+            commonContext.visitorId ||
+            (savedCommonContext && getCommonContext().visitorId)
+          if (visitorId) {
+            context.visitor_id = visitorId
+          }
+        }
         if (!isEmptyObject(context)) {
           serverRumEvent.context = context
         }

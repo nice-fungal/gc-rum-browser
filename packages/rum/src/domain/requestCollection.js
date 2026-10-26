@@ -2,6 +2,7 @@ import {
   RequestType,
   initFetchObservable,
   initXhrObservable,
+  isRequest,
   LifeCycleEventType,
   tryToClone,
   readBytesFromStream,
@@ -51,6 +52,7 @@ export function trackXhr(lifeCycle, configuration, tracer) {
           status: context.status,
           traceId: context.traceId,
           traceSampled: context.traceSampled,
+          visitorId: context.visitorId,
           type: RequestType.XHR,
           url: context.url,
           xhr: context.xhr,
@@ -99,9 +101,10 @@ export function trackFetch(lifeCycle, configuration, tracer) {
             status: context.status,
             traceId: context.traceId,
             traceSampled: context.traceSampled,
+            visitorId: context.visitorId,
             requestHeaderContexts:
               context.init?.headers ||
-              (context.input instanceof Request
+              (isRequest(context.input)
                 ? context.input.headers
                 : undefined),
             type: RequestType.FETCH,

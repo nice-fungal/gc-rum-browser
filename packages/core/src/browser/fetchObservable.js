@@ -6,6 +6,23 @@ import { normalizeUrl } from '../helper/urlPolyfill'
 
 var fetchObservable
 
+export function isRequest(input) {
+  if (typeof Request === 'undefined' || !input || typeof input !== 'object') {
+    return false
+  }
+  if (input instanceof Request) {
+    return true
+  }
+  try {
+    // A native getter checks the Request's internal brand across iframe realms.
+    // Unlike toStringTag or duck typing, this does not trust caller properties.
+    Object.getOwnPropertyDescriptor(Request.prototype, 'url').get.call(input)
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
 export function initFetchObservable() {
   if (!fetchObservable) {
     fetchObservable = createFetchObservable()
@@ -41,14 +58,10 @@ function beforeSend(params, observable) {
   var handlingStack = params.handlingStack
   var input = parameters[0]
   var init = parameters[1]
-  //   var method =
-  //       (init && init.method) || (input instanceof Request && input.method) || 'GET'
-  //     const methodFromParams =
-  //       (init && init.method) || (input instanceof Request && input.method)
-  //     const method = methodFromParams ? methodFromParams.toUpperCase() : 'GET'
+  var requestInput = isRequest(input)
   var methodFromParams = init && init.method
 
-  if (methodFromParams === undefined && input instanceof Request) {
+  if (methodFromParams === undefined && requestInput) {
     methodFromParams = input.method
   }
 
@@ -56,7 +69,7 @@ function beforeSend(params, observable) {
     methodFromParams !== undefined
       ? String(methodFromParams).toUpperCase()
       : 'GET'
-  var url = input instanceof Request ? input.url : normalizeUrl(String(input))
+  var url = requestInput ? input.url : normalizeUrl(String(input))
 
   var startClocks = clocksNow()
 

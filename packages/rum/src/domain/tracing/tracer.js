@@ -10,7 +10,9 @@ import {
   find,
   isMatchOption,
   matchList,
-  isString
+  isString,
+  isRequest,
+  display
 } from '@cloudcare/browser-core'
 import { DDtraceTracer } from './ddtraceTracer'
 import { SkyWalkingTracer } from './skywalkingTracer'
@@ -45,7 +47,7 @@ export function startTracer(configuration, sessionManager) {
         sessionManager,
         function (tracingHeaders) {
           if (
-            context.input instanceof Request &&
+            isRequest(context.input) &&
             (!context.init || !context.init.headers)
           ) {
             context.input = new Request(context.input)
@@ -161,6 +163,17 @@ export function injectHeadersIfTracingAllowed(
     if (getType(result) === 'object') {
       each(result, function (value, key) {
         if (getType(value) === 'string') {
+          if (
+            context.visitorId &&
+            configuration.visitorId &&
+            configuration.visitorId.enabled &&
+            key.toLowerCase() === configuration.visitorId.header
+          ) {
+            display.warn(
+              'injectTraceHeader cannot overwrite the SDK-managed Visitor ID header.'
+            )
+            return
+          }
           headers[key] = value
         }
       })

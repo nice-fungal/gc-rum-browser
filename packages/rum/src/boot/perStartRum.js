@@ -101,6 +101,10 @@ export function createPreStartStrategy(
       return
     }
 
+    if (rumPublicApiOptions.onConfigurationReady) {
+      rumPublicApiOptions.onConfigurationReady(configuration)
+    }
+
     if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
       display.warn(
         'No storage available for session. We will not send any data.'
