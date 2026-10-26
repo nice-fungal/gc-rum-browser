@@ -1,12 +1,12 @@
 {
     "name": "@cloudcare/browser-rum",
-    "version": "3.3.7",
+    "version": "3.3.8",
     "main": "cjs/index.js",
     "module": "esm/index.js",
     "types": "types/index.d.ts",
     "dependencies": {
-        "@cloudcare/browser-core": "3.3.7",
-        "@cloudcare/browser-worker": "3.3.7"
+        "@cloudcare/browser-core": "3.3.8",
+        "@cloudcare/browser-worker": "3.3.8"
     },
     "description": "Guance Browser SDK RUM Package",
     "browserSdkCapabilities": {
@@ -41,5 +41,5 @@
     "author": "dataflux",
     "license": "MIT",
     "homepage": "https://github.com/GuanceCloud/datakit-js/README.md",
-    "gitHead": "e71bbf57dc1ae458d0ecf470f12b61e88ba4e751"
+    "gitHead": "9983292b4519a73ca410ee1a9de75a9624a7a5f3"
 }
