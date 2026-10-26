@@ -3,7 +3,8 @@ import {
   startsWith,
   isNodeShadowRoot,
   forEachChildNodes,
-  hasChildNodes
+  hasChildNodes,
+  getParentNode
 } from '@cloudcare/browser-core'
 import { STABLE_ATTRIBUTES } from '../../rumEventsCollection/actions/getSelectorsFromElement'
 import {
@@ -27,12 +28,14 @@ import {
   getElementInputValue,
   getHiddenElementPlaceholderSize,
   switchToAbsoluteUrl,
-  serializeStyleSheets,
+  createStyleSheetsSerializerTask,
   absoluteToDoc,
   getAbsoluteSrcsetString,
   isSVGElement,
   getHref,
-  getCssRulesString
+  getCssRulesString,
+  STYLESHEET_SERIALIZATION_MAX_CHARACTER_COUNT,
+  STYLESHEET_SERIALIZATION_MAX_SNAPSHOT_BYTES
 } from './serializationUtils'
 import {
   isLongDataUrl,
@@ -48,6 +51,21 @@ export var SerializationContextStatus = {
   MUTATION: 2
 }
 
+export var SERIALIZATION_MAX_SYNC_DURATION_MS = 32
+export var SERIALIZATION_MAX_NODE_COUNT = 50000
+export var SERIALIZATION_MAX_DEPTH = 1000
+export var SERIALIZATION_MAX_STRING_LENGTH =
+  STYLESHEET_SERIALIZATION_MAX_CHARACTER_COUNT
+export var SERIALIZATION_MAX_ATTRIBUTE_COUNT = 1000
+export var SERIALIZATION_MAX_NODE_SOURCE_LENGTH = 200000
+export var SERIALIZATION_MAX_MUTATION_SOURCE_LENGTH = 64 * 1024
+export var SERIALIZATION_TRUNCATION_MARK = '…'
+// A full snapshot is followed by a synchronous JSON serialization before it
+// enters the asynchronous encoder. Keep that unavoidable main-thread step
+// well below the segment collection's 4 MiB backlog watermark.
+export var SERIALIZATION_MAX_APPROX_BYTES = 1024 * 1024
+var serializedNodeApproxBytes = new WeakMap()
+
 export function serializeDocument(
   document,
   configuration,
@@ -62,23 +80,13 @@ export function serializeDocument(
 }
 
 export function serializeNodeWithId(node, options) {
-  var serializedNodeDescription = describeSerializedNode(node, options)
-  if (!serializedNodeDescription) {
+  var serializerTask = createMutationSerializerTask(node, options)
+  if (!serializerTask) {
     return null
   }
-
-  var serializedNodeWithId = assignSerializedNodeId(
-    node,
-    serializedNodeDescription.serializedNode,
-    options
-  )
-  if (serializedNodeDescription.shouldSerializeChildren) {
-    serializedNodeWithId.childNodes = serializeChildNodes(
-      node,
-      serializedNodeDescription.childNodesOptions
-    )
-  }
-  return serializedNodeWithId
+  return completeSerializerTaskSynchronously(serializerTask)
+    ? serializerTask.serializedNode
+    : null
 }
 
 export function serializeNodeWithIdForMutation(node, options) {
@@ -86,8 +94,9 @@ export function serializeNodeWithIdForMutation(node, options) {
   if (!mutationSerializerTask) {
     return null
   }
-  mutationSerializerTask.advance(Infinity)
-  return mutationSerializerTask.serializedNode
+  return completeSerializerTaskSynchronously(mutationSerializerTask)
+    ? mutationSerializerTask.serializedNode
+    : null
 }
 
 export function createMutationSerializerTask(node, options) {
@@ -95,65 +104,244 @@ export function createMutationSerializerTask(node, options) {
   if (!rootNodeDescription) {
     return null
   }
+  if (rootNodeDescription.isSerializationComplexityOverflow) {
+    return createSerializationComplexityOverflowTask()
+  }
 
   var serializedRootNode = assignSerializedNodeId(
     node,
     rootNodeDescription.serializedNode,
     options
   )
+  var approxBytes = estimateSerializedNodeShallowBytes(serializedRootNode)
+  serializedNodeApproxBytes.set(serializedRootNode, approxBytes)
   var stack = []
+  var pendingStyleSheetTasks = []
+  var styleSheetApproxBytes = 0
 
-  if (rootNodeDescription.shouldSerializeChildren) {
-    pushChildNodes(node, serializedRootNode, rootNodeDescription.childNodesOptions)
+  if (rootNodeDescription.styleSheetTask) {
+    pendingStyleSheetTasks.push(rootNodeDescription.styleSheetTask)
+  }
+
+  if (
+    rootNodeDescription.shouldSerializeChildren &&
+    hasChildNodes(node)
+  ) {
+    pushChildIterator(
+      node,
+      serializedRootNode,
+      rootNodeDescription.childNodesOptions
+    )
   }
 
   return {
     serializedNode: serializedRootNode,
-    isComplete: stack.length === 0,
-    advance: function (deadline) {
-      while (stack.length && getCurrentTime() < deadline) {
-        var current = stack.pop()
+    isComplete:
+      stack.length === 0 && pendingStyleSheetTasks.length === 0,
+    processedNodeCount: 1,
+    approxBytes: approxBytes,
+    advance: function (deadline, maxNodeCount, maxApproxBytes) {
+      if (typeof maxNodeCount !== 'number') {
+        maxNodeCount = SERIALIZATION_MAX_NODE_COUNT
+      }
+      if (typeof maxApproxBytes !== 'number') {
+        maxApproxBytes = SERIALIZATION_MAX_APPROX_BYTES
+      }
+      if (
+        this.approxBytes > maxApproxBytes ||
+        ((stack.length > 0 || pendingStyleSheetTasks.length > 0) &&
+          this.approxBytes >= maxApproxBytes)
+      ) {
+        this.isComplete = false
+        this.isMaxApproxBytesReached = true
+        return false
+      }
+      while (
+        (stack.length || pendingStyleSheetTasks.length) &&
+        this.processedNodeCount < maxNodeCount &&
+        this.approxBytes < maxApproxBytes &&
+        !this.isMaxDepthReached &&
+        !this.isMaxNodeComplexityReached &&
+        getCurrentTime() < deadline
+      ) {
+        if (pendingStyleSheetTasks.length) {
+          var styleSheetTask = pendingStyleSheetTasks[0]
+          var previousStyleSheetApproxBytes = styleSheetTask.approxBytes
+          var styleSheetHardMaxApproxBytes =
+            previousStyleSheetApproxBytes +
+            Math.max(
+              STYLESHEET_SERIALIZATION_MAX_SNAPSHOT_BYTES -
+                styleSheetApproxBytes,
+              0
+            )
+          var styleSheetMaxApproxBytes = Math.min(
+            maxApproxBytes -
+              this.approxBytes +
+              previousStyleSheetApproxBytes,
+            styleSheetHardMaxApproxBytes
+          )
+          var isFullSnapshotSerialization =
+            options.serializationContext.status ===
+              SerializationContextStatus.INITIAL_FULL_SNAPSHOT ||
+            options.serializationContext.status ===
+              SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT
+          var styleSheetCompleted = styleSheetTask.advance(
+            deadline,
+            styleSheetMaxApproxBytes,
+            isFullSnapshotSerialization
+              ? styleSheetHardMaxApproxBytes
+              : styleSheetMaxApproxBytes
+          )
+          var styleSheetApproxBytesDelta =
+            styleSheetTask.approxBytes - previousStyleSheetApproxBytes
+          this.approxBytes += styleSheetApproxBytesDelta
+          styleSheetApproxBytes += styleSheetApproxBytesDelta
+          serializedNodeApproxBytes.set(
+            serializedRootNode,
+            this.approxBytes
+          )
+          if (styleSheetTask.isMaxApproxBytesReached) {
+            this.isMaxApproxBytesReached = true
+            break
+          }
+          if (!styleSheetCompleted) {
+            break
+          }
+          pendingStyleSheetTasks.shift()
+          continue
+        }
+        var iterator = stack[stack.length - 1]
+        var childNode = getNextUnprocessedChild(iterator)
+        if (!childNode && iterator.shadowRoot) {
+          childNode = iterator.shadowRoot
+          iterator.shadowRoot = undefined
+        } else if (!childNode) {
+          stack.pop()
+          continue
+        }
+
         var childNodeDescription = describeSerializedNode(
-          current.node,
-          current.options
+          childNode,
+          iterator.options
         )
         if (!childNodeDescription) {
           continue
         }
+        if (childNodeDescription.isSerializationComplexityOverflow) {
+          this.isMaxNodeComplexityReached = true
+          break
+        }
 
         var serializedChildNode = assignSerializedNodeId(
-          current.node,
+          childNode,
           childNodeDescription.serializedNode,
-          current.options
+          iterator.options
         )
-        current.parentSerializedNode.childNodes.push(serializedChildNode)
+        this.processedNodeCount += 1
+        this.approxBytes += estimateSerializedNodeShallowBytes(
+          serializedChildNode
+        )
+        serializedNodeApproxBytes.set(
+          serializedRootNode,
+          this.approxBytes
+        )
+        iterator.parentSerializedNode.childNodes.push(serializedChildNode)
 
-        if (childNodeDescription.shouldSerializeChildren) {
-          pushChildNodes(
-            current.node,
-            serializedChildNode,
-            childNodeDescription.childNodesOptions
+        if (childNodeDescription.styleSheetTask) {
+          pendingStyleSheetTasks.push(
+            childNodeDescription.styleSheetTask
           )
         }
+
+        if (
+          childNodeDescription.shouldSerializeChildren &&
+          hasChildNodes(childNode)
+        ) {
+          if (
+            !pushChildIterator(
+              childNode,
+              serializedChildNode,
+              childNodeDescription.childNodesOptions
+            )
+          ) {
+            this.isMaxDepthReached = true
+          }
+        }
       }
-      this.isComplete = stack.length === 0
+      this.isMaxApproxBytesReached =
+        Boolean(
+          pendingStyleSheetTasks.length &&
+            pendingStyleSheetTasks[0].isMaxApproxBytesReached
+        ) ||
+        this.approxBytes > maxApproxBytes ||
+        ((stack.length > 0 || pendingStyleSheetTasks.length > 0) &&
+          this.approxBytes >= maxApproxBytes)
+      this.isMaxNodeCountReached =
+        stack.length > 0 && this.processedNodeCount >= maxNodeCount
+      this.isComplete =
+        stack.length === 0 &&
+        pendingStyleSheetTasks.length === 0 &&
+        !this.isMaxApproxBytesReached &&
+        !this.isMaxDepthReached &&
+        !this.isMaxNodeComplexityReached
       return this.isComplete
     }
   }
 
-  function pushChildNodes(parentNode, parentSerializedNode, childNodesOptions) {
-    var childNodes = []
-    forEachChildNodes(parentNode, function (childNode) {
-      childNodes.push(childNode)
+  function pushChildIterator(
+    parentNode,
+    parentSerializedNode,
+    childNodesOptions
+  ) {
+    if (stack.length >= SERIALIZATION_MAX_DEPTH) {
+      return false
+    }
+    stack.push({
+      parentNode: parentNode,
+      nextChild: parentNode.firstChild,
+      lastProcessedChild: undefined,
+      shadowRoot: parentNode.shadowRoot || undefined,
+      options: childNodesOptions,
+      parentSerializedNode: parentSerializedNode
     })
-    for (var i = childNodes.length - 1; i >= 0; i--) {
-      stack.push({
-        node: childNodes[i],
-        options: childNodesOptions,
-        parentSerializedNode: parentSerializedNode
-      })
+    return true
+  }
+
+  function getNextUnprocessedChild(iterator) {
+    var childNode = iterator.nextChild
+    if (
+      (!childNode || childNode.parentNode !== iterator.parentNode) &&
+      iterator.lastProcessedChild &&
+      iterator.lastProcessedChild.parentNode === iterator.parentNode
+    ) {
+      childNode = iterator.lastProcessedChild.nextSibling
+    }
+    if (!childNode) {
+      iterator.nextChild = undefined
+      return
+    }
+
+    iterator.lastProcessedChild = childNode
+    iterator.nextChild = childNode.nextSibling
+    return childNode
+  }
+}
+
+function createSerializationComplexityOverflowTask() {
+  return {
+    serializedNode: null,
+    isComplete: false,
+    processedNodeCount: 0,
+    approxBytes: 0,
+    isMaxNodeComplexityReached: true,
+    advance: function () {
+      return false
     }
   }
+}
+
+var SERIALIZATION_COMPLEXITY_OVERFLOW_DESCRIPTION = {
+  isSerializationComplexityOverflow: true
 }
 
 function describeSerializedNode(node, options) {
@@ -195,12 +383,18 @@ export function serializeDocumentNode(document, options) {
 }
 
 function describeDocumentNode(document, options) {
+  var styleSheetTask = createStyleSheetsSerializerTask(
+    document.adoptedStyleSheets
+  )
   return {
     serializedNode: {
       type: NodeType.Document,
       childNodes: [],
-      adoptedStyleSheets: serializeStyleSheets(document.adoptedStyleSheets)
+      adoptedStyleSheets: styleSheetTask
+        ? styleSheetTask.serializedStyleSheets
+        : undefined
     },
+    styleSheetTask: styleSheetTask,
     shouldSerializeChildren: true,
     childNodesOptions: options
   }
@@ -221,19 +415,37 @@ function serializeDocumentFragmentNode(element, options) {
 
 function describeDocumentFragmentNode(element, options) {
   var isShadowRoot = isNodeShadowRoot(element)
+  var shouldSerializeChildren = true
   if (isShadowRoot) {
-    options.serializationContext.shadowRootsController.addShadowRoot(element)
+    var shadowRootsController =
+      options.serializationContext.shadowRootsController
+    var publicationToken = options.serializationContext.publicationToken
+    var registrationResult = publicationToken
+      ? shadowRootsController.addShadowRoot(element, publicationToken)
+      : shadowRootsController.addShadowRoot(element)
+    if (registrationResult === false) {
+      return SERIALIZATION_COMPLEXITY_OVERFLOW_DESCRIPTION
+    }
+    // A controller may defer its own setup, but that must never turn an open
+    // ShadowRoot into a permanently empty replay subtree. The default
+    // controller observes every registered root and only pages flush work.
+    shouldSerializeChildren = true
   }
+  var styleSheetTask =
+    isShadowRoot && shouldSerializeChildren
+      ? createStyleSheetsSerializerTask(element.adoptedStyleSheets)
+      : null
   return {
     serializedNode: {
       type: NodeType.DocumentFragment,
       childNodes: [],
       isShadowRoot: isShadowRoot,
-      adoptedStyleSheets: isShadowRoot
-        ? serializeStyleSheets(element.adoptedStyleSheets)
+      adoptedStyleSheets: styleSheetTask
+        ? styleSheetTask.serializedStyleSheets
         : undefined
     },
-    shouldSerializeChildren: true,
+    styleSheetTask: styleSheetTask,
+    shouldSerializeChildren: shouldSerializeChildren,
     childNodesOptions: options
   }
 }
@@ -273,9 +485,8 @@ function describeElementNode(element, options) {
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     var placeholderSize = getHiddenElementPlaceholderSize(element)
-    var attributes = {
-      [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN
-    }
+    var attributes = {}
+    attributes[PRIVACY_ATTR_NAME] = PRIVACY_ATTR_VALUE_HIDDEN
     if (placeholderSize.width) {
       attributes.rr_width = placeholderSize.width
     }
@@ -304,10 +515,20 @@ function describeElementNode(element, options) {
     nodePrivacyLevel,
     options
   )
-
   var shouldSerializeChildren = false
   var childNodesSerializationOptions
-  if (hasChildNodes(element) && tagName !== 'style') {
+  // Style children are normally replaced by the normalized `_cssText`
+  // attribute. If CSSOM cannot be read, keep the original text instead of
+  // emitting an empty style node and making the whole replay unstyled. The
+  // text serializer applies its explicit privacy-safe truncation marker if a
+  // single raw stylesheet cannot fit the node budget.
+  var shouldSerializeStyleFallback =
+    tagName === 'style' &&
+    !attributes._cssText
+  if (
+    hasChildNodes(element) &&
+    (tagName !== 'style' || shouldSerializeStyleFallback)
+  ) {
     // OBJECT POOLING OPTIMIZATION:
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
@@ -366,7 +587,12 @@ function serializeTextNode(textNode, options) {
   }
   return {
     type: NodeType.Text,
-    textContent: textContent
+    // Apply privacy before truncation.  Taking a raw prefix first would leak
+    // text when a custom shouldMaskNode callback masks this node.
+    textContent: truncateSerializedValue(
+      textContent,
+      getMaxNodeSourceLength(options)
+    )
     // isStyle: parentTagName === 'STYLE' ? true : undefined
   }
 }
@@ -381,12 +607,14 @@ function serializeCDataNode() {
 export function serializeChildNodes(node, options) {
   var result = []
   forEachChildNodes(node, function (childNode) {
-    var serializedChildNode = serializeNodeWithId(childNode, options)
-    if (serializedChildNode) {
-      result.push(serializedChildNode)
+    var serializerTask = createMutationSerializerTask(childNode, options)
+    if (
+      serializerTask &&
+      completeSerializerTaskSynchronously(serializerTask)
+    ) {
+      result.push(serializerTask.serializedNode)
     }
   })
-  //   node.childNodes.forEach()
   return result
 }
 
@@ -398,6 +626,9 @@ function assignSerializedNodeId(node, serializedNode, options) {
   if (options.serializedNodeIds) {
     options.serializedNodeIds.add(id)
   }
+  if (options.onSerializedNode) {
+    options.onSerializedNode(node, getParentNode(node))
+  }
   return serializedNodeWithId
 }
 
@@ -406,6 +637,71 @@ function getCurrentTime() {
     return performance.now()
   }
   return Date.now()
+}
+
+function completeSerializerTaskSynchronously(serializerTask) {
+  return serializerTask.advance(
+    getCurrentTime() + SERIALIZATION_MAX_SYNC_DURATION_MS,
+    SERIALIZATION_MAX_NODE_COUNT,
+    SERIALIZATION_MAX_APPROX_BYTES
+  )
+}
+
+export function getSerializedNodeApproxBytes(serializedNode) {
+  return serializedNodeApproxBytes.get(serializedNode)
+}
+
+function estimateSerializedNodeShallowBytes(serializedNode) {
+  var approxBytes = 2
+  var pendingValues = [serializedNode]
+  while (pendingValues.length) {
+    var value = pendingValues.pop()
+    if (typeof value === 'string') {
+      approxBytes += estimateJsonStringBytes(value)
+    } else if (typeof value === 'number') {
+      approxBytes += 16
+    } else if (typeof value === 'boolean') {
+      approxBytes += 5
+    } else if (value && typeof value === 'object') {
+      if (Array.isArray(value)) {
+        // childNodes are accounted for one node at a time by the serializer.
+        if (value !== serializedNode.childNodes) {
+          for (var index = 0; index < value.length; index += 1) {
+            pendingValues.push(value[index])
+          }
+        }
+        approxBytes += value.length + 2
+      } else {
+        Object.keys(value).forEach(function (key) {
+          if (key === 'childNodes' && value === serializedNode) {
+            return
+          }
+          approxBytes += estimateJsonStringBytes(key) + 2
+          pendingValues.push(value[key])
+        })
+      }
+    } else {
+      approxBytes += 4
+    }
+  }
+  return approxBytes
+}
+
+function estimateJsonStringBytes(value) {
+  if (value.length > SERIALIZATION_MAX_STRING_LENGTH) {
+    return SERIALIZATION_MAX_APPROX_BYTES + 1
+  }
+  var bytes = 4
+  for (var index = 0; index < value.length; index += 1) {
+    var characterCode = value.charCodeAt(index)
+    bytes +=
+      characterCode <= 0x1f ||
+      characterCode === 0x22 ||
+      characterCode === 0x5c
+        ? 12
+        : 2
+  }
+  return bytes
 }
 
 export function serializeAttribute(
@@ -475,6 +771,28 @@ export function serializeAttribute(
   return attributeValue
 }
 
+/**
+ * Bounds a value after privacy/sanitization has been applied.
+ */
+export function truncateSerializedValue(value, maxLength) {
+  if (
+    typeof value !== 'string' ||
+    typeof maxLength !== 'number' ||
+    value.length <= maxLength
+  ) {
+    return value
+  }
+  if (maxLength <= SERIALIZATION_TRUNCATION_MARK.length) {
+    return SERIALIZATION_TRUNCATION_MARK.slice(0, maxLength)
+  }
+  return (
+    value.slice(
+      0,
+      maxLength - SERIALIZATION_TRUNCATION_MARK.length
+    ) + SERIALIZATION_TRUNCATION_MARK
+  )
+}
+
 var _nextId = 1
 function generateNextId() {
   return _nextId++
@@ -527,10 +845,24 @@ function getAttributesForPrivacyLevel(element, nodePrivacyLevel, options) {
   var safeAttrs = {}
   var tagName = getValidTagName(element.tagName)
   var doc = element.ownerDocument
+  var serializedSourceLength = 0
+  var maxNodeSourceLength = getMaxNodeSourceLength(options)
 
-  for (var i = 0; i < element.attributes.length; i += 1) {
+  for (
+    var i = 0;
+    i < element.attributes.length &&
+    i < SERIALIZATION_MAX_ATTRIBUTE_COUNT;
+    i += 1
+  ) {
     var attribute = element.attributes.item(i)
     var attributeName = attribute.name
+    var remainingSourceLength =
+      maxNodeSourceLength -
+      serializedSourceLength -
+      attributeName.length
+    if (remainingSourceLength <= 0) {
+      break
+    }
     var attributeValue = serializeAttribute(
       element,
       nodePrivacyLevel,
@@ -538,12 +870,30 @@ function getAttributesForPrivacyLevel(element, nodePrivacyLevel, options) {
       options.configuration
     )
     if (attributeValue !== null) {
-      safeAttrs[attributeName] = transformAttribute(
+      // Privacy and data-url sanitization happen before either bound.  The
+      // first bound prevents URL/CSS normalization from scanning an
+      // unbounded value; the second covers an absolute base URL added by the
+      // transform.
+      var boundedAttributeValue = truncateSerializedValue(
+        attributeValue,
+        remainingSourceLength
+      )
+      var transformedAttributeValue = transformAttribute(
         doc,
         tagName,
         attributeName,
-        attributeValue
+        boundedAttributeValue
       )
+      transformedAttributeValue = truncateSerializedValue(
+        transformedAttributeValue,
+        remainingSourceLength
+      )
+      safeAttrs[attributeName] = transformedAttributeValue
+      serializedSourceLength +=
+        attributeName.length +
+        (typeof transformedAttributeValue === 'string'
+          ? transformedAttributeValue.length
+          : 8)
     }
   }
 
@@ -560,7 +910,16 @@ function getAttributesForPrivacyLevel(element, nodePrivacyLevel, options) {
       nodePrivacyLevel
     )
     if (formValue !== undefined) {
-      safeAttrs.value = formValue
+      // getElementInputValue masks private input before truncation.
+      safeAttrs.value = truncateSerializedValue(
+        formValue,
+        Math.max(
+          maxNodeSourceLength -
+            serializedSourceLength -
+            'value'.length,
+          SERIALIZATION_TRUNCATION_MARK.length
+        )
+      )
     }
   }
 
@@ -659,6 +1018,13 @@ function getAttributesForPrivacyLevel(element, nodePrivacyLevel, options) {
   }
 
   return safeAttrs
+}
+
+function getMaxNodeSourceLength(options) {
+  return options.serializationContext.status ===
+    SerializationContextStatus.MUTATION
+    ? SERIALIZATION_MAX_MUTATION_SOURCE_LENGTH
+    : SERIALIZATION_MAX_NODE_SOURCE_LENGTH
 }
 
 function getStyleSheetByHref(serializationContext, doc, href) {

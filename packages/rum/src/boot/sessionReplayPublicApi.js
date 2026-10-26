@@ -1,6 +1,12 @@
 import { addTelemetryUsage, monitor } from '@cloudcare/browser-core'
 
 export function makeSessionReplayPublicApi(recorderApi) {
+  function makeDebugGetter(debugIndex) {
+    return monitor(function () {
+      return recorderApi.$rGetDebug(debugIndex)
+    })
+  }
+
   return {
     startSessionReplayRecording: monitor(function (options) {
       recorderApi.start(options)
@@ -20,33 +26,15 @@ export function makeSessionReplayPublicApi(recorderApi) {
     getSerializedNodeIdForDebug: monitor(function (node) {
       return recorderApi.getSerializedNodeIdForDebug(node)
     }),
-    getLastAutoCanvasSnapshotResultForDebug: monitor(function () {
-      return recorderApi.getLastAutoCanvasSnapshotResultForDebug()
-    }),
-    getAutoCanvasSnapshotDebugHistoryForDebug: monitor(function () {
-      return recorderApi.getAutoCanvasSnapshotDebugHistoryForDebug()
-    }),
-    getLastCanvasMutationForDebug: monitor(function () {
-      return recorderApi.getLastCanvasMutationForDebug()
-    }),
-    getCanvasMutationHistoryForDebug: monitor(function () {
-      return recorderApi.getCanvasMutationHistoryForDebug()
-    }),
-    getLastDomMutationForDebug: monitor(function () {
-      return recorderApi.getLastDomMutationForDebug()
-    }),
-    getDomMutationHistoryForDebug: monitor(function () {
-      return recorderApi.getDomMutationHistoryForDebug()
-    }),
-    getLastReplaySegmentFlushForDebug: monitor(function () {
-      return recorderApi.getLastReplaySegmentFlushForDebug()
-    }),
-    getReplaySegmentFlushHistoryForDebug: monitor(function () {
-      return recorderApi.getReplaySegmentFlushHistoryForDebug()
-    }),
-    getReplayPerformanceForDebug: monitor(function () {
-      return recorderApi.getReplayPerformanceForDebug()
-    }),
+    getLastAutoCanvasSnapshotResultForDebug: makeDebugGetter(0),
+    getAutoCanvasSnapshotDebugHistoryForDebug: makeDebugGetter(1),
+    getLastCanvasMutationForDebug: makeDebugGetter(2),
+    getCanvasMutationHistoryForDebug: makeDebugGetter(3),
+    getLastDomMutationForDebug: makeDebugGetter(4),
+    getDomMutationHistoryForDebug: makeDebugGetter(5),
+    getLastReplaySegmentFlushForDebug: makeDebugGetter(6),
+    getReplaySegmentFlushHistoryForDebug: makeDebugGetter(7),
+    getReplayPerformanceForDebug: makeDebugGetter(8),
     flushReplayMutationsForDebug: monitor(function () {
       if (recorderApi.flushReplayMutationsForDebug) {
         recorderApi.flushReplayMutationsForDebug()
@@ -54,4 +42,3 @@ export function makeSessionReplayPublicApi(recorderApi) {
     })
   }
 }
-

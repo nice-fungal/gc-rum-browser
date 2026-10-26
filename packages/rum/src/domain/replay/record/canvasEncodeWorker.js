@@ -3,10 +3,10 @@ import {
   addEventListener,
   clearTimeout,
   display,
-  includes,
   ONE_SECOND,
   setTimeout
 } from '@cloudcare/browser-core'
+import { isWorkerErrorCspRelated } from '../../deflate/deflateWorker'
 
 export var CANVAS_WORKER_INITIALIZATION_TIME_OUT_DELAY = 10 * ONE_SECOND
 
@@ -31,11 +31,18 @@ export function createCanvasEncodeWorker(
     )
   }
 
-  return {
-    worker: new workerCtor(workerUrl),
-    workerUrl: workerUrl,
-    usesExternalUrl: usesExternalUrl,
-    urlObject: urlObject
+  try {
+    return {
+      worker: new workerCtor(workerUrl),
+      workerUrl: workerUrl,
+      usesExternalUrl: usesExternalUrl,
+      urlObject: urlObject
+    }
+  } catch (error) {
+    if (!usesExternalUrl && typeof urlObject.revokeObjectURL === 'function') {
+      urlObject.revokeObjectURL(workerUrl)
+    }
+    throw error
   }
 }
 
@@ -50,37 +57,44 @@ export function createCanvasEncodeWorkerManager(configuration, options) {
   var initializationTimeoutId
   var initializationAttempt = 0
   var stopListeners = function () {}
-  var createWorker =
-    options.createWorker ||
-    function () {
-      return createCanvasEncodeWorker(
-        configuration,
-        options.Worker || globalThis.Worker,
-        options.url || globalThis.URL
-      )
-    }
-  var timeoutDelay =
-    options.initializationTimeoutDelay ||
-    CANVAS_WORKER_INITIALIZATION_TIME_OUT_DELAY
-  var addTelemetryErrorImpl = options.addTelemetryError || addTelemetryError
-  var displayError = options.displayError || display.error
+  var createWorker = __BUILD_ENV__REPLAY_DEBUG_ENABLED__
+    ? options.createWorker ||
+      function () {
+        return createCanvasEncodeWorker(
+          configuration,
+          options.Worker || globalThis.Worker,
+          options.url || globalThis.URL
+        )
+      }
+    : function () {
+        return createCanvasEncodeWorker(
+          configuration,
+          globalThis.Worker,
+          globalThis.URL
+        )
+      }
+  var timeoutDelay = __BUILD_ENV__REPLAY_DEBUG_ENABLED__
+    ? options.initializationTimeoutDelay ||
+      CANVAS_WORKER_INITIALIZATION_TIME_OUT_DELAY
+    : CANVAS_WORKER_INITIALIZATION_TIME_OUT_DELAY
+  var addTelemetryErrorImpl = __BUILD_ENV__REPLAY_DEBUG_ENABLED__
+    ? options.addTelemetryError || addTelemetryError
+    : addTelemetryError
+  var displayError = __BUILD_ENV__REPLAY_DEBUG_ENABLED__
+    ? options.displayError || display.error
+    : display.error
   var onInitialized = options.onInitialized || function () {}
   var onError = options.onError || function () {}
   var onMessage = options.onMessage || function () {}
 
-  function cleanup() {
-    stopListeners()
-    stopListeners = function () {}
-    if (initializationTimeoutId) {
+  function clearInitializationTimeout() {
+    if (initializationTimeoutId !== undefined) {
       clearTimeout(initializationTimeoutId)
       initializationTimeoutId = undefined
     }
-    if (worker) {
-      if (typeof worker.terminate === 'function') {
-        worker.terminate()
-      }
-      worker = undefined
-    }
+  }
+
+  function revokeWorkerUrl() {
     if (
       workerUrl &&
       shouldRevokeWorkerUrl &&
@@ -94,6 +108,19 @@ export function createCanvasEncodeWorkerManager(configuration, options) {
     shouldRevokeWorkerUrl = false
   }
 
+  function cleanup() {
+    stopListeners()
+    stopListeners = function () {}
+    clearInitializationTimeout()
+    if (worker) {
+      if (typeof worker.terminate === 'function') {
+        worker.terminate()
+      }
+      worker = undefined
+    }
+    revokeWorkerUrl()
+  }
+
   function handleError(error, phase) {
     if (status === CanvasEncodeWorkerStatus.Loading) {
       displayError(
@@ -101,8 +128,7 @@ export function createCanvasEncodeWorkerManager(configuration, options) {
         error
       )
       if (
-        error instanceof Event ||
-        (error instanceof Error && isMessageCspRelated(error.message))
+        isWorkerErrorCspRelated(error)
       ) {
         if (configuration.replayCanvasWorkerUrl) {
           displayError(
@@ -134,7 +160,7 @@ export function createCanvasEncodeWorkerManager(configuration, options) {
     })
   }
 
-  return {
+  var manager = {
     ensureWorker: function () {
       if (
         status === CanvasEncodeWorkerStatus.Loading ||
@@ -163,6 +189,8 @@ export function createCanvasEncodeWorkerManager(configuration, options) {
           if (data.action === 'initialized') {
             version = data.version
             status = CanvasEncodeWorkerStatus.Initialized
+            clearInitializationTimeout()
+            revokeWorkerUrl()
             onInitialized(data)
             return
           }
@@ -173,7 +201,6 @@ export function createCanvasEncodeWorkerManager(configuration, options) {
           messageListener.stop()
         }
 
-        worker.postMessage({ action: 'init' })
         initializationTimeoutId = setTimeout(function () {
           if (
             status === CanvasEncodeWorkerStatus.Loading &&
@@ -188,6 +215,7 @@ export function createCanvasEncodeWorkerManager(configuration, options) {
             )
           }
         }, timeoutDelay)
+        worker.postMessage({ action: 'init' })
       } catch (error) {
         handleError(error, 'initialization')
       }
@@ -196,16 +224,12 @@ export function createCanvasEncodeWorkerManager(configuration, options) {
     stop: function () {
       status = CanvasEncodeWorkerStatus.Nil
       cleanup()
-    },
-    getStatus: function () {
+    }
+  }
+  if (__BUILD_ENV__REPLAY_DEBUG_ENABLED__) {
+    manager.getStatus = function () {
       return status
     }
   }
-}
-
-function isMessageCspRelated(message) {
-  return (
-    includes(message, 'Content Security Policy') ||
-    includes(message, "requires 'TrustedScriptURL'")
-  )
+  return manager
 }
