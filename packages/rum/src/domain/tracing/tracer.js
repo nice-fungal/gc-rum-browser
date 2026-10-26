@@ -104,7 +104,7 @@ export function injectHeadersIfTracingAllowed(
   inject
 ) {
   const session = sessionManager.findTrackedSession()
-  if (!session) {
+  if (!session && !configuration.allowTraceHeaderWithoutSession) {
     return
   }
   var tracingOption = find(
@@ -116,10 +116,9 @@ export function injectHeadersIfTracingAllowed(
   if (!tracingOption) {
     return
   }
-  const traceSampled = isTraceSampled(
-    session.id,
-    configuration.tracingSampleRate
-  )
+  const traceSampled = session
+    ? isTraceSampled(session.id, configuration.tracingSampleRate)
+    : performDraw(configuration.tracingSampleRate)
 
   //   if (!traceSampled) return
   var tracer,
