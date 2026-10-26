@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import { UUID, assign, deepClone, addTelemetryError } from '@cloudcare/browser-core'
 
 var RESOURCE_TRACKER_HEADER = 'x-rum-resource-id'
@@ -7,7 +8,7 @@ var RESOURCE_TRACKER_ORPHAN_TTL_MS = 5 * 60 * 1000
 var DEBUG_CLONE_MAX_DEPTH = 8
 
 export function createResourceTrackerManager() {
-  var trackers = new Map()
+  var trackers = new SDKMap()
   var flushTrackedResource
 
   return {

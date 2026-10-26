@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import {
   clocksNow,
   elapsed,
@@ -54,7 +55,7 @@ export function trackWebSocket(
   webSocketContextObservable,
   viewContexts
 ) {
-  var registry = new Map()
+  var registry = new SDKMap()
   var isWaitingForSessionRenewal = false
   var subscription = webSocketContextObservable.subscribe(function (context) {
     var connection = registry.get(context.instance)

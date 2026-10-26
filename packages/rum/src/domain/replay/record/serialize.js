@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import {
   assign,
   startsWith,
@@ -1044,7 +1045,7 @@ function getStyleSheetByHref(serializationContext, doc, href) {
 
   var styleSheetByHref = serializationContext.styleSheetByHref
   if (!styleSheetByHref) {
-    styleSheetByHref = new Map()
+    styleSheetByHref = new SDKMap()
     for (var i = 0; i < doc.styleSheets.length; i += 1) {
       var styleSheet = doc.styleSheets[i]
       if (styleSheet.href) {

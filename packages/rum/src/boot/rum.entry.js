@@ -3,8 +3,9 @@ import { makeRecorderApi } from './recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { makeRumEntry } from './rumEntryFactory'
 import { makeSessionReplayPublicApi } from './sessionReplayPublicApi'
-var recorderApi = makeRecorderApi(startRecording)
-export var datafluxRum = makeRumEntry(recorderApi, {
+export var datafluxRum = makeRumEntry(function () {
+  return makeRecorderApi(startRecording)
+}, {
   startCompressionWorker: startDeflateWorker,
   createCompressionEncoder: createDeflateEncoder,
   makeRecorderPublicApi: makeSessionReplayPublicApi

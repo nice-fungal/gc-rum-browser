@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import {
   safeTruncate,
   isIE,
@@ -24,7 +25,7 @@ export function getActionNameFromElement(
 ) {
   configuration = configuration || {}
   var userProgrammaticAttribute = configuration.actionNameAttribute
-  var nodePrivacyLevelCache = new Map()
+  var nodePrivacyLevelCache = new SDKMap()
   var explicitActionName = getExplicitActionName(
     element,
     userProgrammaticAttribute

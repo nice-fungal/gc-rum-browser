@@ -1,8 +1,9 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import { elapsed, ONE_SECOND, relativeNow } from '@cloudcare/browser-core'
 
 // Maximum duration for click actions
 export const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND
-export const interactionSelectorCache = new Map()
+export const interactionSelectorCache = new SDKMap()
 
 export function getInteractionSelector(relativeTimestamp) {
   const selector = interactionSelectorCache.get(relativeTimestamp)

@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 function arrayBufferToBase64(buffer) {
   var bytes = new Uint8Array(buffer)
   var binary = ''
@@ -120,7 +121,7 @@ export function createCanvasCommandObjectRefRegistry() {
       var constructorName = value.constructor.name || 'Object'
       var contextRefs = objectRefsByContext.get(context)
       if (!contextRefs) {
-        contextRefs = new Map()
+        contextRefs = new SDKMap()
         objectRefsByContext.set(context, contextRefs)
       }
       var constructorRefs = contextRefs.get(constructorName)

@@ -1,3 +1,4 @@
+import { SDKMap } from './sdkMap'
 import { display } from './display'
 import { setTimeout, clearTimeout } from './timer'
 import { computeNavigationStart } from './navigationStart'
@@ -1384,7 +1385,7 @@ export function findCommaSeparatedValue(rawString, name) {
 }
 
 export function findCommaSeparatedValues(rawString) {
-  var result = new Map()
+  var result = new SDKMap()
   COMMA_SEPARATED_KEY_VALUE.lastIndex = 0
   // eslint-disable-next-line no-constant-condition
   while (true) {

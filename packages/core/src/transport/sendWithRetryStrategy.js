@@ -1,3 +1,4 @@
+import { SDKMap } from '../helper/sdkMap'
 import { clocksNow, ONE_SECOND } from '../helper/tools'
 import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../helper/byteUtils'
 import { ErrorSource } from '../helper/errorTools'
@@ -493,7 +494,7 @@ export function newRetryState(retryMaxSize) {
     $rRetryGeneration: 0,
     $rRetryTimeoutId: undefined,
     $rOngoingRequests: new Set(),
-    $rPayloadSequenceByPayload: new Map(),
+    $rPayloadSequenceByPayload: new SDKMap(),
     $rNextPayloadSequence: 0
   }
 }

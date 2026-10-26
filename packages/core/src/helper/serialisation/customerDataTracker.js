@@ -1,3 +1,4 @@
+import { SDKMap } from '../sdkMap'
 import { ONE_KIBI_BYTE, computeBytesCount } from '../byteUtils'
 import { throttle, isEmptyObject } from '../tools'
 import { jsonStringify } from './jsonStringify'
@@ -25,7 +26,7 @@ export const CustomerDataCompressionStatus = {
 export function createCustomerDataTrackerManager(
   compressionStatus = CustomerDataCompressionStatus.Disabled
 ) {
-  const customerDataTrackers = new Map()
+  const customerDataTrackers = new SDKMap()
 
   let alreadyWarned = false
   function checkCustomerDataLimit(initialBytesCount = 0) {

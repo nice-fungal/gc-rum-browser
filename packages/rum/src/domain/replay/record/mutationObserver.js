@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import {
   noop,
   isNodeShadowHost,
@@ -443,7 +444,7 @@ export function processMutations(
   }
   var transactionState =
     mutationBatchContext && mutationBatchContext.transaction
-  var nodePrivacyLevelCache = new Map()
+  var nodePrivacyLevelCache = new SDKMap()
   var pendingRootTasksToRefresh = new Set()
   var childListMutations = []
   var characterDataMutations = []
@@ -742,7 +743,7 @@ export function processMutations(
     currentSourceState,
     transactionState &&
       (transactionState.$rHandledAttributeMutations ||
-        (transactionState.$rHandledAttributeMutations = new Map()))
+        (transactionState.$rHandledAttributeMutations = new SDKMap()))
   )
   consumeMutationNormalizationBudget(
     normalizationState,
@@ -943,9 +944,9 @@ function processChildListMutations(
   // two mutation records, one with a "removedNodes" and the other with "addedNodes". In this case,
   // the node will be in both sets.
   var addedAndMovedNodes = new Set()
-  var removedNodes = new Map()
+  var removedNodes = new SDKMap()
   var replacementNodes = new Set()
-  var singleReplacementNodes = new Map()
+  var singleReplacementNodes = new SDKMap()
   for (var _i = 0, mutations_1 = mutations; _i < mutations_1.length; _i++) {
     var mutation = mutations_1[_i]
     var coalescedTextReplacementMarker = undefined
@@ -1618,7 +1619,7 @@ function processAttributesMutations(
   var attributeMutations = []
 
   // Deduplicate mutations based on their target node and changed attribute
-  handledElements = handledElements || new Map()
+  handledElements = handledElements || new SDKMap()
   var filteredMutations = mutations.filter(function (mutation) {
     if (
       consumeMutationNormalizationBudget(
@@ -1641,7 +1642,7 @@ function processAttributesMutations(
   })
 
   // Emit mutations
-  var emittedMutations = new Map()
+  var emittedMutations = new SDKMap()
   for (
     var _i = 0, filteredMutations_2 = filteredMutations;
     _i < filteredMutations_2.length;
@@ -1852,7 +1853,7 @@ export function createMutationTasksController(
   var deferredRootTaskCount = 0
   var deferredRootTaskOutstandingCount = 0
   var pendingRootTaskByRootNode = new WeakMap()
-  var pendingRootTaskBySequence = new Map()
+  var pendingRootTaskBySequence = new SDKMap()
   var scheduledFlush = undefined
   var stopped = false
   var overflowed = false
@@ -1860,7 +1861,7 @@ export function createMutationTasksController(
   var retainedRootTaskApproxBytes = 0
   var retainedMutationGroupApproxBytes = 0
   var retainedMutationBudgetReservation
-  var completedRootTasksBySequence = new Map()
+  var completedRootTasksBySequence = new SDKMap()
   var locallyDroppedRootNodes = new WeakSet()
 
   return {
@@ -1934,10 +1935,10 @@ export function createMutationTasksController(
     retainedRootTaskApproxBytes = 0
     retainedMutationGroupApproxBytes = 0
     updateRetainedMutationResourceBudget()
-    completedRootTasksBySequence = new Map()
+    completedRootTasksBySequence = new SDKMap()
     locallyDroppedRootNodes = new WeakSet()
     pendingRootTaskByRootNode = new WeakMap()
-    pendingRootTaskBySequence = new Map()
+    pendingRootTaskBySequence = new SDKMap()
   }
 
   function reset() {
@@ -3052,13 +3053,13 @@ export function createMutationTasksController(
     var emissionGeneration = generation
     var ungroupedAdds = []
     var ungroupedAddsApproxBytes = 64
-    var queuedRootParentIds = new Map()
+    var queuedRootParentIds = new SDKMap()
     var siblingResolutionState = [
       getCurrentTime() + MUTATION_NORMALIZATION_MAX_DURATION_MS,
       0,
       false,
-      new Map(),
-      new Map()
+      new SDKMap(),
+      new SDKMap()
     ]
 
     for (

@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import { createCanvasCommandObjectRefRegistry } from './canvasCommandSerializeArgs'
 import { createCanvasMutationRecord } from './canvasMutationRecord'
 
@@ -514,7 +515,7 @@ export function createCanvas2DCommandRecorder(options) {
   var rejectedContextSet = new WeakSet()
   var patchedPrototypeRecords = []
   var snapshotFallbackPatchTargets = new WeakSet()
-  var pendingCommandsByContext = new Map()
+  var pendingCommandsByContext = new SDKMap()
   var pendingCommandApproxBytes = 0
   var fallbackModeContexts = new WeakSet()
   var persistentFallbackModeContexts = new WeakSet()
