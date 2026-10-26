@@ -246,6 +246,7 @@ export var dataMap = {
   'end_time',
   'start_view_id',
   'end_view_id',
+  'end_view_path',
   'tracking_end_reason',
   'close_code',
   'close_reason',
