@@ -199,7 +199,7 @@ export function startRum(
     viewContexts: viewContexts,
     session: session,
     setForcedSession: function () {
-      session.setForcedSession()
+      session.setForcedSession({ refreshView: true })
     },
     stopSession: function () {
       session.expire()

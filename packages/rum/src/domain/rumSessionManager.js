@@ -133,8 +133,18 @@ export function startRumSessionManager(configuration, lifeCycle) {
     sessionStateUpdateObservable: sessionManager.sessionStateUpdateObservable,
     setErrorForSession: () =>
       sessionManager.updateSessionState({ hasError: '1', ets: timeStampNow() }),
-    setForcedSession: () => {
-      sessionManager.forceSession()
+    setForcedSession: (options) => {
+      sessionManager.forceSession(
+        options && options.refreshView
+          ? (previousState) => {
+              // Activation and renewal already publish a View. Only an
+              // explicit public call needs another update when already forced.
+              if (previousState && previousState.forcedSession) {
+                lifeCycle.notify(LifeCycleEventType.SESSION_FORCED)
+              }
+            }
+          : undefined
+      )
     }
   }
 }
