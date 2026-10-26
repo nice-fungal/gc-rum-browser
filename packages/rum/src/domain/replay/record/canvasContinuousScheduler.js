@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import { addEventListener, DOM_EVENT } from '@cloudcare/browser-core'
 import {
   getReplayCanvasRecordingDecision,
@@ -270,7 +271,7 @@ export function startContinuousCanvasSnapshotLoop(options) {
       canvasCount,
       MAX_CONTINUOUS_CANVAS_SCAN_PER_RUN
     )
-    var priorityByCanvas = new Map()
+    var priorityByCanvas = new SDKMap()
     var canvases = []
     for (var offset = 0; offset < scannedCanvasCount; offset += 1) {
       var canvas =

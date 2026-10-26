@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import {
   instrumentSetter,
   instrumentMethod,
@@ -649,7 +650,7 @@ export function initInputObserver(
     var rootState = radioGroupStateByRoot.get(root)
     if (!rootState) {
       rootState = {
-        groupsWithoutForm: new Map(),
+        groupsWithoutForm: new SDKMap(),
         groupsByForm: new WeakMap()
       }
       radioGroupStateByRoot.set(root, rootState)
@@ -659,7 +660,7 @@ export function initInputObserver(
     }
     var formGroups = rootState.groupsByForm.get(form)
     if (!formGroups) {
-      formGroups = new Map()
+      formGroups = new SDKMap()
       rootState.groupsByForm.set(form, formGroups)
     }
     return formGroups

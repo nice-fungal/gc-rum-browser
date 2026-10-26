@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import {
   getParentNode,
   instrumentMethod,
@@ -79,7 +80,7 @@ export var initShadowRootsController = function (configuration, data) {
 
   var nextGenerationId = 0
   var activeGeneration = createGeneration()
-  var controllerByShadowRoot = new Map()
+  var controllerByShadowRoot = new SDKMap()
   // Persist only the latest registration identity. This distinguishes a root
   // retired by a baseline reset from a never-registered nested root without
   // walking the retired generation during reset.
@@ -256,7 +257,7 @@ export var initShadowRootsController = function (configuration, data) {
 
     rollbackProvisionalShadowRoots: function (owner) {
       var shadowRoots = owner.provisionalShadowRoots || []
-      var retiredControllers = new Map()
+      var retiredControllers = new SDKMap()
       for (
         var shadowRootIndex = 0;
         shadowRootIndex < shadowRoots.length;
@@ -857,7 +858,7 @@ export var initShadowRootsController = function (configuration, data) {
     mutationDependencyState.$rPublishedRoots = new WeakSet()
     mutationDependencyState.$rLocallyDroppedRoots = new WeakSet()
     activeGeneration = createGeneration()
-    controllerByShadowRoot = new Map()
+    controllerByShadowRoot = new SDKMap()
     retireControllerEntries(retiredControllers)
   }
 

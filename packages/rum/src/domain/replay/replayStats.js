@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 export var MAX_STATS_HISTORY = 10
 var statsPerView
 
@@ -27,7 +28,7 @@ export function resetReplayStats() {
 
 function getOrCreateReplayStats(viewId) {
   if (!statsPerView) {
-    statsPerView = new Map()
+    statsPerView = new SDKMap()
   }
 
   var replayStats

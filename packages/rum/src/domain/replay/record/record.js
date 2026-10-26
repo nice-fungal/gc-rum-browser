@@ -1,3 +1,4 @@
+import { SDKMap } from '@cloudcare/browser-core'
 import {
   timeStampNow,
   getScrollX,
@@ -3804,12 +3805,12 @@ function createEmptyMutationPayload() {
     textsApproxBytes: 0,
     attributesApproxBytes: 0,
     addApproxBytes: [],
-    removesByKey: new Map(),
-    removeApproxBytesByKey: new Map(),
-    textsById: new Map(),
-    textApproxBytesById: new Map(),
-    attributesById: new Map(),
-    attributeApproxBytesById: new Map()
+    removesByKey: new SDKMap(),
+    removeApproxBytesByKey: new SDKMap(),
+    textsById: new SDKMap(),
+    textApproxBytesById: new SDKMap(),
+    attributesById: new SDKMap(),
+    attributeApproxBytesById: new SDKMap()
   }
 }
 
@@ -4001,7 +4002,7 @@ function hasRemoveToAddDependency(
   // A later remove is a new transition when the same node (or an ancestor in
   // the staged add tree) was already paired with this add. Keep sibling removes
   // eligible: one add token can contain nodes moved from several observers.
-  var pairedRemovedNodesByPublicationToken = new Map()
+  var pairedRemovedNodesByPublicationToken = new SDKMap()
   removesAlreadyPairedWithAdds.forEach(function (remove) {
     var removedNode = getMutationRemoveSourceNode(remove)
     if (
@@ -4184,8 +4185,8 @@ function createStructuralMutationComponents(
   wasNodePublishedBeforePendingMutation
 ) {
   var structuralEntries = []
-  var entriesByParentId = new Map()
-  var addEntryIndexByPublicationToken = new Map()
+  var entriesByParentId = new SDKMap()
+  var addEntryIndexByPublicationToken = new SDKMap()
 
   function appendStructuralEntry(type, entry, approxBytes) {
     var entryIndex = structuralEntries.length
@@ -4287,7 +4288,7 @@ function createStructuralMutationComponents(
     }
   })
 
-  var componentsByRoot = new Map()
+  var componentsByRoot = new SDKMap()
   structuralEntries.forEach(function (structuralEntry, entryIndex) {
     var root = findRoot(entryIndex)
     var component = componentsByRoot.get(root)
@@ -4307,7 +4308,7 @@ function createStructuralMutationComponents(
   })
 
   var components = Array.from(componentsByRoot.values())
-  var addComponentByNodeId = new Map()
+  var addComponentByNodeId = new SDKMap()
   components.forEach(function (component) {
     component.adds.forEach(function (addEntry) {
       addComponentByNodeId.set(addEntry.entry.node.id, component)

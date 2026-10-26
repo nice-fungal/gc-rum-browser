@@ -67,3 +67,5 @@ export * from './telemetry/telemetry'
 export * from './helper/catchUserErrors'
 export * from './helper/connectivity'
 export * from './helper/displayAlreadyInitializedError'
+
+export { SDKMap } from './helper/sdkMap'

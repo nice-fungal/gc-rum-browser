@@ -39,9 +39,11 @@ export function monitorError(e) {
   }
 }
 export function displayIfDebugEnabled() {
-  var args = [].slice.call(arguments)
-  //   display.error.apply(null, ['[MONITOR]'].concat(args))
-  if (debugMode) {
-    display.error.apply(null, ['[MONITOR]'].concat(args))
-  }
+  // Reporting an SDK failure must not turn a caught error into a business error
+  // if a host-provided console implementation itself throws.
+  try {
+    if (debugMode) {
+      display.error.apply(null, ['[MONITOR]'].concat([].slice.call(arguments)))
+    }
+  } catch (_) {}
 }
