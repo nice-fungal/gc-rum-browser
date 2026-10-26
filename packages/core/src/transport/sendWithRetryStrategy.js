@@ -149,7 +149,11 @@ function scheduleRetry(state, sendStrategy, endpointUrl, reportError) {
       $rGeneration: retryGeneration,
       $rPayloadRetainedInQueue: true,
       onSuccess: function () {
-        state.queuedPayloads.dequeue()
+        // A permanent rejection may already have pruned this payload and
+        // its dependents. Do not remove the next valid generation's head.
+        if (state.queuedPayloads.first() === payload) {
+          state.queuedPayloads.dequeue()
+        }
 
         state.currentBackoffTime = INITIAL_BACKOFF_TIME
         retryQueuedPayloads(
@@ -379,7 +383,7 @@ function notifyPermanentDrop(payload, reason) {
   }
 }
 
-function isPayloadValid(payload) {
+export function isPayloadValid(payload) {
   if (!payload || typeof payload.$rIsValid !== 'function') {
     return true
   }
@@ -494,52 +498,34 @@ export function newRetryState(retryMaxSize) {
   }
 }
 
-export function drainQueuedPayloads(state) {
-  if (state.$rRetryTimeoutId !== undefined) {
-    clearTimeout(state.$rRetryTimeoutId)
-    state.$rRetryTimeoutId = undefined
+// Transfer only queued payloads accepted by the exit transport. In-flight
+// requests keep their callbacks, watchdog and bandwidth reservation: aborting
+// them before a replacement is possible can truncate the HTTP request body.
+export function drainQueuedPayloads(state, trySend) {
+  var sentPayloads = []
+  if (state.$rOngoingRequests.size > 0) {
+    return sentPayloads
   }
-  var queuedPayloads = state.queuedPayloads
-  state.queuedPayloads = newPayloadQueue()
-  var payloads = []
-  var drainedPayloads = new Set()
-  function appendPayload(payload) {
-    if (!isPayloadValid(payload)) {
-      state.$rPayloadSequenceByPayload.delete(payload)
-      return
+  while (state.queuedPayloads.size() > 0) {
+    var payload = state.queuedPayloads.first()
+    if (isPayloadValid(payload)) {
+      if (!trySend(payload)) {
+        break
+      }
+      sentPayloads.push(payload)
     }
-    if (!drainedPayloads.has(payload)) {
-      drainedPayloads.add(payload)
-      payloads.push(payload)
-    }
-  }
-  state.$rRetryGeneration += 1
-  state.$rOngoingRequests.forEach(function (ongoingRequest) {
-    appendPayload(ongoingRequest.payload)
-    ongoingRequest.$rRetired = true
-    clearOngoingRequestWatchdog(ongoingRequest)
-    if (ongoingRequest.$rActive) {
-      ongoingRequest.$rActive = false
-      state.bandwidthMonitor.remove(ongoingRequest.payload)
-      abortOngoingRequest(ongoingRequest.$rAbort)
-    }
-  })
-  state.$rOngoingRequests.clear()
-  while (queuedPayloads.size() > 0) {
-    appendPayload(queuedPayloads.dequeue())
-  }
-  payloads.sort(function (firstPayload, secondPayload) {
-    return (
-      state.$rPayloadSequenceByPayload.get(firstPayload) -
-      state.$rPayloadSequenceByPayload.get(secondPayload)
-    )
-  })
-  payloads.forEach(function (payload) {
+    state.queuedPayloads.dequeue()
     state.$rPayloadSequenceByPayload.delete(payload)
-  })
-  state.transportStatus = TransportStatus.UP
-  state.currentBackoffTime = INITIAL_BACKOFF_TIME
-  return payloads
+  }
+  if (state.queuedPayloads.size() === 0) {
+    if (state.$rRetryTimeoutId !== undefined) {
+      clearTimeout(state.$rRetryTimeoutId)
+      state.$rRetryTimeoutId = undefined
+    }
+    state.transportStatus = TransportStatus.UP
+    state.currentBackoffTime = INITIAL_BACKOFF_TIME
+  }
+  return sentPayloads
 }
 
 export function getPendingPayloadsBytesCount(state) {

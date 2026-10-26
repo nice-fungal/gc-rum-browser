@@ -60,13 +60,9 @@ export var SERIALIZATION_MAX_ATTRIBUTE_COUNT = 1000
 export var SERIALIZATION_MAX_NODE_SOURCE_LENGTH = 200000
 export var SERIALIZATION_MAX_MUTATION_SOURCE_LENGTH = 64 * 1024
 export var SERIALIZATION_TRUNCATION_MARK = '…'
-// A full snapshot is followed by a synchronous JSON serialization before it
-// enters the asynchronous encoder. Keep that unavoidable main-thread step
-// well below the segment collection's 4 MiB backlog watermark.
+// Bound each traversal slice. A complete snapshot may span multiple slices;
+// this is not a size limit for the resulting DOM and CSS record.
 export var SERIALIZATION_MAX_APPROX_BYTES = 1024 * 1024
-// Reserve segment metadata below the existing 4 MiB pending-raw budget.
-export var FULL_SNAPSHOT_SERIALIZATION_MAX_APPROX_BYTES =
-  SERIALIZATION_MAX_APPROX_BYTES * 4 - 64 * 1024
 var serializedNodeApproxBytes = new WeakMap()
 
 export function serializeDocument(
@@ -955,10 +951,7 @@ function getAttributesForPrivacyLevel(element, nodePrivacyLevel, options) {
       doc,
       element.href
     )
-    var cssText = getCssRulesString(
-      stylesheet,
-      FULL_SNAPSHOT_SERIALIZATION_MAX_APPROX_BYTES / 2
-    )
+    var cssText = getCssRulesString(stylesheet)
     if (cssText && stylesheet) {
       safeAttrs._cssText = cssText
     }
@@ -966,10 +959,7 @@ function getAttributesForPrivacyLevel(element, nodePrivacyLevel, options) {
 
   // dynamic stylesheet
   if (tagName === 'style' && element.sheet) {
-    var cssText = getCssRulesString(
-      element.sheet,
-      FULL_SNAPSHOT_SERIALIZATION_MAX_APPROX_BYTES / 2
-    )
+    var cssText = getCssRulesString(element.sheet)
     if (cssText) {
       safeAttrs._cssText = cssText
     }
