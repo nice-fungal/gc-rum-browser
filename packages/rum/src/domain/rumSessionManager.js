@@ -64,6 +64,9 @@ export function startRumSessionManager(configuration, lifeCycle) {
         if (sessionEntity) {
           sessionEntity.id = newState.id
           sessionEntity.isSessionForced = true
+          // Publish only after the current history entry becomes collectable.
+          // Renewed sessions already create and publish their own View.
+          lifeCycle.notify(LifeCycleEventType.SESSION_FORCED)
         }
       }
     }
