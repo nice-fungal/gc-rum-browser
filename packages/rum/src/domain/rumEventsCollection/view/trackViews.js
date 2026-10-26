@@ -121,6 +121,7 @@ export function trackViews(
     }
   )
   var stopWebViewLifecycleTracking = noop
+  var forcedSessionSubscription
   startViewLifeCycle()
   var pendingNavigation
   var locationChangeSubscription = renewViewOnLocationChange(
@@ -140,6 +141,12 @@ export function trackViews(
       currentView.stop()
     }
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewCurrentView)
+    forcedSessionSubscription = lifeCycle.subscribe(
+      LifeCycleEventType.SESSION_FORCED,
+      function () {
+        currentView.update()
+      }
+    )
 
     lifeCycle.subscribe(
       LifeCycleEventType.SESSION_EXPIRED,
@@ -238,6 +245,7 @@ export function trackViews(
         locationChangeSubscription.unsubscribe()
       }
       stopWebViewLifecycleTracking()
+      forcedSessionSubscription.unsubscribe()
       softNavigationMetricsTracking()
       currentView.end()
       activeViews.forEach(function (view) {
@@ -444,6 +452,7 @@ function newView(
     })
   }
   var result = {
+    update: triggerViewUpdate,
     name: name,
     service: service,
     version: version,
