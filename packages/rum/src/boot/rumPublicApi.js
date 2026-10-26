@@ -254,9 +254,9 @@ export function makeRumPublicApi(startRumImpl, recorderApi, options) {
     getInitConfiguration: monitor(function () {
       return deepClone(strategy.initConfiguration)
     }),
-    getRemoteConfiguration: monitor(function (callback) {
-      return strategy.getRemoteConfiguration(callback)
-    }),
+    // getRemoteConfiguration: monitor(function (callback) {
+    //   return strategy.getRemoteConfiguration(callback)
+    // }),
     getInternalContext: monitor(function (startTime) {
       return strategy.getInternalContext(startTime)
     }),
@@ -393,9 +393,9 @@ function createPostStartStrategy(preStartStrategy, startRumResult) {
         displayAlreadyInitializedError('DATAFLUX_RUM', initConfiguration)
       },
       initConfiguration: preStartStrategy.getInitConfiguration(),
-      getRemoteConfiguration: function (callback) {
-        preStartStrategy.getRemoteConfiguration(callback)
-      }
+      // getRemoteConfiguration: function (callback) {
+      //   preStartStrategy.getRemoteConfiguration(callback)
+      // }
     },
     startRumResult
   )

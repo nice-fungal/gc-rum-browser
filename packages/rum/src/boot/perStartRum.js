@@ -11,9 +11,9 @@ import {
   addTelemetryConfiguration,
   initFetchObservable,
   deepClone,
-  fetchAndApplyRemoteConfiguration,
+  // fetchAndApplyRemoteConfiguration,
   getEventBridge,
-  getType
+  // getType
 } from '@cloudcare/browser-core'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
 import { getPluginsTelemetry, validatePlugins } from '../domain/plugins'
@@ -28,17 +28,17 @@ export function createPreStartStrategy(
   var startCompressionWorker = rumPublicApiOptions.startCompressionWorker
   var overrideInitConfiguration = rumPublicApiOptions.overrideInitConfiguration
   var bufferApiCalls = createBoundedBuffer()
-  var remoteConfigrationCallbacks = createBoundedBuffer()
+  // var remoteConfigrationCallbacks = createBoundedBuffer()
   var firstStartViewCall
 
   var compressionWorker
 
   var cachedInitConfiguration
   var cachedConfiguration
-  var cachedRemoteConfiguration
+  // var cachedRemoteConfiguration
   var hasStarted
   var initializationPending
-  var pluginsRequireManualViewTracking
+  // var pluginsRequireManualViewTracking
   var resourceTrackerManager = rumPublicApiOptions.resourceTrackerManager
   function tryStartRum() {
     if (hasStarted || !cachedInitConfiguration || !cachedConfiguration) {
@@ -82,8 +82,8 @@ export function createPreStartStrategy(
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
     cachedInitConfiguration = initConfiguration
-    cachedRemoteConfiguration = remoteConfiguration
-    remoteConfigrationCallbacks.drain(cachedRemoteConfiguration)
+    // cachedRemoteConfiguration = remoteConfiguration
+    // remoteConfigrationCallbacks.drain(cachedRemoteConfiguration)
     if (cachedConfiguration) {
       displayAlreadyInitializedError('DATAFLUX_RUM', initConfiguration)
       return
@@ -173,19 +173,19 @@ export function createPreStartStrategy(
       if (rumPublicApiOptions.onInit) {
         rumPublicApiOptions.onInit(initConfiguration, publicApi)
       }
-      pluginsRequireManualViewTracking =
-        !!initConfiguration.plugins &&
-        initConfiguration.trackViewsManually === true
+      // pluginsRequireManualViewTracking =
+      //   !!initConfiguration.plugins &&
+      //   initConfiguration.trackViewsManually === true
       if (initConfiguration.remoteConfiguration) {
-        fetchAndApplyRemoteConfiguration(
-          initConfiguration,
-          function (remoteInitConfiguration, remoteConfiguration) {
-            if (pluginsRequireManualViewTracking) {
-              remoteInitConfiguration.trackViewsManually = true
-            }
-            doInit(remoteInitConfiguration, remoteConfiguration)
-          }
-        )
+        // fetchAndApplyRemoteConfiguration(
+        //   initConfiguration,
+        //   function (remoteInitConfiguration, remoteConfiguration) {
+        //     if (pluginsRequireManualViewTracking) {
+        //       remoteInitConfiguration.trackViewsManually = true
+        //     }
+        //     doInit(remoteInitConfiguration, remoteConfiguration)
+        //   }
+        // )
       } else {
         doInit(initConfiguration)
       }
@@ -194,15 +194,15 @@ export function createPreStartStrategy(
     getInitConfiguration: function () {
       return cachedInitConfiguration
     },
-    getRemoteConfiguration: function (callback) {
-      if (getType(callback) === 'function') {
-        if (cachedRemoteConfiguration) {
-          callback(cachedRemoteConfiguration)
-        } else {
-          remoteConfigrationCallbacks.add(callback)
-        }
-      }
-    },
+    // getRemoteConfiguration: function (callback) {
+    //   if (getType(callback) === 'function') {
+    //     if (cachedRemoteConfiguration) {
+    //       callback(cachedRemoteConfiguration)
+    //     } else {
+    //       remoteConfigrationCallbacks.add(callback)
+    //     }
+    //   }
+    // },
     getInternalContext: noop,
 
     stopSession: noop,
