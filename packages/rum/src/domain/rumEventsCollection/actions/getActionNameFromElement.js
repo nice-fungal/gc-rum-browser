@@ -8,13 +8,12 @@ import {
   getParentElement,
   isNodeShadowRoot
 } from '@cloudcare/browser-core'
+import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './__constants';
 import {
   getNodePrivacyLevel,
   shouldMaskNode
 } from '../../privacy'
 
-export var DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE =
-  'data-guance-action-name'
 export var ACTION_NAME_PLACEHOLDER = 'Masked Element'
 
 export function getActionNameFromElement(
