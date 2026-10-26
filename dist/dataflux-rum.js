@@ -2,8 +2,201 @@
 /******/ 	"use strict";
 var __webpack_exports__ = {};
 
-// UNUSED EXPORTS: datafluxRum
+// UNUSED EXPORTS: TraceType, datafluxRum
 
+;// CONCATENATED MODULE: ../core/esm/helper/sdkMap.js
+// Keep this module dependency-free: collections are also created while modules
+// load, before monitor/telemetry or the public API can be initialized.
+var sdkMap_SDKMap = selectMapConstructor();
+function selectMapConstructor() {
+  // var Candidate
+  // var WeakCandidate
+  // try {
+  //   Candidate = typeof Map === 'function' ? Map : undefined
+  //   WeakCandidate = typeof WeakMap === 'function' ? WeakMap : undefined
+  // } catch (_) {
+  //   // A host may expose a throwing global getter.
+  // }
+  // return chooseMapConstructor(Candidate, WeakCandidate)
+  return Map;
+}
+
+// // Exported from this file for contract tests, not from the package entry point.
+// export function chooseMapConstructor(Candidate, WeakCandidate) {
+//   try {
+//     var map = new Candidate()
+//     var key = {}
+//     if (
+//       map.set(key, 1) === map && map.get(key) === 1 && map.has(key) &&
+//       map.set(NaN, 2) === map && map.get(NaN) === 2 &&
+//       map.set(-0, 3) === map && map.has(0) && map.size === 3 &&
+//       map.keys().next().value === key &&
+//       map.values().next().value === 1 &&
+//       map.entries().next().value[0] === key
+//     ) {
+//       var count = 0
+//       map.forEach(function (value, entryKey, owner) {
+//         if (owner === map && owner.get(entryKey) === value) count++
+//       })
+//       if (count === 3 && map.delete(key) && !map.has(key)) {
+//         var iterator = map.entries()
+//         map.clear()
+//         map.set('after-clear', 4)
+//         var next = iterator.next()
+//         if (map.size === 1 && next.value[0] === 'after-clear' && iterator.next().done) {
+//           // Native fast path: no wrapper around instances or individual calls.
+//           return Candidate
+//         }
+//       }
+//     }
+//   } catch (_) {
+//     // Legacy applications sometimes replace the global Map with a put/get API.
+//   }
+//   return createFallbackMap(WeakCandidate)
+// }
+
+// function createFallbackMap(WeakCandidate) {
+//   var ObjectIndex
+//   try {
+//     var weak = new WeakCandidate()
+//     var frozenKey = Object.freeze({})
+//     weak.set(frozenKey, 1)
+//     if (weak.get(frozenKey) === 1 && weak.delete(frozenKey) && weak.get(frozenKey) === undefined) {
+//       ObjectIndex = WeakCandidate
+//     }
+//   } catch (_) {
+//     // Identity lookup below also works without a usable WeakMap. Never add
+//     // metadata to customer DOM nodes, frozen objects or other object keys.
+//   }
+//   var iteratorSymbol
+//   try {
+//     iteratorSymbol = typeof Symbol === 'function' && Symbol.iterator
+//   } catch (_) {}
+
+//   function FallbackMap(entries) {
+//     this.$rHead = { $rNext: undefined }
+//     this.$rTail = this.$rHead
+//     this.$rIndex = Object.create(null)
+//     this.$rObjects = ObjectIndex ? new ObjectIndex() : undefined
+//     this.size = 0
+//     if (entries != null) {
+//       var iteratorMethod = iteratorSymbol && entries[iteratorSymbol]
+//       if (iteratorMethod) {
+//         var iterator = iteratorMethod.call(entries)
+//         try {
+//           var step
+//           while (!(step = iterator.next()).done) addEntry(this, step.value)
+//         } catch (error) {
+//           if (typeof iterator.return === 'function') iterator.return()
+//           throw error
+//         }
+//       } else if (Array.isArray(entries)) {
+//         for (var i = 0; i < entries.length; i++) addEntry(this, entries[i])
+//       } else {
+//         throw new TypeError('Map entries must be iterable')
+//       }
+//     }
+//   }
+//   function addEntry(map, entry) {
+//     if (!entry || (typeof entry !== 'object' && typeof entry !== 'function')) {
+//       throw new TypeError('Map entry must be an object')
+//     }
+//     map.set(entry[0], entry[1])
+//   }
+//   function indexKey(key) {
+//     var type = typeof key
+//     if (key !== null && (type === 'object' || type === 'function')) return undefined
+//     return type === 'symbol' ? key : type + ':' + String(key)
+//   }
+//   function find(map, key) {
+//     var indexedKey = indexKey(key)
+//     if (indexedKey !== undefined) return map.$rIndex[indexedKey]
+//     if (map.$rObjects) return map.$rObjects.get(key)
+//     var node = map.$rHead.$rNext
+//     while (node) {
+//       if (node.$rKey === key) return node
+//       node = node.$rNext
+//     }
+//   }
+//   function advance(map, node) {
+//     // Iterators survive deletion of their current entry, and clear followed by
+//     // insertion. Removed entries retain only a backwards link, not key/value.
+//     while (node.$rRemoved) node = node.$rPrevious
+//     return node.$rNext
+//   }
+//   function makeIterator(map, kind) {
+//     var current = map.$rHead
+//     var iterator = {
+//       next: function () {
+//         current = current && advance(map, current)
+//         return current
+//           ? { done: false, value: kind === 'keys' ? current.$rKey : kind === 'values' ? current.$rValue : [current.$rKey, current.$rValue] }
+//           : { done: true, value: undefined }
+//       }
+//     }
+//     if (iteratorSymbol) iterator[iteratorSymbol] = function () { return this }
+//     return iterator
+//   }
+//   FallbackMap.prototype.has = function (key) { return !!find(this, key) }
+//   FallbackMap.prototype.get = function (key) {
+//     var node = find(this, key)
+//     return node && node.$rValue
+//   }
+//   FallbackMap.prototype.set = function (key, value) {
+//     var node = find(this, key)
+//     if (node) {
+//       node.$rValue = value
+//     } else {
+//       node = { $rKey: key === 0 ? 0 : key, $rValue: value, $rPrevious: this.$rTail }
+//       this.$rTail.$rNext = node
+//       this.$rTail = node
+//       var indexedKey = indexKey(key)
+//       if (indexedKey !== undefined) this.$rIndex[indexedKey] = node
+//       else if (this.$rObjects) this.$rObjects.set(key, node)
+//       this.size++
+//     }
+//     return this
+//   }
+//   FallbackMap.prototype.delete = function (key) {
+//     var node = find(this, key)
+//     if (!node) return false
+//     var indexedKey = indexKey(key)
+//     if (indexedKey !== undefined) delete this.$rIndex[indexedKey]
+//     else if (this.$rObjects) this.$rObjects.delete(key)
+//     node.$rPrevious.$rNext = node.$rNext
+//     if (node.$rNext) node.$rNext.$rPrevious = node.$rPrevious
+//     else this.$rTail = node.$rPrevious
+//     node.$rRemoved = true
+//     node.$rKey = node.$rValue = node.$rNext = undefined
+//     this.size--
+//     return true
+//   }
+//   FallbackMap.prototype.clear = function () {
+//     var node = this.$rHead.$rNext
+//     while (node) {
+//       var next = node.$rNext
+//       node.$rRemoved = true
+//       node.$rPrevious = this.$rHead
+//       node.$rKey = node.$rValue = node.$rNext = undefined
+//       node = next
+//     }
+//     this.$rHead.$rNext = undefined
+//     this.$rTail = this.$rHead
+//     this.$rIndex = Object.create(null)
+//     this.$rObjects = ObjectIndex ? new ObjectIndex() : undefined
+//     this.size = 0
+//   }
+//   FallbackMap.prototype.forEach = function (callback, thisArg) {
+//     if (typeof callback !== 'function') throw new TypeError('Map callback must be a function')
+//     var node = this.$rHead
+//     while ((node = advance(this, node))) callback.call(thisArg, node.$rValue, node.$rKey, this)
+//   }
+//   FallbackMap.prototype.keys = function () { return makeIterator(this, 'keys') }
+//   FallbackMap.prototype.values = function () { return makeIterator(this, 'values') }
+//   FallbackMap.prototype.entries = function () { return makeIterator(this, 'entries') }
+//   if (iteratorSymbol) FallbackMap.prototype[iteratorSymbol] = FallbackMap.prototype.entries
+//   return FallbackMap
+// }
 ;// CONCATENATED MODULE: ../core/esm/helper/display.js
 
 var ConsoleApiName = {
@@ -42,33 +235,38 @@ function resetMonitor() {
 }
 function monitor(fn) {
   return function () {
-    return callMonitored(fn, this, arguments);
+    return monitor_callMonitored(fn, this, arguments);
   };
 }
-function callMonitored(fn, context, args) {
+function monitor_callMonitored(fn, context, args) {
   try {
     return fn.apply(context, args);
   } catch (e) {
-    displayIfDebugEnabled(e);
-    if (onMonitorErrorCollected) {
-      try {
-        onMonitorErrorCollected(e);
-      } catch (e) {
-        displayIfDebugEnabled(e);
-      }
+    monitorError(e);
+  }
+}
+function monitorError(e) {
+  displayIfDebugEnabled(e);
+  if (onMonitorErrorCollected) {
+    try {
+      onMonitorErrorCollected(e);
+    } catch (e) {
+      displayIfDebugEnabled(e);
     }
   }
 }
 function displayIfDebugEnabled() {
-  var args = [].slice.call(arguments);
-  //   display.error.apply(null, ['[MONITOR]'].concat(args))
-  if (debugMode) {
-    display.error.apply(null, ['[MONITOR]'].concat(args));
-  }
+  // Reporting an SDK failure must not turn a caught error into a business error
+  // if a host-provided console implementation itself throws.
+  try {
+    if (debugMode) {
+      display.error.apply(null, ['[MONITOR]'].concat([].slice.call(arguments)));
+    }
+  } catch (_) {}
 }
 ;// CONCATENATED MODULE: ../core/esm/helper/catchUserErrors.js
 
-function catchUserErrors(fn, errorMsg) {
+function catchUserErrors_catchUserErrors(fn, errorMsg) {
   return function () {
     var args = [].slice.call(arguments);
     try {
@@ -104,8 +302,8 @@ function defineGlobal(global, name, api) {
   var existingGlobalVariable = global[name];
   global[name] = api;
   if (existingGlobalVariable && existingGlobalVariable.q) {
-    each(existingGlobalVariable.q, function (fn) {
-      catchUserErrors(fn, 'onReady callback threw an error:')();
+    tools_each(existingGlobalVariable.q, function (fn) {
+      catchUserErrors_catchUserErrors(fn, 'onReady callback threw an error:')();
     });
   }
 }
@@ -178,7 +376,23 @@ function timer_setInterval(callback, delay) {
 function timer_clearInterval(timeoutId) {
   getZoneJsOriginalValue(getGlobalObject(), 'clearInterval')(timeoutId);
 }
+;// CONCATENATED MODULE: ../core/esm/helper/navigationStart.js
+function isValidNavigationStart(value) {
+  return typeof value === 'number' && isFinite(value) && value > 0;
+}
+function computeNavigationStart(performanceObject, currentTime) {
+  var legacyNavigationStart = performanceObject.timing && performanceObject.timing.navigationStart;
+  if (isValidNavigationStart(legacyNavigationStart)) {
+    return legacyNavigationStart;
+  }
+  if (isValidNavigationStart(performanceObject.timeOrigin)) {
+    return performanceObject.timeOrigin;
+  }
+  return Math.round(currentTime - performanceObject.now());
+}
 ;// CONCATENATED MODULE: ../core/esm/helper/tools.js
+
+
 
 
 var ArrayProto = Array.prototype;
@@ -190,7 +404,7 @@ var tools_hasOwnProperty = ObjProto.hasOwnProperty;
 var nativeForEach = ArrayProto.forEach;
 var nativeIsArray = Array.isArray;
 var breaker = false;
-var each = function (obj, iterator, context) {
+var tools_each = function (obj, iterator, context) {
   if (obj === null) return false;
   if (nativeForEach && obj.forEach === nativeForEach) {
     obj.forEach(iterator, context);
@@ -211,7 +425,7 @@ var each = function (obj, iterator, context) {
   }
 };
 function tools_assign(target) {
-  each(slice.call(arguments, 1), function (source) {
+  tools_each(slice.call(arguments, 1), function (source) {
     for (var prop in source) {
       if (Object.prototype.hasOwnProperty.call(source, prop)) {
         target[prop] = source[prop];
@@ -224,7 +438,7 @@ function shallowClone(object) {
   return tools_assign({}, object);
 }
 var extend = function (obj) {
-  each(slice.call(arguments, 1), function (source) {
+  tools_each(slice.call(arguments, 1), function (source) {
     for (var prop in source) {
       if (source[prop] !== void 0) {
         obj[prop] = source[prop];
@@ -234,7 +448,7 @@ var extend = function (obj) {
   return obj;
 };
 var extend2Lev = function (obj) {
-  each(slice.call(arguments, 1), function (source) {
+  tools_each(slice.call(arguments, 1), function (source) {
     for (var prop in source) {
       if (source[prop] !== void 0) {
         if (isObject(source[prop]) && isObject(obj[prop])) {
@@ -248,7 +462,7 @@ var extend2Lev = function (obj) {
   return obj;
 };
 var coverExtend = function (obj) {
-  each(slice.call(arguments, 1), function (source) {
+  tools_each(slice.call(arguments, 1), function (source) {
     for (var prop in source) {
       if (source[prop] !== void 0 && obj[prop] === void 0) {
         obj[prop] = source[prop];
@@ -291,7 +505,7 @@ var values = function (obj) {
   if (obj === null) {
     return results;
   }
-  each(obj, function (value) {
+  tools_each(obj, function (value) {
     results[results.length] = value;
   });
   return results;
@@ -301,7 +515,7 @@ var keys = function (obj) {
   if (obj === null) {
     return results;
   }
-  each(obj, function (value, key) {
+  tools_each(obj, function (value, key) {
     results[results.length] = key;
   });
   return results;
@@ -459,7 +673,7 @@ var isEmptyObject = function (obj) {
 };
 var objectEntries = function (object) {
   var res = [];
-  each(object, function (value, key) {
+  tools_each(object, function (value, key) {
     res.push([key, value]);
   });
   return res;
@@ -515,7 +729,7 @@ var mediaQueriesSupported = function () {
 };
 var getScreenOrientation = function () {
   var screenOrientationAPI = screen.msOrientation || screen.mozOrientation || (screen.orientation || {}).type;
-  var screenOrientation = 'unknown';
+  var screenOrientation = '未取到值';
   if (screenOrientationAPI) {
     screenOrientation = screenOrientationAPI.indexOf('landscape') > -1 ? 'landscape' : 'portrait';
   } else if (mediaQueriesSupported()) {
@@ -651,7 +865,7 @@ var unique = function (ar) {
 };
 var strip_empty_properties = function (p) {
   var ret = {};
-  each(p, function (v, k) {
+  tools_each(p, function (v, k) {
     if (v != null) {
       ret[k] = v;
     }
@@ -740,15 +954,15 @@ var base64Encode = function (data) {
  * UUID v4
  * from https://gist.github.com/jed/982883
  */
-function UUID(placeholder) {
+function tools_UUID(placeholder) {
   return placeholder ?
   // eslint-disable-next-line  no-bitwise
-  (parseInt(placeholder, 10) ^ Math.random() * 16 >> parseInt(placeholder, 10) / 4).toString(16) : "".concat(1e7, "-", 1e3, "-", 4e3, "-", 8e3, "-", 1e11).replace(/[018]/g, UUID);
+  (parseInt(placeholder, 10) ^ Math.random() * 16 >> parseInt(placeholder, 10) / 4).toString(16) : "".concat(1e7, "-", 1e3, "-", 4e3, "-", 8e3, "-", 1e11).replace(/[018]/g, tools_UUID);
 }
 
 /**
  * 替换url包含数字的路由, e.g.
- * 
+ *
  * /authors/345             ->  /authors/?
  * /authors/abc             ->  /authors/abc
  * /authors/a4c             ->  /authors/?
@@ -756,14 +970,14 @@ function UUID(placeholder) {
  * /authors/abc#/books/678  ->  /authors/abc#/books/?
  * /authors/345#/books/678  ->  /authors/?/books/?
  */
-function replaceNumberCharByPath(path) {
+function tools_replaceNumberCharByPath(path) {
   var pathGroup = '';
   if (path) {
     pathGroup = path.replace(/\/([^\/]*)\d([^\/]*)/g, '/?').replace(/\/$/g, '');
   }
   return pathGroup || '/';
 }
-var urlParse = function (para) {
+var tools_urlParse = function (para) {
   var URLParser = function (a) {
     this._fields = {
       Username: 4,
@@ -898,12 +1112,44 @@ function elementMatches(element, selector) {
 //   isSupport: function () {
 //     var supported = true
 
+//     return storedValue
+//   },
+
+//   set: function (name, value) {
+//     window.localStorage.setItem(name, value)
+//   },
+
+//   remove: function (name) {
+//     window.localStorage.removeItem(name)
+//   },
+
+//   isSupport: function () {
+//     var supported = true
+//     try {
+//       var key = '__sensorsdatasupport__'
+//       var val = 'testIsSupportStorage'
+//       localStorage.set(key, val)
+//       if (localStorage.get(key) !== val) {
+//         supported = false
+//       }
+//       localStorage.remove(key)
+//     } catch (err) {
+//       supported = false
+//     }
+//     return supported
+//   }
+// }
+
+// export var sessionStorage = {
+//   isSupport: function () {
+//     var supported = true
+
 //     var key = '__sensorsdatasupport__'
 //     var val = 'testIsSupportStorage'
 //     try {
-//       if (sessionStorage && sessionStorage.setItem) {
-//         sessionStorage.setItem(key, val)
-//         sessionStorage.removeItem(key, val)
+//       if (window.sessionStorage && window.sessionStorage.setItem) {
+//         window.sessionStorage.setItem(key, val)
+//         window.sessionStorage.removeItem(key, val)
 //         supported = true
 //       } else {
 //         supported = false
@@ -914,6 +1160,7 @@ function elementMatches(element, selector) {
 //     return supported
 //   }
 // }
+
 // export var isSupportCors = function () {
 //   if (typeof window.XMLHttpRequest === 'undefined') {
 //     return false
@@ -926,6 +1173,7 @@ function elementMatches(element, selector) {
 //     return false
 //   }
 // }
+
 var xhr = function (cors) {
   if (cors) {
     if (typeof window.XMLHttpRequest !== 'undefined' && 'withCredentials' in new XMLHttpRequest()) {
@@ -1030,50 +1278,58 @@ var ajax = function (para) {
   } catch (e) {}
   g.send(para.data || null);
 };
-var loadScript = function (para) {
-  para = extend({
-    success: function () {},
-    error: function () {},
-    appendCall: function (g) {
-      document.getElementsByTagName('head')[0].appendChild(g);
-    }
-  }, para);
-  var g = null;
-  if (para.type === 'css') {
-    g = document.createElement('link');
-    g.rel = 'stylesheet';
-    g.href = para.url;
-  }
-  if (para.type === 'js') {
-    g = document.createElement('script');
-    g.async = 'async';
-    g.setAttribute('charset', 'UTF-8');
-    g.src = para.url;
-    g.type = 'text/javascript';
-  }
-  g.onload = g.onreadystatechange = function () {
-    if (!this.readyState || this.readyState === 'loaded' || this.readyState === 'complete') {
-      para.success();
-      g.onload = g.onreadystatechange = null;
-    }
-  };
-  g.onerror = function () {
-    para.error();
-    g.onerror = null;
-  };
-  para.appendCall(g);
-};
+// export var loadScript = function (para) {
+//   para = extend(
+//     {
+//       success: function () {},
+//       error: function () {},
+//       appendCall: function (g) {
+//         document.getElementsByTagName('head')[0].appendChild(g)
+//       }
+//     },
+//     para
+//   )
+
+//   var g = null
+//   if (para.type === 'css') {
+//     g = document.createElement('link')
+//     g.rel = 'stylesheet'
+//     g.href = para.url
+//   }
+//   if (para.type === 'js') {
+//     g = document.createElement('script')
+//     g.async = 'async'
+//     g.setAttribute('charset', 'UTF-8')
+//     g.src = para.url
+//     g.type = 'text/javascript'
+//   }
+//   g.onload = g.onreadystatechange = function () {
+//     if (
+//       !this.readyState ||
+//       this.readyState === 'loaded' ||
+//       this.readyState === 'complete'
+//     ) {
+//       para.success()
+//       g.onload = g.onreadystatechange = null
+//     }
+//   }
+//   g.onerror = function () {
+//     para.error()
+//     g.onerror = null
+//   }
+//   para.appendCall(g)
+// }
 var getHostname = function (url, defaultValue) {
   if (!defaultValue || typeof defaultValue !== 'string') {
-    defaultValue = 'hostname expception!';
+    defaultValue = 'hostname解析异常';
   }
   var hostname = null;
   try {
-    hostname = URL(url).hostname;
+    hostname = new URL(url).hostname;
   } catch (e) {}
   return hostname || defaultValue;
 };
-var getQueryParamsFromUrl = function (url) {
+var tools_getQueryParamsFromUrl = function (url) {
   var result = {};
   var arr = url.split('?');
   var queryString = arr[1] || '';
@@ -1128,7 +1384,7 @@ function createCircularReferenceChecker() {
 /**
  * Similar to `typeof`, but distinguish plain objects from `null` and arrays
  */
-function getType(value) {
+function tools_getType(value) {
   if (value === null) {
     return 'null';
   }
@@ -1170,7 +1426,7 @@ function mergeInto(destination, source, circularReferenceChecker) {
     }
     return merged;
   }
-  var merged = getType(destination) === 'object' ? destination : {};
+  var merged = tools_getType(destination) === 'object' ? destination : {};
   for (var key in source) {
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       merged[key] = mergeInto(merged[key], source[key], circularReferenceChecker);
@@ -1191,9 +1447,9 @@ function deepClone(value) {
 var getCurrentDomain = function (url) {
   var cookieTopLevelDomain = getCookieTopLevelDomain();
   if (url === '') {
-    return 'URL parsing failed';
+    return 'url解析失败';
   } else if (cookieTopLevelDomain === '') {
-    return 'URL parsing failed';
+    return 'url解析失败';
   } else {
     return cookieTopLevelDomain;
   }
@@ -1254,30 +1510,50 @@ var autoExeQueue = function () {
   };
   return queue;
 };
-var strip_sa_properties = function (p) {
-  if (!isObject(p)) {
-    return p;
-  }
-  each(p, function (v, k) {
-    if (isArray(v)) {
-      var temp = [];
-      each(v, function (arrv) {
-        if (isString(arrv)) {
-          temp.push(arrv);
-        } else {}
-      });
-      if (temp.length !== 0) {
-        p[k] = temp;
-      } else {
-        delete p[k];
-      }
-    }
-    if (!(isString(v) || isNumber(v) || isDate(v) || isBoolean(v) || isArray(v) || isFunction(v) || k === '$option')) {
-      delete p[k];
-    }
-  });
-  return p;
-};
+// export var strip_sa_properties = function (p) {
+//   if (!isObject(p)) {
+//     return p
+//   }
+//   each(p, function (v, k) {
+//     if (isArray(v)) {
+//       var temp = []
+//       each(v, function (arrv) {
+//         if (isString(arrv)) {
+//           temp.push(arrv)
+//         } else {
+//           console.log(
+//             '您的数据-',
+//             k,
+//             v,
+//             '的数组里的值必须是字符串,已经将其删除'
+//           )
+//         }
+//       })
+//       if (temp.length !== 0) {
+//         p[k] = temp
+//       } else {
+//         delete p[k]
+//         console.log('已经删除空的数组')
+//       }
+//     }
+//     if (
+//       !(
+//         isString(v) ||
+//         isNumber(v) ||
+//         isDate(v) ||
+//         isBoolean(v) ||
+//         isArray(v) ||
+//         isFunction(v) ||
+//         k === '$option'
+//       )
+//     ) {
+//       console.log('您的数据-', k, v, '-格式不满足要求，我们已经将其删除')
+//       delete p[k]
+//     }
+//   })
+//   return p
+// }
+
 var searchConfigData = function (data) {
   if (typeof data === 'object' && data.$option) {
     var data_config = data.$option;
@@ -1287,7 +1563,7 @@ var searchConfigData = function (data) {
     return {};
   }
 };
-
+// 从字符串 src 中查找 k+sp 和  e 之间的字符串，如果 k==e 且 k 只有一个，或者 e 不存在，从 k+sp 截取到字符串结束
 // abcd=1&b=1&c=3;
 // abdc=1;b=1;a=3;
 var stringSplice = function (src, k, e, sp) {
@@ -1311,6 +1587,7 @@ function getStatusGroup(status) {
 var getReferrer = function () {
   var ref = document.referrer.toLowerCase();
   var re = /^[^\?&#]*.swf([\?#])?/;
+  // 如果页面 Referer 为空，从 URL 中获取
   if (ref === '' || ref.match(re)) {
     ref = stringSplice(window.location.href, 'ref', '&', '');
     if (ref !== '') {
@@ -1347,12 +1624,12 @@ function msToNs(duration) {
 }
 function mapValues(object, fn) {
   var newObject = {};
-  each(object, function (value, key) {
+  tools_each(object, function (value, key) {
     newObject[key] = fn(value);
   });
   return newObject;
 }
-function toServerDuration(duration) {
+function tools_toServerDuration(duration) {
   if (!isNumber(duration)) {
     return duration;
   }
@@ -1432,7 +1709,7 @@ function getCorrectedTimeStamp(relativeTime) {
 var navigationStart;
 function getNavigationStart() {
   if (navigationStart === undefined) {
-    navigationStart = performance.timing.navigationStart;
+    navigationStart = computeNavigationStart(performance, dateNow());
   }
   return navigationStart;
 }
@@ -1452,7 +1729,7 @@ function findCommaSeparatedValue(rawString, name) {
   }
 }
 function tools_findCommaSeparatedValues(rawString) {
-  var result = new Map();
+  var result = new SDKMap();
   COMMA_SEPARATED_KEY_VALUE.lastIndex = 0;
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -1486,7 +1763,7 @@ function safeTruncate(candidate, length) {
   return candidate.slice(0, length);
 }
 function isMatchOption(item) {
-  const itemType = getType(item);
+  const itemType = tools_getType(item);
   return itemType === 'string' || itemType === 'function' || item instanceof RegExp;
 }
 function includes(candidate, search) {
@@ -1502,7 +1779,7 @@ function find(array, predicate) {
   }
   return undefined;
 }
-function arrayFrom(arrayLike) {
+function tools_arrayFrom(arrayLike) {
   if (Array.from) {
     return Array.from(arrayLike);
   }
@@ -1587,7 +1864,7 @@ function tools_getLinkElementOrigin(element) {
 }
 function withSnakeCaseKeys(candidate) {
   var result = {};
-  each(candidate, function (value, key) {
+  tools_each(candidate, function (value, key) {
     result[toSnakeCase(key)] = deepSnakeCase(value);
   });
   return result;
@@ -1631,7 +1908,7 @@ function removeDuplicates(array) {
   array.forEach(function (item) {
     set.add(item);
   });
-  return arrayFrom(set);
+  return tools_arrayFrom(set);
 }
 function removeItem(array, item) {
   var index = array.indexOf(item);
@@ -1704,7 +1981,7 @@ function createValueHistory(params) {
   var expireDelay = params.expireDelay;
   var maxEntries = params.maxEntries;
   var entries = [];
-  if (cleanupHistoriesInterval) {
+  if (cleanupHistoriesInterval === null) {
     cleanupHistoriesInterval = timer_setInterval(function () {
       return clearExpiredValues();
     }, CLEAR_OLD_VALUES_INTERVAL);
@@ -1802,12 +2079,47 @@ function createValueHistory(params) {
 }
 ;// CONCATENATED MODULE: ../core/esm/helper/deviceInfo.js
 
+function getBrowserWindow() {
+  return typeof window !== 'undefined' ? window : undefined;
+}
+function getNavigator() {
+  const browserWindow = getBrowserWindow();
+  return browserWindow && typeof browserWindow.navigator !== 'undefined' ? browserWindow.navigator : {};
+}
+function getUserAgent() {
+  return getNavigator().userAgent || '';
+}
+var HIGH_ENTROPY_VALUES_TIMEOUT = 100;
+function applyWindowsPlatformVersion(deviceInfo, platformVersion) {
+  if (typeof platformVersion !== 'string') {
+    return;
+  }
+  var majorPlatformVersionString = platformVersion.split('.')[0];
+  if (!/^\d+$/.test(majorPlatformVersionString)) {
+    return;
+  }
+  var majorPlatformVersion = parseInt(majorPlatformVersionString, 10);
+  if (majorPlatformVersion >= 13) {
+    deviceInfo.osVersion = '11';
+    deviceInfo.osVersionMajor = '11';
+  }
+}
+function getTarget(target, context) {
+  return target || context || {};
+}
 var VariableLibrary = {
-  navigator: typeof window !== 'undefined' && typeof window.navigator != 'undefined' ? window.navigator : {}
+  get navigator() {
+    return getNavigator();
+  }
 };
+// 方法库
 var MethodLibrary = {
   getNetwork: monitor(function () {
-    var connection = window.navigator.connection || window.navigator.mozConnection || window.navigator.webkitConnection;
+    var browserWindow = getBrowserWindow();
+    if (!browserWindow || !browserWindow.navigator) {
+      return 'unknown';
+    }
+    var connection = browserWindow.navigator.connection || browserWindow.navigator.mozConnection || browserWindow.navigator.webkitConnection;
     var result = 'unknown';
     var type = connection ? connection.type || connection.effectiveType : null;
     if (type && typeof type === 'string') {
@@ -1844,10 +2156,11 @@ var MethodLibrary = {
     }
     return result;
   }),
-  getLanguage: monitor(function () {
-    var _this = this;
+  getLanguage: monitor(function (target) {
+    var _this = getTarget(target, this);
     _this.language = function () {
-      var language = VariableLibrary.navigator.browserLanguage || VariableLibrary.navigator.language || '';
+      var navigator = getNavigator();
+      var language = navigator.browserLanguage || navigator.language || '';
       var arr = language.split('-');
       if (arr[1]) {
         arr[1] = arr[1].toUpperCase();
@@ -1865,16 +2178,19 @@ var MethodLibrary = {
     }
   })
 };
-var _deviceInfo = {};
-if (typeof window !== 'undefined') {
-  _deviceInfo = {
-    screenSize: window.screen.width + '*' + window.screen.height,
+function getDeviceInfo() {
+  return {
+    screenSize: screen.width + '*' + screen.height,
     networkType: MethodLibrary.getNetwork(),
-    userAgent: VariableLibrary.navigator.userAgent || '',
-    timeZone: MethodLibrary.getTimeZone()
+    timeZone: MethodLibrary.getTimeZone(),
+    userAgent: getUserAgent()
   };
 }
-var deviceInfo = _deviceInfo;
+function getDeviceInfoWithHighEntropyValues(callback) {
+  const currentDeviceInfo = getDeviceInfo();
+  callback(currentDeviceInfo);
+}
+var deviceInfo = getDeviceInfo();
 ;// CONCATENATED MODULE: ../core/esm/helper/enums.js
 var DOM_EVENT = {
   BEFORE_UNLOAD: 'beforeunload',
@@ -1888,6 +2204,7 @@ var DOM_EVENT = {
   TOUCH_END: 'touchend',
   TOUCH_MOVE: 'touchmove',
   VISIBILITY_CHANGE: 'visibilitychange',
+  PRERENDERING_CHANGE: 'prerenderingchange',
   PAGE_SHOW: 'pageshow',
   FREEZE: 'freeze',
   RESUME: 'resume',
@@ -1912,7 +2229,7 @@ var DOM_EVENT = {
   SELECTION_CHANGE: 'selectionchange',
   STORAGE: 'storage'
 };
-var ResourceType = {
+var enums_ResourceType = {
   DOCUMENT: 'document',
   XHR: 'xhr',
   BEACON: 'beacon',
@@ -1922,8 +2239,12 @@ var ResourceType = {
   IMAGE: 'image',
   FONT: 'font',
   MEDIA: 'media',
+  WEBSOCKET: 'websocket',
   OTHER: 'other',
   CUSTOM: 'custom'
+};
+var ExperimentalFeature = {
+  TRACK_WEBSOCKETS: 'track_websockets'
 };
 var ActionType = {
   CLICK: 'click',
@@ -1934,7 +2255,7 @@ var FrustrationType = {
   ERROR_CLICK: 'error_click',
   DEAD_CLICK: 'dead_click'
 };
-var RumEventType = {
+var enums_RumEventType = {
   ACTION: 'action',
   ERROR: 'error',
   LONG_TASK: 'long_task',
@@ -1951,8 +2272,8 @@ var ViewLoadingType = {
   ROUTE_CHANGE: 'route_change'
 };
 var RequestType = {
-  FETCH: ResourceType.FETCH,
-  XHR: ResourceType.XHR
+  FETCH: enums_ResourceType.FETCH,
+  XHR: enums_ResourceType.XHR
 };
 var TraceType = {
   DDTRACE: 'ddtrace',
@@ -1963,7 +2284,7 @@ var TraceType = {
   SKYWALKING_V3: 'skywalking_v3',
   JAEGER: 'jaeger'
 };
-var enums_ErrorHandling = {
+var ErrorHandling = {
   HANDLED: 'handled',
   UNHANDLED: 'unhandled'
 };
@@ -2030,7 +2351,7 @@ function computeStackTrace(ex) {
     stackProperty = stackProperty.slice(exString.length);
   }
   if (stackProperty) {
-    each(stackProperty.split('\n'), function (line) {
+    tools_each(stackProperty.split('\n'), function (line) {
       var stackFrame = parseChromeLine(line) || parseChromeAnonymousLine(line) || parseWinLine(line) || parseGeckoLine(line);
       if (stackFrame) {
         if (!stackFrame.func && stackFrame.line) {
@@ -2194,6 +2515,16 @@ function instrumentOnError(callback) {
     var stackTrace;
     if (errorObj instanceof Error) {
       stackTrace = computeStackTrace(errorObj);
+      // Script parse errors can have a message-only stack while onerror still
+      // provides the source location separately.
+      if (stackTrace.stack.length === 0 && url && line > 0) {
+        stackTrace.stack.push({
+          func: '?',
+          url: url,
+          line: line,
+          column: column > 0 ? column : undefined
+        });
+      }
     } else {
       var location = {
         url: url,
@@ -2492,7 +2823,7 @@ function warnOverCharacterLimit(maxCharacterCount, changeType, source) {
 
 
 var NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error';
-var errorTools_ErrorSource = {
+var ErrorSource = {
   AGENT: 'agent',
   CONSOLE: 'console',
   NETWORK: 'network',
@@ -2509,21 +2840,22 @@ function computeRawError(data) {
   var nonErrorPrefix = data.nonErrorPrefix;
   var source = data.source;
   var handling = data.handling;
-  var isErrorInstance = originalError instanceof Error;
+  var useFallbackStack = data.useFallbackStack === undefined ? true : data.useFallbackStack;
+  var isErrorInstance = isError(originalError);
+  if (!stackTrace && isErrorInstance) {
+    stackTrace = computeStackTrace(originalError);
+  }
   var message = computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError);
-  var stack = hasUsableStack(isErrorInstance, stackTrace) ? toStackTraceString(stackTrace) : NO_ERROR_STACK_PRESENT_MESSAGE;
-  var causes = isErrorInstance ? flattenErrorCauses(originalError, source) : undefined;
-  var type = stackTrace && stackTrace.name;
   return {
     startClocks: startClocks,
     source: source,
     handling: handling,
     originalError: originalError,
     message: message,
-    stack: stack,
+    stack: stackTrace ? toStackTraceString(stackTrace) : useFallbackStack ? NO_ERROR_STACK_PRESENT_MESSAGE : undefined,
     handlingStack: handlingStack,
-    type: type,
-    causes: causes
+    type: stackTrace ? stackTrace.name : undefined,
+    causes: isErrorInstance ? flattenErrorCauses(originalError, source) : undefined
   };
 }
 function computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError) {
@@ -2565,7 +2897,7 @@ function formatUnknownError(stackTrace, errorObject, nonErrorPrefix, handlingSta
  - Has to be called at the utmost position of the call stack.
  - No internal monitoring should encapsulate the function, that is why we need to use callMonitored inside of it.
  */
-function createHandlingStack() {
+function errorTools_createHandlingStack() {
   /**
    * Skip the two internal frames:
    * - SDK API (console.error, ...)
@@ -2584,7 +2916,7 @@ function createHandlingStack() {
       tools_noop();
     }
   }
-  callMonitored(function () {
+  monitor_callMonitored(function () {
     var stackTrace = computeStackTrace(error);
     stackTrace.stack = stackTrace.stack.slice(internalFramesToSkip);
     formattedStack = toStackTraceString(stackTrace);
@@ -2593,7 +2925,7 @@ function createHandlingStack() {
 }
 function toStackTraceString(stack) {
   var result = formatErrorMessage(stack);
-  each(stack.stack, function (frame) {
+  tools_each(stack.stack, function (frame) {
     var func = frame.func === '?' ? '<anonymous>' : frame.func;
     var args = frame.args && frame.args.length > 0 ? '(' + frame.args.join(', ') + ')' : '';
     var line = frame.line ? ':' + frame.line : '';
@@ -2624,6 +2956,9 @@ function flattenErrorCauses(error, parentSource) {
   }
   return causes.length ? causes : undefined;
 }
+function isError(error) {
+  return error instanceof Error || Object.prototype.toString.call(error) === '[object Error]';
+}
 ;// CONCATENATED MODULE: ../core/esm/helper/instrumentMethod.js
 
 
@@ -2647,19 +2982,19 @@ function instrumentMethod(targetPrototype, method, onPreCall, opts) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       return original.apply(this, arguments);
     }
-    var parameters = arrayFrom(arguments);
+    var parameters = tools_arrayFrom(arguments);
     var postCallCallback;
-    callMonitored(onPreCall, null, [{
+    monitor_callMonitored(onPreCall, null, [{
       target: this,
       parameters: parameters,
       onPostCall: function (callback) {
         postCallCallback = callback;
       },
-      handlingStack: computeHandlingStack ? createHandlingStack() : undefined
+      handlingStack: computeHandlingStack ? errorTools_createHandlingStack() : undefined
     }]);
     var result = original.apply(this, parameters);
     if (postCallCallback) {
-      callMonitored(postCallCallback, null, [result]);
+      monitor_callMonitored(postCallCallback, null, [result]);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -2673,6 +3008,87 @@ function instrumentMethod(targetPrototype, method, onPreCall, opts) {
       if (targetPrototype[method] === instrumentation) {
         targetPrototype[method] = original;
       }
+    }
+  };
+}
+function instrumentConstructor(container, constructor, onPreCall, opts) {
+  var computeHandlingStack = opts && opts.computeHandlingStack;
+  var original = container[constructor];
+  if (typeof original !== 'function') {
+    return {
+      stop: noop
+    };
+  }
+  var stopped = false;
+  var instrumentation = function () {
+    if (!new.target) {
+      return original.apply(this, arrayFrom(arguments));
+    }
+    var newTarget = new.target === instrumentation ? original : new.target;
+    if (stopped) {
+      return construct(original, arrayFrom(arguments), newTarget);
+    }
+    var parameters = arrayFrom(arguments);
+    var postCallCallback;
+    callMonitored(onPreCall, null, [{
+      parameters: parameters,
+      onPostCall: function (callback) {
+        postCallCallback = callback;
+      },
+      handlingStack: computeHandlingStack ? createHandlingStack() : undefined
+    }]);
+    var result = construct(original, parameters, newTarget);
+    if (postCallCallback) {
+      callMonitored(postCallCallback, null, [result]);
+    }
+    return result;
+  };
+  var restorePrototypeConstructor = preserveConstructorShape(instrumentation, original);
+  container[constructor] = instrumentation;
+  return {
+    stop: function () {
+      stopped = true;
+      restorePrototypeConstructor();
+      if (container[constructor] === instrumentation) {
+        container[constructor] = original;
+      }
+    }
+  };
+}
+function construct(original, parameters, newTarget) {
+  if (typeof Reflect !== 'undefined' && typeof Reflect.construct === 'function') {
+    return Reflect.construct(original, parameters, newTarget);
+  }
+  var BoundConstructor = Function.prototype.bind.apply(original, [null].concat(parameters));
+  var result = new BoundConstructor();
+  if (newTarget !== original && newTarget.prototype) {
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(result, newTarget.prototype);
+    } else if ('__proto__' in result) {
+      result.__proto__ = newTarget.prototype;
+    }
+  }
+  return result;
+}
+function preserveConstructorShape(instrumentation, original) {
+  var propertyKeys = Object.getOwnPropertyNames(original);
+  if (Object.getOwnPropertySymbols) {
+    propertyKeys = propertyKeys.concat(Object.getOwnPropertySymbols(original));
+  }
+  propertyKeys.forEach(function (key) {
+    Object.defineProperty(instrumentation, key, Object.getOwnPropertyDescriptor(original, key));
+  });
+  if (!original.prototype) {
+    return noop;
+  }
+  var originalConstructorDescriptor = Object.getOwnPropertyDescriptor(original.prototype, 'constructor');
+  Object.defineProperty(original.prototype, 'constructor', assign({}, originalConstructorDescriptor, {
+    value: instrumentation
+  }));
+  return function () {
+    var currentDescriptor = Object.getOwnPropertyDescriptor(original.prototype, 'constructor');
+    if (currentDescriptor && currentDescriptor.value === instrumentation) {
+      Object.defineProperty(original.prototype, 'constructor', originalConstructorDescriptor);
     }
   };
 }
@@ -2720,8 +3136,8 @@ function trackRuntimeError(errorObservable) {
       originalError: originalError,
       startClocks: clocksNow(),
       nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
-      source: errorTools_ErrorSource.SOURCE,
-      handling: enums_ErrorHandling.UNHANDLED
+      source: ErrorSource.SOURCE,
+      handling: ErrorHandling.UNHANDLED
     }));
   });
 }
@@ -2751,7 +3167,7 @@ _Observable.prototype = {
     };
   },
   notify: function (data) {
-    each(this.observers, function (observer) {
+    tools_each(this.observers, function (observer) {
       observer(data);
     });
   }
@@ -2766,13 +3182,14 @@ function mergeObservables() {
       });
     });
     return function () {
-      return each(subscriptions, function (subscription) {
+      return tools_each(subscriptions, function (subscription) {
         return subscription.unsubscribe();
       });
     };
   });
 }
 ;// CONCATENATED MODULE: ../core/esm/console/consoleObservable.js
+
 
 
 
@@ -2802,8 +3219,8 @@ function createConsoleObservable(api) {
     console[api] = function () {
       var params = [].slice.call(arguments);
       originalConsoleApi.apply(console, arguments);
-      var handlingStack = createHandlingStack();
-      callMonitored(function () {
+      var handlingStack = errorTools_createHandlingStack();
+      monitor_callMonitored(function () {
         observable.notify(buildConsoleLog(params, api, handlingStack));
       });
     };
@@ -2816,36 +3233,41 @@ function buildConsoleLog(params, api, handlingStack) {
   var message = tools_map(params, function (param) {
     return formatConsoleParameters(param);
   }).join(' ');
-  var error;
   if (api === ConsoleApiName.error) {
-    var firstErrorParam = find(params, function (param) {
-      return param instanceof Error;
-    });
-    error = {
-      stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
-      causes: firstErrorParam ? flattenErrorCauses(firstErrorParam, 'console') : undefined,
+    var firstErrorParam = find(params, isError);
+    const rawError = computeRawError({
+      originalError: firstErrorParam,
       startClocks: clocksNow(),
       message: message,
-      source: errorTools_ErrorSource.CONSOLE,
-      handling: enums_ErrorHandling.HANDLED,
+      source: ErrorSource.CONSOLE,
+      handling: ErrorHandling.HANDLED,
+      handlingStack: handlingStack,
+      nonErrorPrefix: NonErrorPrefix.PROVIDED,
+      useFallbackStack: false
+    });
+    rawError.message = message;
+    return {
+      api: api,
+      message: message,
+      error: rawError,
       handlingStack: handlingStack
     };
   }
   return {
     api: api,
     message: message,
-    error: error,
+    error: undefined,
     handlingStack: handlingStack
   };
 }
 function formatConsoleParameters(param) {
   if (typeof param === 'string') {
-    return param;
+    return sanitize(param);
   }
-  if (param instanceof Error) {
+  if (isError(param)) {
     return formatErrorMessage(computeStackTrace(param));
   }
-  return jsonStringify_jsonStringify(param, undefined, 2);
+  return jsonStringify_jsonStringify(sanitize(param), undefined, 2);
 }
 ;// CONCATENATED MODULE: ../core/esm/browser/addEventListener.js
 
@@ -2891,13 +3313,13 @@ function addEventListeners(eventTarget, eventNames, listener, options) {
   //   eventNames.forEach((eventName) => {
   //     add.call(eventTarget, eventName, wrappedListener, options)
   //   })
-  each(eventNames, function (eventName) {
+  tools_each(eventNames, function (eventName) {
     withOriginalOrZoneJsPatchedMethod(eventTarget, 'addEventListener', method => method.call(eventTarget, eventName, wrappedListener, options));
     // add.call(eventTarget, eventName, wrappedListener, options)
   });
   var stop = function () {
     // var remove = getZoneJsOriginalValue(listenerTarget, 'removeEventListener')
-    each(eventNames, function (eventName) {
+    tools_each(eventNames, function (eventName) {
       withOriginalOrZoneJsPatchedMethod(eventTarget, 'removeEventListener', method => method.call(eventTarget, eventName, wrappedListener, options));
       //   remove.call(eventTarget, eventName, wrappedListener, options)
     });
@@ -2915,7 +3337,7 @@ function isIllegalInvocationError(error, methodName) {
   error.message.includes("'".concat(methodName, "' called on an object that does not implement interface EventTarget.")) ||
   // firefox
   error.message.includes("Can only call EventTarget.".concat(methodName, " on instances of EventTarget")) // safari
-  ;
+;
 }
 function withOriginalOrZoneJsPatchedMethod(eventTarget, methodName, cb) {
   // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
@@ -2933,6 +3355,8 @@ function withOriginalOrZoneJsPatchedMethod(eventTarget, methodName, cb) {
   }
 }
 ;// CONCATENATED MODULE: ../core/esm/report/reportObservable.js
+
+
 
 
 
@@ -2963,7 +3387,7 @@ function createReportObservable(reportTypes) {
       return;
     }
     var handleReports = monitor(function (reports) {
-      each(reports, function (report) {
+      tools_each(reports, function (report) {
         observable.notify(buildRawReportErrorFromReport(report));
       });
     });
@@ -3037,12 +3461,16 @@ var LifeCycleEventType = {
   VIEW_ENDED: 'VIEW_ENDED',
   AFTER_VIEW_ENDED: 'AFTER_VIEW_ENDED',
   SESSION_RENEWED: 'SESSION_RENEWED',
+  SESSION_FORCED: 'SESSION_FORCED',
   SESSION_EXPIRED: 'SESSION_EXPIRED',
   PAGE_EXITED: 'PAGE_EXITED',
   REQUEST_STARTED: 'REQUEST_STARTED',
   REQUEST_COMPLETED: 'REQUEST_COMPLETED',
+  WEBSOCKET_COMPLETED: 'WEBSOCKET_COMPLETED',
   RAW_RUM_EVENT_COLLECTED: 'RAW_RUM_EVENT_COLLECTED',
   RUM_EVENT_COLLECTED: 'RUM_EVENT_COLLECTED',
+  RUM_VIEW_FIRST_COLLECTED: 'RUM_VIEW_FIRST_COLLECTED',
+  RUM_VIEW_FORCED_COLLECTED: 'RUM_VIEW_FORCED_COLLECTED',
   RAW_ERROR_COLLECTED: 'RAW_ERROR_COLLECTED',
   RAW_LOG_COLLECTED: 'RAW_LOG_COLLECTED',
   LOG_COLLECTED: 'LOG_COLLECTED'
@@ -3054,7 +3482,7 @@ LifeCycle.prototype = {
   notify: function (eventType, data) {
     var eventCallbacks = this.callbacks[eventType];
     if (eventCallbacks) {
-      each(eventCallbacks, function (callback) {
+      tools_each(eventCallbacks, function (callback) {
         callback(data);
       });
     }
@@ -3080,17 +3508,15 @@ LifeCycle.prototype = {
 function limitModification(object, modifiableFieldPaths, modifier) {
   const clone = deepClone(object);
   const result = modifier(clone);
-  objectEntries(modifiableFieldPaths).forEach(_ref => {
-    let [fieldPath, fieldType] = _ref;
-    return (
-      // Traverse both object and clone simultaneously up to the path and apply the modification from the clone to the original object when the type is valid
-      setValueAtPath(object, clone, fieldPath.split(/\.|(?=\[\])/), fieldType)
-    );
+  objectEntries(modifiableFieldPaths).forEach(function (fieldEntry) {
+    // Traverse both object and clone simultaneously up to the path and apply the modification from the clone to the original object when the type is valid
+    setValueAtPath(object, clone, fieldEntry[0].split(/\.|(?=\[\])/), fieldEntry[1]);
   });
   return result;
 }
 function setValueAtPath(object, clone, pathSegments, fieldType) {
-  const [field, ...restPathSegments] = pathSegments;
+  const field = pathSegments[0];
+  const restPathSegments = pathSegments.slice(1);
   if (field === '[]') {
     if (Array.isArray(object) && Array.isArray(clone)) {
       object.forEach((item, i) => setValueAtPath(item, clone[i], restPathSegments, fieldType));
@@ -3106,7 +3532,7 @@ function setValueAtPath(object, clone, pathSegments, fieldType) {
   setNestedValue(object, field, clone[field], fieldType);
 }
 function setNestedValue(object, field, value, fieldType) {
-  const newType = getType(value);
+  const newType = tools_getType(value);
   if (newType === fieldType) {
     object[field] = sanitize(value);
   } else if (fieldType === 'object' && (newType === 'undefined' || newType === 'null')) {
@@ -3114,7 +3540,7 @@ function setNestedValue(object, field, value, fieldType) {
   }
 }
 function isValidObject(object) {
-  return getType(object) === 'object';
+  return tools_getType(object) === 'object';
 }
 ;// CONCATENATED MODULE: ../core/esm/helper/createEventRateLimiter.js
 
@@ -3140,7 +3566,7 @@ function createEventRateLimiter(eventType, limit, onLimitReached) {
         try {
           onLimitReached({
             message: 'Reached max number of ' + eventType + 's by minute: ' + limit,
-            source: errorTools_ErrorSource.AGENT,
+            source: ErrorSource.AGENT,
             startClocks: clocksNow()
           });
         } finally {
@@ -3263,7 +3689,7 @@ function readBytesFromStream(stream, callback, options) {
         // else, we need to copy buffers into a larger buffer to concatenate them.
         completeBuffer = new Uint8Array(readBytesCount);
         var offset = 0;
-        each(chunks, function (chunk) {
+        tools_each(chunks, function (chunk) {
           completeBuffer.set(chunk, offset);
           offset += chunk.length;
         });
@@ -3378,6 +3804,7 @@ function getEndPointUrl(configuration, type) {
   if (!subUrl) return '';
   var url = configuration.datakitOrigin || configuration.datakitUrl || configuration.site;
   if (url.indexOf('/') === 0) {
+    // 绝对路径这种 /xxx
     url = location.origin + trim(url);
   }
   var endpoint = url;
@@ -3429,6 +3856,7 @@ function isIntakeRequest(url, configuration) {
   if (configuration.sessionReplayEndPoint) {
     notTakeRequest.push(configuration.sessionReplayEndPoint);
   }
+  // datakit 地址，log 地址，以及客户自定义过滤方法定义url
   return some(notTakeRequest, function (takeUrl) {
     return url.indexOf(takeUrl) === 0;
   }) || configuration.isIntakeUrl(url);
@@ -3475,7 +3903,7 @@ function areCookiesAuthorized(options) {
   try {
     // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
     // the test cookie lifetime
-    var testCookieName = "gc_cookie_test_".concat(UUID());
+    var testCookieName = "gc_cookie_test_".concat(tools_UUID());
     var testCookieValue = 'test';
     setCookie(testCookieName, testCookieValue, ONE_MINUTE, options);
     const isCookieCorrectlySet = cookie_getCookie(testCookieName, options) === testCookieValue;
@@ -3496,7 +3924,7 @@ function getCurrentSite() {
   if (getCurrentSiteCache === undefined) {
     // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
     // the test cookie lifetime
-    const testCookieName = "gc_site_test_".concat(UUID());
+    const testCookieName = "gc_site_test_".concat(tools_UUID());
     const testCookieValue = 'test';
     const domainLevels = window.location.hostname.split('.');
     let candidateDomain = domainLevels.pop();
@@ -3545,6 +3973,15 @@ function isSessionStarted(session) {
 function isSessionInExpiredState(session) {
   return session.isExpired !== undefined || !isActiveSession(session);
 }
+function getSessionExpirationTime(sessionState) {
+  if (sessionState.isExpired !== undefined || isActiveSession(sessionState)) {
+    return undefined;
+  }
+  const sessionTimeOutTime = sessionState.created === undefined ? Infinity : Number(sessionState.created) + SESSION_TIME_OUT_DELAY;
+  const inactivityExpirationTime = sessionState.expire === undefined ? Infinity : Number(sessionState.expire);
+  const sessionExpirationTime = Math.min(sessionTimeOutTime, inactivityExpirationTime);
+  return isNumber(sessionExpirationTime) ? sessionExpirationTime : undefined;
+}
 function isActiveSession(sessionState) {
   return (sessionState.created === undefined || dateNow() - Number(sessionState.created) < SESSION_TIME_OUT_DELAY) && (sessionState.expire === undefined || dateNow() < Number(sessionState.expire));
 }
@@ -3562,7 +3999,8 @@ function toSessionState(sessionString) {
     sessionString.split(SESSION_ENTRY_SEPARATOR).forEach(function (entry) {
       const matches = SESSION_ENTRY_REGEXP.exec(entry);
       if (matches !== null) {
-        const [, key, value] = matches;
+        const key = matches[1];
+        const value = matches[2];
         session[key] = value;
       }
     });
@@ -3630,7 +4068,7 @@ function buildCookieOptions(initConfiguration) {
 const LOCAL_STORAGE_TEST_KEY = '_gc_test_';
 function selectLocalStorageStrategy() {
   try {
-    const id = UUID();
+    const id = tools_UUID();
     const testKey = "".concat(LOCAL_STORAGE_TEST_KEY).concat(id);
     localStorage.setItem(testKey, id);
     const retrievedId = localStorage.getItem(testKey);
@@ -3660,34 +4098,7 @@ function retrieveSessionFromLocalStorage() {
 function expireSessionFromLocalStorage() {
   persistInLocalStorage(getExpiredSessionState());
 }
-;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js
-function _objectWithoutPropertiesLoose(r, e) {
-  if (null == r) return {};
-  var t = {};
-  for (var n in r) if ({}.hasOwnProperty.call(r, n)) {
-    if (-1 !== e.indexOf(n)) continue;
-    t[n] = r[n];
-  }
-  return t;
-}
-
-;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/objectWithoutProperties.js
-
-function _objectWithoutProperties(e, t) {
-  if (null == e) return {};
-  var o,
-    r,
-    i = _objectWithoutPropertiesLoose(e, t);
-  if (Object.getOwnPropertySymbols) {
-    var n = Object.getOwnPropertySymbols(e);
-    for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]);
-  }
-  return i;
-}
-
 ;// CONCATENATED MODULE: ../core/esm/session/sessionStoreOperations.js
-
-const _excluded = ["lock"];
 
 
 
@@ -3703,22 +4114,19 @@ const bufferedOperations = [];
 let ongoingOperations;
 function processSessionStoreOperations(operations, sessionStoreStrategy) {
   let numberOfRetries = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-  const {
-    isLockEnabled,
-    persistSession,
-    expireSession
-  } = sessionStoreStrategy;
+  const isLockEnabled = sessionStoreStrategy.isLockEnabled,
+    persistSession = sessionStoreStrategy.persistSession,
+    expireSession = sessionStoreStrategy.expireSession;
   const persistWithLock = function (session) {
     return persistSession(tools_assign({}, session, {
       lock: currentLock
     }));
   };
   const retrieveStore = function () {
-    const _sessionStoreStrategy = sessionStoreStrategy.retrieveSession(),
-      {
-        lock
-      } = _sessionStoreStrategy,
-      session = _objectWithoutProperties(_sessionStoreStrategy, _excluded);
+    const storedSession = sessionStoreStrategy.retrieveSession();
+    const lock = storedSession.lock;
+    const session = tools_assign({}, storedSession);
+    delete session.lock;
     return {
       session,
       lock: lock && !isLockExpired(lock) ? lock : undefined
@@ -3807,10 +4215,10 @@ function next(sessionStore) {
   }
 }
 function createLock() {
-  return UUID() + LOCK_SEPARATOR + timeStampNow();
+  return tools_UUID() + LOCK_SEPARATOR + timeStampNow();
 }
 function isLockExpired(lock) {
-  const [, timeStamp] = lock.split(LOCK_SEPARATOR);
+  const timeStamp = lock.split(LOCK_SEPARATOR)[1];
   return !timeStamp || tools_elapsed(Number(timeStamp), timeStampNow()) > LOCK_EXPIRATION_DELAY;
 }
 ;// CONCATENATED MODULE: ../core/esm/session/sessionStore.js
@@ -3865,33 +4273,30 @@ function startSessionStore(sessionStoreStrategyType, productKey, computeSessionS
   const expireObservable = new Observable();
   const sessionStateUpdateObservable = new Observable();
   const sessionStoreStrategy = sessionStoreStrategyType.type === SessionPersistence.COOKIE ? initCookieStrategy(sessionStoreStrategyType.cookieOptions) : initLocalStorageStrategy();
-  const {
-    expireSession
-  } = sessionStoreStrategy;
+  const expireSession = sessionStoreStrategy.expireSession;
   const watchSessionTimeoutId = timer_setInterval(watchSession, STORAGE_POLL_DELAY);
   let sessionCache;
   startSession();
-  const {
-    throttled: throttledExpandOrRenewSession,
-    cancel: cancelExpandOrRenewSession
-  } = throttle(function () {
-    processSessionStoreOperations({
-      process: function (sessionState) {
-        if (isSessionInNotStartedState(sessionState)) {
-          return;
+  const _throttle = throttle(function () {
+      processSessionStoreOperations({
+        process: function (sessionState) {
+          if (isSessionInNotStartedState(sessionState)) {
+            return;
+          }
+          const synchronizedSession = synchronizeSession(sessionState);
+          expandOrRenewSessionState(synchronizedSession);
+          return synchronizedSession;
+        },
+        after: function (sessionState) {
+          if (isSessionStarted(sessionState) && !hasSessionInCache()) {
+            renewSessionInCache(sessionState);
+          }
+          sessionCache = sessionState;
         }
-        const synchronizedSession = synchronizeSession(sessionState);
-        expandOrRenewSessionState(synchronizedSession);
-        return synchronizedSession;
-      },
-      after: function (sessionState) {
-        if (isSessionStarted(sessionState) && !hasSessionInCache()) {
-          renewSessionInCache(sessionState);
-        }
-        sessionCache = sessionState;
-      }
-    }, sessionStoreStrategy);
-  }, STORAGE_POLL_DELAY);
+      }, sessionStoreStrategy);
+    }, STORAGE_POLL_DELAY),
+    throttledExpandOrRenewSession = _throttle.throttled,
+    cancelExpandOrRenewSession = _throttle.cancel;
   function expandSession() {
     processSessionStoreOperations({
       process: function (sessionState) {
@@ -3914,12 +4319,13 @@ function startSessionStore(sessionStoreStrategyType, productKey, computeSessionS
     }, sessionStoreStrategy);
   }
   function synchronizeSession(sessionState) {
+    const storedSessionExpirationTime = getSessionExpirationTime(sessionState);
     if (isSessionInExpiredState(sessionState)) {
       sessionState = getExpiredSessionState();
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
-        expireSessionInCache();
+        expireSessionInCache(storedSessionExpirationTime === undefined ? getSessionExpirationTime(sessionCache) : storedSessionExpirationTime);
       } else {
         sessionStateUpdateObservable.notify({
           previousState: sessionCache,
@@ -3933,7 +4339,7 @@ function startSessionStore(sessionStoreStrategyType, productKey, computeSessionS
   function startSession() {
     processSessionStoreOperations({
       process: function (sessionState) {
-        if (isSessionInNotStartedState(sessionState)) {
+        if (isSessionInNotStartedState(sessionState) || isSessionInExpiredState(sessionState)) {
           return getExpiredSessionState();
         }
       },
@@ -3942,19 +4348,21 @@ function startSessionStore(sessionStoreStrategyType, productKey, computeSessionS
       }
     }, sessionStoreStrategy);
   }
-  function expandOrRenewSessionState(sessionState) {
+  function expandOrRenewSessionState(sessionState, options) {
     if (isSessionInNotStartedState(sessionState)) {
       return false;
     }
-    const {
-      trackingType,
-      isTracked
-    } = computeSessionState(sessionState[productKey]);
+    const _computeSessionState = computeSessionState(sessionState[productKey]),
+      trackingType = _computeSessionState.trackingType,
+      isTracked = _computeSessionState.isTracked;
     sessionState[productKey] = trackingType;
     delete sessionState.isExpired;
-    if (isTracked && !sessionState.id) {
-      sessionState.id = UUID();
+    if ((isTracked || options && options.force) && !sessionState.id) {
+      sessionState.id = tools_UUID();
       sessionState.created = String(dateNow());
+    }
+    if (options && options.force) {
+      sessionState.forcedSession = '1';
     }
   }
   function hasSessionInCache() {
@@ -3963,9 +4371,9 @@ function startSessionStore(sessionStoreStrategyType, productKey, computeSessionS
   function isSessionInCacheOutdated(sessionState) {
     return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey];
   }
-  function expireSessionInCache() {
+  function expireSessionInCache(sessionExpirationTime) {
     sessionCache = getExpiredSessionState();
-    expireObservable.notify();
+    expireObservable.notify(sessionExpirationTime);
   }
   function renewSessionInCache(sessionState) {
     sessionCache = sessionState;
@@ -3979,6 +4387,65 @@ function startSessionStore(sessionStoreStrategyType, productKey, computeSessionS
       after: synchronizeSession
     }, sessionStoreStrategy);
   }
+  function renewSession() {
+    cancelExpandOrRenewSession();
+    processSessionStoreOperations({
+      process: function () {
+        const sessionState = getExpiredSessionState();
+        expandOrRenewSessionState(sessionState);
+        return sessionState;
+      },
+      after: function (sessionState) {
+        if (hasSessionInCache()) {
+          expireSessionInCache();
+        }
+        sessionCache = sessionState;
+        renewObservable.notify();
+      }
+    }, sessionStoreStrategy);
+  }
+  function forceSession(onComplete) {
+    cancelExpandOrRenewSession();
+    let shouldRenew;
+    let sessionExpirationTime;
+    processSessionStoreOperations({
+      process: function (sessionState) {
+        sessionExpirationTime = getSessionExpirationTime(sessionState);
+        const isInactive = isSessionInNotStartedState(sessionState) || isSessionInExpiredState(sessionState);
+        // Compare before forcing assigns an id to an untracked session.
+        // A different stored session must renew the local history and View.
+        shouldRenew = isInactive || hasSessionInCache() && isSessionInCacheOutdated(sessionState);
+        if (isInactive) {
+          sessionState = getExpiredSessionState();
+        }
+        expandOrRenewSessionState(sessionState, {
+          force: true
+        });
+        return sessionState;
+      },
+      after: function (sessionState) {
+        let previousState;
+        if (!shouldRenew && hasSessionInCache()) {
+          previousState = sessionCache;
+          sessionCache = sessionState;
+          sessionStateUpdateObservable.notify({
+            previousState,
+            newState: sessionState
+          });
+        } else {
+          if (hasSessionInCache()) {
+            expireSessionInCache(sessionExpirationTime === undefined ? getSessionExpirationTime(sessionCache) : sessionExpirationTime);
+          }
+          renewSessionInCache(sessionState);
+        }
+        // Run only after persistence and history synchronization succeed.
+        // A renewed session has no previous active state.
+        if (onComplete) {
+          onComplete(previousState);
+        }
+      }
+    }, sessionStoreStrategy);
+  }
   return {
     expandOrRenewSession: throttledExpandOrRenewSession,
     expandSession,
@@ -3989,6 +4456,8 @@ function startSessionStore(sessionStoreStrategyType, productKey, computeSessionS
     expireObservable,
     sessionStateUpdateObservable,
     restartSession: startSession,
+    renewSession,
+    forceSession,
     expire: function () {
       cancelExpandOrRenewSession();
       expireSession();
@@ -4012,6 +4481,13 @@ var DefaultPrivacyLevel = {
   MASK: 'mask',
   MASK_USER_INPUT: 'mask-user-input'
 };
+var NodePrivacyLevel = {
+  IGNORE: 'ignore',
+  HIDDEN: 'hidden',
+  ALLOW: DefaultPrivacyLevel.ALLOW,
+  MASK: DefaultPrivacyLevel.MASK,
+  MASK_USER_INPUT: DefaultPrivacyLevel.MASK_USER_INPUT
+};
 function validateAndBuildConfiguration(initConfiguration) {
   if (initConfiguration.sampleRate !== undefined && !isPercentage(initConfiguration.sampleRate)) {
     display.error('Sample Rate should be a number between 0 and 100');
@@ -4027,7 +4503,7 @@ function validateAndBuildConfiguration(initConfiguration) {
   }
   var sessionSampleRate = isNullUndefinedDefaultValue(initConfiguration.sessionSampleRate, initConfiguration.sampleRate);
   return tools_assign({
-    beforeSend: initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
+    beforeSend: initConfiguration.beforeSend && catchUserErrors_catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
     isOpenWay: initConfiguration.site && initConfiguration.clientToken,
     sessionSampleRate: isNullUndefinedDefaultValue(sessionSampleRate, 100),
@@ -4056,7 +4532,7 @@ function validateAndBuildConfiguration(initConfiguration) {
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
     resourceUrlLimit: 5 * ONE_KIBI_BYTE,
     storeContextsToLocal: !!initConfiguration.storeContextsToLocal,
-    // localstorage key ，default auto gen
+    // 存储到localstorage key ，默认不填，自动生成
     storeContextsKey: initConfiguration.storeContextsKey,
     sendContentTypeByJson: !!initConfiguration.sendContentTypeByJson,
     retryMaxSize: isNullUndefinedDefaultValue(initConfiguration.retryMaxSize, -1)
@@ -4086,6 +4562,22 @@ function validatePostRequestRequireParamsConfiguration(initConfiguration) {
 
 
 var fetchObservable;
+function isRequest(input) {
+  if (typeof Request === 'undefined' || !input || typeof input !== 'object') {
+    return false;
+  }
+  if (input instanceof Request) {
+    return true;
+  }
+  try {
+    // A native getter checks the Request's internal brand across iframe realms.
+    // Unlike toStringTag or duck typing, this does not trust caller properties.
+    Object.getOwnPropertyDescriptor(Request.prototype, 'url').get.call(input);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
 function initFetchObservable() {
   if (!fetchObservable) {
     fetchObservable = createFetchObservable();
@@ -4114,17 +4606,13 @@ function beforeSend(params, observable) {
   var handlingStack = params.handlingStack;
   var input = parameters[0];
   var init = parameters[1];
-  //   var method =
-  //       (init && init.method) || (input instanceof Request && input.method) || 'GET'
-  //     const methodFromParams =
-  //       (init && init.method) || (input instanceof Request && input.method)
-  //     const method = methodFromParams ? methodFromParams.toUpperCase() : 'GET'
+  var requestInput = isRequest(input);
   var methodFromParams = init && init.method;
-  if (methodFromParams === undefined && input instanceof Request) {
+  if (methodFromParams === undefined && requestInput) {
     methodFromParams = input.method;
   }
   var method = methodFromParams !== undefined ? String(methodFromParams).toUpperCase() : 'GET';
-  var url = input instanceof Request ? input.url : normalizeUrl(String(input));
+  var url = requestInput ? input.url : normalizeUrl(String(input));
   var startClocks = clocksNow();
   var context = {
     state: 'start',
@@ -4293,6 +4781,7 @@ function abortXhr(params) {
 
 
 
+
 var PageExitReason = {
   HIDDEN: 'visibility_hidden',
   UNLOADING: 'before_unload',
@@ -4334,7 +4823,14 @@ function createPageExitObservable() {
      */
     var beforeUnloadListener = addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, function () {
       observable.notify({
-        reason: PageExitReason.UNLOADING
+        reason: PageExitReason.UNLOADING,
+        // beforeunload can be canceled by the application or browser. A
+        // queued task only runs if the document survives, allowing replay
+        // to restart from a clean Full Snapshot without weakening the
+        // synchronous unload flush.
+        $rOnCancel: function (callback) {
+          timer_setTimeout(callback, 0);
+        }
       });
     });
     return function () {
@@ -4385,6 +4881,20 @@ function forEachChildNodes(node, callback) {
  */
 function getParentNode(node) {
   return isNodeShadowRoot(node) ? node.host : node.parentNode;
+}
+
+/**
+ * Return the parent element, crossing an open shadow root boundary when needed.
+ */
+function getParentElement(element) {
+  if (element.parentElement) {
+    return element.parentElement;
+  }
+  var parentNode = element.parentNode;
+  if (parentNode && isNodeShadowRoot(parentNode)) {
+    return parentNode.host;
+  }
+  return null;
 }
 ;// CONCATENATED MODULE: ../core/esm/browser/runOnReadyState.js
 
@@ -4471,6 +4981,7 @@ var commonTags = {
   view_host: 'view.host',
   view_path: 'view.path',
   view_name: 'view.name',
+  // 冗余一个字段
   view_path_group: 'view.path_group',
   view_path_name: 'view.pathname'
 };
@@ -4489,11 +5000,13 @@ var commonFields = {
   session_replay_on_error_sample_rate: '_gc.configuration.session_replay_on_error_sample_rate',
   drift: '_gc.drift'
 };
+// 需要用双引号将字符串类型的field value括起来， 这里有数组标示[string, path]
 var dataMap = {
   view: {
-    type: RumEventType.VIEW,
+    type: enums_RumEventType.VIEW,
     tags: {
       view_loading_type: 'view.loading_type',
+      view_navigation_type: 'view.navigation_type',
       view_apdex_level: 'view.apdex_level',
       view_privacy_replay_level: 'privacy.replay_level'
     },
@@ -4538,7 +5051,7 @@ var dataMap = {
     }
   },
   resource: {
-    type: RumEventType.RESOURCE,
+    type: enums_RumEventType.RESOURCE,
     tags: {
       trace_id: '_gc.trace_id',
       span_id: '_gc.span_id',
@@ -4578,7 +5091,7 @@ var dataMap = {
     }
   },
   error: {
-    type: RumEventType.ERROR,
+    type: enums_RumEventType.ERROR,
     tags: {
       error_id: 'error.id',
       trace_id: '_gc.trace_id',
@@ -4602,7 +5115,7 @@ var dataMap = {
     }
   },
   long_task: {
-    type: RumEventType.LONG_TASK,
+    type: enums_RumEventType.LONG_TASK,
     tags: {
       long_task_id: 'long_task.id'
     },
@@ -4617,7 +5130,7 @@ var dataMap = {
     }
   },
   action: {
-    type: RumEventType.ACTION,
+    type: enums_RumEventType.ACTION,
     tags: {
       action_type: 'action.type'
     },
@@ -4647,7 +5160,7 @@ var dataMap = {
     }
   },
   browser_log: {
-    type: RumEventType.LOGGER,
+    type: enums_RumEventType.LOGGER,
     tags: {
       error_source: 'error.source',
       error_type: 'error.type',
@@ -4668,7 +5181,14 @@ var dataMap = {
       error_stack: ['string', 'error.stack']
     }
   }
-};
+}
+
+// Keep the WebSocket schema in one compact list.  The flattened intake key
+// mirrors the nested payload path, with dots replaced by underscores.
+;
+['connection_id', 'handshake_succeeded', 'start_time', 'end_time', 'start_view_id', 'end_view_id', 'end_view_path', 'tracking_end_reason', 'close_code', 'close_reason', 'was_clean', 'messages_in.count', 'messages_in.size', 'messages_out.count', 'messages_out.size', 'time_to_first_message_in', 'time_to_first_message_out', 'last_message_in_at', 'longest_inbound_silence', 'inbound_idle_duration_before_close', 'buffered_amount_max', 'protocol', 'setup_duration'].forEach(function (path) {
+  dataMap.resource.fields['resource_websocket_' + path.replace('.', '_')] = 'resource.websocket.' + path;
+});
 ;// CONCATENATED MODULE: ../core/esm/session/sessionManagement.js
 
 
@@ -4698,8 +5218,8 @@ function startSessionManager(configuration, productKey, computeSessionState) {
     sessionContextHistory.add(buildSessionContext(), tools_relativeNow());
     renewObservable.notify();
   });
-  sessionStore.expireObservable.subscribe(function () {
-    expireObservable.notify();
+  sessionStore.expireObservable.subscribe(function (sessionExpirationTime) {
+    expireObservable.notify(sessionExpirationTime);
     sessionContextHistory.closeActive(tools_relativeNow());
   });
 
@@ -4736,6 +5256,9 @@ function startSessionManager(configuration, productKey, computeSessionState) {
     findSession: function (startTime, options) {
       return sessionContextHistory.find(startTime, options);
     },
+    expandOrRenewSession: sessionStore.expandOrRenewSession,
+    renewSession: sessionStore.renewSession,
+    forceSession: sessionStore.forceSession,
     renewObservable,
     expireObservable,
     sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
@@ -4750,12 +5273,11 @@ function stopSessionManager() {
   stopCallbacks = [];
 }
 function trackActivity(expandOrRenewSession) {
-  const {
-    stop
-  } = addEventListeners(window, [DOM_EVENT.CLICK, DOM_EVENT.TOUCH_START, DOM_EVENT.KEY_DOWN, DOM_EVENT.SCROLL], expandOrRenewSession, {
-    capture: true,
-    passive: true
-  });
+  const _addEventListeners = addEventListeners(window, [DOM_EVENT.CLICK, DOM_EVENT.TOUCH_START, DOM_EVENT.KEY_DOWN, DOM_EVENT.SCROLL], expandOrRenewSession, {
+      capture: true,
+      passive: true
+    }),
+    stop = _addEventListeners.stop;
   stopCallbacks.push(stop);
 }
 function trackVisibility(expandSession) {
@@ -4764,9 +5286,8 @@ function trackVisibility(expandSession) {
       expandSession();
     }
   };
-  const {
-    stop
-  } = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible);
+  const _addEventListener = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible),
+    stop = _addEventListener.stop;
   stopCallbacks.push(stop);
   const visibilityCheckInterval = timer_setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY);
   stopCallbacks.push(function () {
@@ -4774,14 +5295,14 @@ function trackVisibility(expandSession) {
   });
 }
 function trackResume(cb) {
-  const {
-    stop
-  } = addEventListener(window, DOM_EVENT.RESUME, cb, {
-    capture: true
-  });
+  const _addEventListener2 = addEventListener(window, DOM_EVENT.RESUME, cb, {
+      capture: true
+    }),
+    stop = _addEventListener2.stop;
   stopCallbacks.push(stop);
 }
 ;// CONCATENATED MODULE: ../core/esm/transport/sendWithRetryStrategy.js
+
 
 
 
@@ -4791,6 +5312,15 @@ var MAX_ONGOING_REQUESTS = 32;
 var MAX_QUEUE_BYTES_COUNT = 20 * ONE_MEBI_BYTE;
 var MAX_BACKOFF_TIME = 256 * ONE_SECOND;
 var INITIAL_BACKOFF_TIME = ONE_SECOND;
+// Browsers can report a transient fetch/XHR network failure with status 0
+// while navigator.onLine is still true (for example during a network handoff).
+// Keep this retry path bounded so permanent CORS/TLS failures do not retain
+// payloads forever.
+var ONLINE_NETWORK_ERROR_MAX_RETRIES = 3;
+// Ordered payloads intentionally allow only one in-flight request. Without a
+// watchdog, a fetch/XHR that never settles blocks the complete ordered stream
+// and lets its retry queue grow until the 20 MiB cap is reached.
+var ORDERED_REQUEST_TIMEOUT = 30 * ONE_SECOND;
 var TransportStatus = {
   UP: 0,
   FAILURE_DETECTED: 1,
@@ -4801,29 +5331,75 @@ var RetryReason = {
   AFTER_RESUME: 1
 };
 function sendWithRetryStrategy(payload, state, sendStrategy, endpointUrl, reportError) {
+  if (!isPayloadValid(payload)) {
+    state.$rPayloadSequenceByPayload.delete(payload);
+    return;
+  }
+  if (!state.$rPayloadSequenceByPayload.has(payload)) {
+    state.$rPayloadSequenceByPayload.set(payload, state.$rNextPayloadSequence);
+    state.$rNextPayloadSequence += 1;
+  }
   if (state.transportStatus === TransportStatus.UP && state.queuedPayloads.size() === 0 && state.bandwidthMonitor.canHandle(payload)) {
     send(payload, state, sendStrategy, {
+      $rGeneration: state.$rRetryGeneration,
       onSuccess: function () {
         return retryQueuedPayloads(RetryReason.AFTER_SUCCESS, state, sendStrategy, endpointUrl, reportError);
       },
       onFailure: function () {
-        state.queuedPayloads.enqueue(payload);
+        var queued = enqueueAfterPruningInvalidPayloads(payload, state, !!payload.$rEnforceOrder, sendStrategy, endpointUrl, reportError);
+        if (!queued) {
+          state.$rPayloadSequenceByPayload.delete(payload);
+          notifyPermanentDrop(payload, 'queue_full');
+          resumeAfterInvalidPayloadsPruned(!isPayloadValid(payload) && pruneInvalidPayloads(state), state, sendStrategy, endpointUrl, reportError);
+        }
         scheduleRetry(state, sendStrategy, endpointUrl, reportError);
       }
     });
   } else {
-    state.queuedPayloads.enqueue(payload);
+    if (!enqueueAfterPruningInvalidPayloads(payload, state, false, sendStrategy, endpointUrl, reportError)) {
+      state.$rPayloadSequenceByPayload.delete(payload);
+      notifyPermanentDrop(payload, 'queue_full');
+      resumeAfterInvalidPayloadsPruned(!isPayloadValid(payload) && pruneInvalidPayloads(state), state, sendStrategy, endpointUrl, reportError);
+      return;
+    }
+    // A retry timer can legitimately drain only stale generation-bound
+    // payloads and leave the transport DOWN with no timer. A later valid
+    // payload must restart recovery instead of remaining queued forever.
+    scheduleRetry(state, sendStrategy, endpointUrl, reportError);
   }
 }
 function scheduleRetry(state, sendStrategy, endpointUrl, reportError) {
-  if (state.transportStatus !== TransportStatus.DOWN) {
+  if (state.transportStatus !== TransportStatus.DOWN || state.$rRetryTimeoutId !== undefined || state.queuedPayloads.size() === 0) {
     return;
   }
-  timer_setTimeout(function () {
-    var payload = state.queuedPayloads.first();
+  var retryGeneration = state.$rRetryGeneration;
+  state.$rRetryTimeoutId = timer_setTimeout(function () {
+    state.$rRetryTimeoutId = undefined;
+    if (retryGeneration !== state.$rRetryGeneration || state.transportStatus !== TransportStatus.DOWN || state.queuedPayloads.size() === 0) {
+      return;
+    }
+    var payload;
+    while (state.queuedPayloads.size() > 0) {
+      payload = state.queuedPayloads.first();
+      if (isPayloadValid(payload)) {
+        break;
+      }
+      state.queuedPayloads.dequeue();
+      state.$rPayloadSequenceByPayload.delete(payload);
+      payload = undefined;
+    }
+    if (!payload) {
+      return;
+    }
     send(payload, state, sendStrategy, {
+      $rGeneration: retryGeneration,
+      $rPayloadRetainedInQueue: true,
       onSuccess: function () {
-        state.queuedPayloads.dequeue();
+        // A permanent rejection may already have pruned this payload and
+        // its dependents. Do not remove the next valid generation's head.
+        if (state.queuedPayloads.first() === payload) {
+          state.queuedPayloads.dequeue();
+        }
         state.currentBackoffTime = INITIAL_BACKOFF_TIME;
         retryQueuedPayloads(RetryReason.AFTER_RESUME, state, sendStrategy, endpointUrl, reportError);
       },
@@ -4832,33 +5408,105 @@ function scheduleRetry(state, sendStrategy, endpointUrl, reportError) {
         scheduleRetry(state, sendStrategy, endpointUrl, reportError);
       }
     });
-  }, state.currentBackoffTime);
+  }, state.currentBackoffTime / 2 + Math.random() * state.currentBackoffTime / 2);
 }
 function send(payload, state, sendStrategy, responseData) {
   var onSuccess = responseData.onSuccess;
   var onFailure = responseData.onFailure;
+  var ongoingRequest = {
+    payload: payload,
+    $rActive: true,
+    $rPayloadRetainedInQueue: responseData.$rPayloadRetainedInQueue
+  };
+  var responseHandled = false;
+  state.$rOngoingRequests.add(ongoingRequest);
   state.bandwidthMonitor.add(payload);
-  sendStrategy(payload, function (response) {
-    state.bandwidthMonitor.remove(payload);
+  function handleResponse(response) {
+    if (responseHandled || ongoingRequest.$rRetired) {
+      return;
+    }
+    responseHandled = true;
+    clearOngoingRequestWatchdog(ongoingRequest);
+    state.$rOngoingRequests.delete(ongoingRequest);
+    if (ongoingRequest.$rActive) {
+      ongoingRequest.$rActive = false;
+      state.bandwidthMonitor.remove(payload);
+    }
+    if (responseData.$rGeneration !== state.$rRetryGeneration) {
+      return;
+    }
     if (!shouldRetryRequest(response, state, payload)) {
+      state.$rPayloadSequenceByPayload.delete(payload);
+      var permanentDropReason = getPermanentDropReason(response, state, payload);
+      if (permanentDropReason) {
+        notifyPermanentDrop(payload, permanentDropReason);
+        if (!isPayloadValid(payload)) {
+          pruneInvalidPayloads(state);
+        }
+      }
       state.transportStatus = TransportStatus.UP;
       onSuccess();
     } else {
       // do not consider transport down if another ongoing request could succeed
       state.transportStatus = state.bandwidthMonitor.ongoingRequestCount > 0 ? TransportStatus.FAILURE_DETECTED : TransportStatus.DOWN;
+      var previousRetry = payload.retry;
       payload.retry = {
-        count: payload.retry ? payload.retry.count + 1 : 1,
+        count: previousRetry ? previousRetry.count + 1 : 1,
         lastFailureStatus: response.status
       };
+      if (response.status === 0 && navigator.onLine && !response.$rForceRetry) {
+        payload.retry.$rOnlineNetworkErrorCount = (previousRetry ? previousRetry.$rOnlineNetworkErrorCount || 0 : 0) + 1;
+      }
       onFailure();
     }
-  });
+  }
+  try {
+    ongoingRequest.$rAbort = sendStrategy(payload, handleResponse);
+    if (payload.$rEnforceOrder && !responseHandled && !ongoingRequest.$rRetired) {
+      ongoingRequest.$rWatchdogTimeoutId = timer_setTimeout(function () {
+        ongoingRequest.$rWatchdogTimeoutId = undefined;
+        if (responseHandled || ongoingRequest.$rRetired) {
+          return;
+        }
+        var abort = ongoingRequest.$rAbort;
+        // Settle the retry state before aborting. XHR abort can dispatch a
+        // synchronous loadend with status 0, which must not turn this timeout
+        // into a permanent online http_0 rejection.
+        handleResponse({
+          status: 0,
+          $rForceRetry: true
+        });
+        abortOngoingRequest(abort);
+      }, ORDERED_REQUEST_TIMEOUT);
+    }
+  } catch (e) {
+    handleResponse({
+      status: 0,
+      $rForceRetry: true
+    });
+  }
+}
+function clearOngoingRequestWatchdog(ongoingRequest) {
+  if (ongoingRequest.$rWatchdogTimeoutId !== undefined) {
+    timer_clearTimeout(ongoingRequest.$rWatchdogTimeoutId);
+    ongoingRequest.$rWatchdogTimeoutId = undefined;
+  }
+}
+function abortOngoingRequest(abort) {
+  if (!abort || typeof abort.abort !== 'function') {
+    return;
+  }
+  try {
+    abort.abort();
+  } catch (e) {
+    // Transport cleanup must continue when cancellation is unavailable.
+  }
 }
 function retryQueuedPayloads(reason, state, sendStrategy, endpointUrl, reportError) {
   if (reason === RetryReason.AFTER_SUCCESS && state.queuedPayloads.isFull() && !state.queueFullReported) {
     reportError({
       message: 'Reached max ' + endpointUrl + ' events size queued for upload: ' + MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE + 'MiB',
-      source: errorTools_ErrorSource.AGENT,
+      source: ErrorSource.AGENT,
       startClocks: clocksNow()
     });
     state.queueFullReported = true;
@@ -4871,7 +5519,103 @@ function retryQueuedPayloads(reason, state, sendStrategy, endpointUrl, reportErr
 }
 function shouldRetryRequest(response, state, payload) {
   if (state.retryMaxSize > -1 && payload.retry && payload.retry.count > state.retryMaxSize) return false;
-  return response.type !== 'opaque' && (response.status === 0 && !navigator.onLine || response.status === 408 || response.status === 429 || response.status >= 500);
+  if (response.$rForceRetry) {
+    return true;
+  }
+  if (response.type === 'opaque') {
+    return false;
+  }
+  if (response.status === 0) {
+    return !navigator.onLine || !payload.retry || (payload.retry.$rOnlineNetworkErrorCount || 0) < ONLINE_NETWORK_ERROR_MAX_RETRIES;
+  }
+  return response.status === 408 || response.status === 429 || response.status >= 500;
+}
+function getPermanentDropReason(response, state, payload) {
+  if (state.retryMaxSize > -1 && payload.retry && payload.retry.count > state.retryMaxSize) {
+    return 'retry_exhausted';
+  }
+  if (response.type === 'opaque' || response.status >= 200 && response.status < 300) {
+    return;
+  }
+  return 'http_' + response.status;
+}
+function notifyPermanentDrop(payload, reason) {
+  if (!payload || payload.$rPermanentDropNotified || typeof payload.$rOnPermanentDrop !== 'function') {
+    return;
+  }
+  payload.$rPermanentDropNotified = true;
+  try {
+    payload.$rOnPermanentDrop(reason);
+  } catch (e) {
+    // Transport cleanup and queue progression must not depend on replay
+    // recovery callbacks succeeding.
+  }
+}
+function isPayloadValid(payload) {
+  if (!payload || typeof payload.$rIsValid !== 'function') {
+    return true;
+  }
+  try {
+    return payload.$rIsValid() !== false;
+  } catch (e) {
+    return false;
+  }
+}
+function enqueueAfterPruningInvalidPayloads(payload, state, enqueueFirst, sendStrategy, endpointUrl, reportError) {
+  var enqueue = enqueueFirst ? 'enqueueFirst' : 'enqueue';
+  if (state.queuedPayloads[enqueue](payload)) {
+    return true;
+  }
+  var invalidPayloadPruned = pruneInvalidPayloads(state);
+  var queued = state.queuedPayloads[enqueue](payload);
+  resumeAfterInvalidPayloadsPruned(invalidPayloadPruned, state, sendStrategy, endpointUrl, reportError);
+  return queued;
+}
+function pruneInvalidPayloads(state) {
+  var invalidPayloadPruned = false;
+  var queuedPayloads = state.queuedPayloads;
+  var validQueuedPayloads = [];
+  while (queuedPayloads.size() > 0) {
+    var queuedPayload = queuedPayloads.dequeue();
+    if (isPayloadValid(queuedPayload)) {
+      // Preserve the complete valid queue, including its permitted one-item
+      // overshoot. Re-applying admission while compacting could silently drop
+      // a valid tail after an ordered head crossed the byte watermark.
+      validQueuedPayloads.push(queuedPayload);
+    } else {
+      invalidPayloadPruned = true;
+      state.$rPayloadSequenceByPayload.delete(queuedPayload);
+    }
+  }
+  state.queuedPayloads = newPayloadQueue(validQueuedPayloads);
+  state.$rOngoingRequests.forEach(function (ongoingRequest) {
+    if (isPayloadValid(ongoingRequest.payload)) {
+      return;
+    }
+    invalidPayloadPruned = true;
+    ongoingRequest.$rRetired = true;
+    clearOngoingRequestWatchdog(ongoingRequest);
+    state.$rOngoingRequests.delete(ongoingRequest);
+    if (ongoingRequest.$rActive) {
+      ongoingRequest.$rActive = false;
+      state.bandwidthMonitor.remove(ongoingRequest.payload);
+    }
+    state.$rPayloadSequenceByPayload.delete(ongoingRequest.payload);
+    abortOngoingRequest(ongoingRequest.$rAbort);
+  });
+  return invalidPayloadPruned;
+}
+function resumeAfterInvalidPayloadsPruned(invalidPayloadPruned, state, sendStrategy, endpointUrl, reportError) {
+  if (!invalidPayloadPruned || state.bandwidthMonitor.ongoingRequestCount > 0) {
+    return;
+  }
+  if (state.$rRetryTimeoutId !== undefined) {
+    timer_clearTimeout(state.$rRetryTimeoutId);
+    state.$rRetryTimeoutId = undefined;
+  }
+  state.transportStatus = TransportStatus.UP;
+  state.currentBackoffTime = INITIAL_BACKOFF_TIME;
+  retryQueuedPayloads(RetryReason.AFTER_SUCCESS, state, sendStrategy, endpointUrl, reportError);
 }
 function newRetryState(retryMaxSize) {
   return {
@@ -4880,32 +5624,103 @@ function newRetryState(retryMaxSize) {
     bandwidthMonitor: newBandwidthMonitor(),
     queuedPayloads: newPayloadQueue(),
     queueFullReported: false,
-    retryMaxSize: retryMaxSize
+    retryMaxSize: retryMaxSize,
+    $rRetryGeneration: 0,
+    $rRetryTimeoutId: undefined,
+    $rOngoingRequests: new Set(),
+    $rPayloadSequenceByPayload: new sdkMap_SDKMap(),
+    $rNextPayloadSequence: 0
   };
 }
-function newPayloadQueue() {
-  var queue = [];
+
+// Transfer only queued payloads accepted by the exit transport. In-flight
+// requests keep their callbacks, watchdog and bandwidth reservation: aborting
+// them before a replacement is possible can truncate the HTTP request body.
+function drainQueuedPayloads(state, trySend) {
+  var sentPayloads = [];
+  if (state.$rOngoingRequests.size > 0) {
+    return sentPayloads;
+  }
+  while (state.queuedPayloads.size() > 0) {
+    var payload = state.queuedPayloads.first();
+    if (isPayloadValid(payload)) {
+      if (!trySend(payload)) {
+        break;
+      }
+      sentPayloads.push(payload);
+    }
+    state.queuedPayloads.dequeue();
+    state.$rPayloadSequenceByPayload.delete(payload);
+  }
+  if (state.queuedPayloads.size() === 0) {
+    if (state.$rRetryTimeoutId !== undefined) {
+      timer_clearTimeout(state.$rRetryTimeoutId);
+      state.$rRetryTimeoutId = undefined;
+    }
+    state.transportStatus = TransportStatus.UP;
+    state.currentBackoffTime = INITIAL_BACKOFF_TIME;
+  }
+  return sentPayloads;
+}
+function getPendingPayloadsBytesCount(state) {
+  var pendingBytesCount = state.queuedPayloads.bytesCount + state.bandwidthMonitor.ongoingByteCount;
+  // A retry attempt keeps the queue head until it succeeds. Its ongoing
+  // request is a second reference to the same payload, not additional memory.
+  state.$rOngoingRequests.forEach(function (ongoingRequest) {
+    if (ongoingRequest.$rActive && ongoingRequest.$rPayloadRetainedInQueue) {
+      pendingBytesCount -= ongoingRequest.payload.bytesCount;
+    }
+  });
+  return pendingBytesCount;
+}
+function newPayloadQueue(initialPayloads) {
+  var queue = initialPayloads || [];
+  var head = 0;
+  var initialBytesCount = 0;
+  for (var index = 0; index < queue.length; index += 1) {
+    initialBytesCount += queue[index].bytesCount;
+  }
   return {
-    bytesCount: 0,
+    bytesCount: initialBytesCount,
     enqueue: function (payload) {
       if (this.isFull()) {
-        return;
+        return false;
       }
       queue.push(payload);
       this.bytesCount += payload.bytesCount;
+      return true;
+    },
+    enqueueFirst: function (payload) {
+      if (this.isFull()) {
+        return false;
+      }
+      if (head > 0) {
+        head -= 1;
+        queue[head] = payload;
+      } else {
+        queue.unshift(payload);
+      }
+      this.bytesCount += payload.bytesCount;
+      return true;
     },
     first: function () {
-      return queue[0];
+      return queue[head];
     },
     dequeue: function () {
-      var payload = queue.shift();
+      var payload = queue[head];
       if (payload) {
+        queue[head] = undefined;
+        head += 1;
         this.bytesCount -= payload.bytesCount;
+        if (head === queue.length) {
+          queue = [];
+          head = 0;
+        }
       }
       return payload;
     },
     size: function () {
-      return queue.length;
+      return queue.length - head;
     },
     isFull: function () {
       return this.bytesCount >= MAX_QUEUE_BYTES_COUNT;
@@ -4915,16 +5730,26 @@ function newPayloadQueue() {
 function newBandwidthMonitor() {
   return {
     ongoingRequestCount: 0,
+    ongoingOrderedRequestCount: 0,
     ongoingByteCount: 0,
     canHandle: function (payload) {
+      if (this.ongoingOrderedRequestCount > 0 || payload.$rEnforceOrder && this.ongoingRequestCount > 0) {
+        return false;
+      }
       return this.ongoingRequestCount === 0 || this.ongoingByteCount + payload.bytesCount <= MAX_ONGOING_BYTES_COUNT && this.ongoingRequestCount < MAX_ONGOING_REQUESTS;
     },
     add: function (payload) {
       this.ongoingRequestCount += 1;
+      if (payload.$rEnforceOrder) {
+        this.ongoingOrderedRequestCount += 1;
+      }
       this.ongoingByteCount += payload.bytesCount;
     },
     remove: function (payload) {
       this.ongoingRequestCount -= 1;
+      if (payload.$rEnforceOrder) {
+        this.ongoingOrderedRequestCount -= 1;
+      }
       this.ongoingByteCount -= payload.bytesCount;
     }
   };
@@ -4933,6 +5758,7 @@ function newBandwidthMonitor() {
 
 
 
+// import { WeakSet } from '../helper/polyfills'
 // import { addTelemetryError } from '../telemetry/telemetry'
 /**
  * Use POST request without content type to:
@@ -4955,23 +5781,97 @@ function createHttpRequest(endpointUrl, bytesLimit, retryMaxSize, reportError) {
     retryMaxSize = -1;
   }
   var retryState = newRetryState(retryMaxSize);
+  var exitAcceptedPayloads = new WeakSet();
   var sendStrategyForRetry = function (payload, onResponse) {
-    return fetchKeepAliveStrategy(endpointUrl, bytesLimit, payload, onResponse);
+    return fetchStrategyWithFallback(endpointUrl, payload, onResponse);
   };
+  var sendWithRetry = function (payload) {
+    sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointUrl, reportError);
+  };
+  function sendOnExitWithBudget(bytesBudget, currentPayload) {
+    var sentBytesCount = 0;
+    function trySend(payload) {
+      var exitBytesCount = getExitBytesCount(payload);
+      if (sentBytesCount + exitBytesCount > bytesBudget || !trySendBeacon(endpointUrl, bytesLimit, payload)) {
+        return false;
+      }
+      sentBytesCount += exitBytesCount;
+      exitAcceptedPayloads.add(payload);
+      return true;
+    }
+    drainQueuedPayloads(retryState, trySend);
+    if (currentPayload && isPayloadValid(currentPayload) && !exitAcceptedPayloads.has(currentPayload) && !retryState.$rPayloadSequenceByPayload.has(currentPayload)) {
+      if (hasPendingRetryPayloads(retryState) || !trySend(currentPayload)) {
+        // Keep the regular transport and its ordered retry queue as the owner
+        // when beacon cannot accept this payload. Do not lose the current tail.
+        sendWithRetry(currentPayload);
+      }
+    }
+    return sentBytesCount;
+  }
   return {
-    send: function (payload) {
-      sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointUrl, reportError);
-    },
+    send: sendWithRetry,
     /**
      * Since fetch keepalive behaves like regular fetch on Firefox,
      * keep using sendBeaconStrategy on exit
      */
-    sendOnExit: function (payload) {
-      sendBeaconStrategy(endpointUrl, bytesLimit, payload);
+    sendOnExit: function (payload, bytesBudget) {
+      var hasBytesBudget = typeof bytesBudget === 'number' && isFinite(bytesBudget) && bytesBudget >= 0;
+      if (!hasBytesBudget) {
+        if (payload.$rEnforceOrder && hasPendingRetryPayloads(retryState)) {
+          // Hidden/frozen pages can resume. Do not let their newest replay
+          // segment bypass an older ordered fetch/retry: once beaconed, that
+          // dependent tail could not be withdrawn if the older segment is
+          // permanently rejected later.
+          sendWithRetry(payload);
+          return;
+        }
+        sendBeaconStrategy(endpointUrl, bytesLimit, payload);
+        return;
+      }
+      var sentBytesCount = sendOnExitWithBudget(bytesBudget, payload);
+      return {
+        $rBytesCount: sentBytesCount,
+        $rCurrentPayloadSent: exitAcceptedPayloads.has(payload),
+        $rPending: retryState.$rPayloadSequenceByPayload.has(payload)
+      };
+    },
+    // Session Replay calls this explicitly on UNLOADING so retry payloads are
+    // promoted even when there is no current segment to pass to sendOnExit().
+    $rDrainOnExit: function (bytesBudget) {
+      var hasBytesBudget = typeof bytesBudget === 'number' && isFinite(bytesBudget) && bytesBudget >= 0;
+      if (!hasBytesBudget) {
+        return {
+          $rBytesCount: 0,
+          $rAllPayloadsSent: false
+        };
+      }
+      var sentBytesCount = sendOnExitWithBudget(bytesBudget);
+      var pending = hasPendingRetryPayloads(retryState);
+      return {
+        $rBytesCount: sentBytesCount,
+        $rAllPayloadsSent: !pending,
+        $rPending: pending
+      };
+    },
+    $rPendingBytes: function () {
+      return getPendingPayloadsBytesCount(retryState);
     }
   };
 }
+function hasPendingRetryPayloads(retryState) {
+  return retryState.queuedPayloads.size() > 0 || retryState.$rOngoingRequests.size > 0;
+}
+function getExitBytesCount(payload) {
+  var bytesCount = payload && typeof payload.$rExitBytesCount === 'number' ? payload.$rExitBytesCount : payload && payload.bytesCount;
+  return typeof bytesCount === 'number' && isFinite(bytesCount) ? Math.max(bytesCount, 0) : 0;
+}
 function sendBeaconStrategy(endpointUrl, bytesLimit, payload) {
+  if (!trySendBeacon(endpointUrl, bytesLimit, payload)) {
+    sendXHR(addBatchPrecision(endpointUrl, payload.encoding), payload);
+  }
+}
+function trySendBeacon(endpointUrl, bytesLimit, payload) {
   var data = payload.data;
   var bytesCount = payload.bytesCount;
   var url = addBatchPrecision(endpointUrl, payload.encoding);
@@ -4988,13 +5888,13 @@ function sendBeaconStrategy(endpointUrl, bytesLimit, payload) {
       }
       var isQueued = navigator.sendBeacon(url, beaconData);
       if (isQueued) {
-        return;
+        return true;
       }
     } catch (e) {
       reportBeaconError(e);
     }
   }
-  sendXHR(url, payload);
+  return false;
 }
 var hasReportedBeaconError = false;
 function reportBeaconError(e) {
@@ -5003,45 +5903,12 @@ function reportBeaconError(e) {
     // addTelemetryError(e)
   }
 }
-function fetchKeepAliveStrategy(endpointUrl, bytesLimit, payload, onResponse) {
-  var data = payload.data;
-  var bytesCount = payload.bytesCount;
+function fetchStrategyWithFallback(endpointUrl, payload, onResponse) {
   var url = addBatchPrecision(endpointUrl, payload.encoding);
-  var canUseKeepAlive = isKeepAliveSupported() && bytesCount < bytesLimit;
-  if (canUseKeepAlive) {
-    var fetchOption = {
-      method: 'POST',
-      body: data,
-      keepalive: true,
-      mode: 'cors'
-    };
-    const headers = {
-      'x-client-timestamp': Date.now().toString()
-    };
-    if (payload.type) {
-      headers['Content-Type'] = payload.type;
-    }
-    fetchOption.headers = headers;
-    fetch(url, fetchOption).then(monitor(function (response) {
-      if (typeof onResponse === 'function') {
-        onResponse({
-          status: response.status,
-          type: response.type
-        });
-      }
-    })).catch(monitor(function () {
-      fetchStrategy(url, payload, onResponse);
-    }));
+  if (typeof fetch === 'function') {
+    return sendFetch(url, payload, onResponse);
   } else {
-    sendXHR(url, payload, onResponse);
-  }
-}
-function isKeepAliveSupported() {
-  // Request can throw, cf https://developer.mozilla.org/en-US/docs/Web/API/Request/Request#errors
-  try {
-    return window.Request && 'keepalive' in new Request('http://a');
-  } catch (_unused) {
-    return false;
+    return sendXHR(url, payload, onResponse);
   }
 }
 function sendXHR(url, payload, onResponse) {
@@ -5064,12 +5931,13 @@ function sendXHR(url, payload, onResponse) {
     once: true
   });
   request.send(data);
+  return request;
 }
-function fetchStrategy(url, payload, onResponse) {
+function sendFetch(url, payload, onResponse) {
+  const controller = typeof AbortController === 'function' && new AbortController();
   const fetchOption = {
     method: 'POST',
     body: payload.data,
-    keepalive: true,
     mode: 'cors'
   };
   const headers = {
@@ -5078,7 +5946,13 @@ function fetchStrategy(url, payload, onResponse) {
   if (payload.type) {
     headers['Content-Type'] = payload.type;
   }
+  if (payload.$rKeepalive) {
+    fetchOption.keepalive = true;
+  }
   fetchOption.headers = headers;
+  if (controller) {
+    fetchOption.signal = controller.signal;
+  }
   fetch(url, fetchOption).then(monitor(function (response) {
     if (typeof onResponse === 'function') {
       onResponse({
@@ -5093,6 +5967,9 @@ function fetchStrategy(url, payload, onResponse) {
       });
     }
   }));
+  if (controller) {
+    return controller;
+  }
 }
 ;// CONCATENATED MODULE: ../core/esm/helper/serialisation/rowData.js
 
@@ -5112,6 +5989,7 @@ function escapeJsonValue(value, isTag) {
   if (typeof value === 'object' && value) {
     value = jsonStringify_jsonStringify(value);
   } else if (isTag) {
+    // tag  json  只能是字符串
     value = '' + value;
   }
   return value;
@@ -5140,6 +6018,7 @@ function escapeRowField(value) {
 // https://en.wikipedia.org/wiki/UTF-8
 // eslint-disable-next-line no-control-regex
 var CUSTOM_KEYS = 'custom_keys';
+var MAX_PENDING_RAW_JOURNAL_BYTES_COUNT = 4 * 1024 * 1024;
 var processedMessageByDataMap = function (message) {
   if (!message || !message.type) return {
     rowStr: '',
@@ -5151,14 +6030,14 @@ var processedMessageByDataMap = function (message) {
   };
   var hasFileds = false;
   var rowStr = '';
-  each(dataMap, function (value, key) {
+  tools_each(dataMap, function (value, key) {
     if (value.type === message.type) {
       rowStr += key + ',';
       rowData.measurement = key;
       var tagsStr = [];
       var tags = extend({}, commonTags, value.tags);
-      var filterFileds = ['date', 'type', CUSTOM_KEYS];
-      each(tags, function (value_path, _key) {
+      var filterFileds = ['date', 'type', CUSTOM_KEYS]; // 已经在datamap中定义过的fields和tags
+      tools_each(tags, function (value_path, _key) {
         var _value = findByPath(message, value_path);
         filterFileds.push(_key);
         if (_value || isNumber(_value)) {
@@ -5168,32 +6047,34 @@ var processedMessageByDataMap = function (message) {
       });
       var fieldsStr = [];
       var fields = extend({}, commonFields, value.fields);
-      each(fields, function (_value, _key) {
+      tools_each(fields, function (_value, _key) {
         if (isArray(_value) && _value.length === 2) {
           var value_path = _value[1];
           var _valueData = findByPath(message, value_path);
           filterFileds.push(_key);
           if (_valueData !== undefined && _valueData !== null) {
-            rowData.fields[_key] = escapeJsonValue(_valueData);
+            rowData.fields[_key] = escapeJsonValue(_valueData); // 这里不需要转译
             fieldsStr.push(escapeRowData(_key) + '=' + escapeRowField(_valueData));
           }
         } else if (isString(_value)) {
           var _valueData = findByPath(message, _value);
           filterFileds.push(_key);
           if (_valueData !== undefined && _valueData !== null) {
-            rowData.fields[_key] = escapeJsonValue(_valueData);
+            rowData.fields[_key] = escapeJsonValue(_valueData); // 这里不需要转译
             fieldsStr.push(escapeRowData(_key) + '=' + escapeRowField(_valueData));
           }
         }
       });
       if (message.context && isObject(message.context) && !isEmptyObject(message.context)) {
+        // 自定义tag， 存储成field
         var _tagKeys = [];
-        each(message.context, function (_value, _key) {
+        tools_each(message.context, function (_value, _key) {
+          // 如果和之前tag重名，则舍弃
           if (filterFileds.indexOf(_key) > -1) return;
           filterFileds.push(_key);
           if (_value !== undefined && _value !== null) {
             _tagKeys.push(_key);
-            rowData.fields[_key] = escapeJsonValue(_value);
+            rowData.fields[_key] = escapeJsonValue(_value); // 这里不需要转译
             fieldsStr.push(escapeRowData(_key) + '=' + escapeRowField(_value));
           }
         });
@@ -5202,10 +6083,11 @@ var processedMessageByDataMap = function (message) {
           fieldsStr.push(escapeRowData(CUSTOM_KEYS) + '=' + escapeRowField(_tagKeys));
         }
       }
-      if (message.type === RumEventType.LOGGER) {
-        each(message, function (value, key) {
+      if (message.type === enums_RumEventType.LOGGER) {
+        // 这里处理日志类型数据自定义字段
+        tools_each(message, function (value, key) {
           if (filterFileds.indexOf(key) === -1 && value !== undefined && value !== null) {
-            rowData.fields[key] = escapeJsonValue(value);
+            rowData.fields[key] = escapeJsonValue(value); // 这里不需要转译
             fieldsStr.push(escapeRowData(key) + '=' + escapeRowField(value));
           }
         });
@@ -5219,7 +6101,7 @@ var processedMessageByDataMap = function (message) {
         hasFileds = true;
       }
       rowStr = rowStr + ' ' + message.date;
-      rowData.time = message.date;
+      rowData.time = message.date; // 这里不需要转译
     }
   });
   return {
@@ -5229,11 +6111,24 @@ var processedMessageByDataMap = function (message) {
 };
 function createBatch(options) {
   var encoder = options.encoder;
+  var encoderFallback = options.encoderFallback;
   var request = options.request;
+  var bytesLimit = options.bytesLimit;
   var messageBytesLimit = options.messageBytesLimit;
   var sendContentTypeByJson = options.sendContentTypeByJson;
   var flushController = options.flushController;
   var upsertBuffer = {};
+  var upsertMessageBytesCountByKey = {};
+  var upsertRawBytesCountByKey = {};
+  var upsertRawBytesCount = 0;
+  var fallbackMessagesBuffer = [];
+  var fallbackMessagesBufferBytesCount = 0;
+  var rawFallbackBatchActive = false;
+  var pendingRawBatches = [];
+  var pendingRawBatchesBytesCount = 0;
+  var maxPendingRawBytes = typeof options.maxPendingRawBytes === 'number' ? options.maxPendingRawBytes : MAX_PENDING_RAW_JOURNAL_BYTES_COUNT;
+  var rawJournalLimitReported = false;
+  var currentBatchGeneration = 0;
   var flushSubscription = flushController.flushObservable.subscribe(function (event) {
     flush(event);
   });
@@ -5255,23 +6150,53 @@ function createBatch(options) {
   }
   function push(serializedMessage, estimatedMessageBytesCount, key) {
     flushController.notifyBeforeAddMessage(estimatedMessageBytesCount);
+    var rawMessageBytesCount = computeBytesCount(serializedMessage) + 1;
+    if (encoder.isAsync && encoderFallback && pendingRawBatchesBytesCount + fallbackMessagesBufferBytesCount + upsertRawBytesCount + rawMessageBytesCount > maxPendingRawBytes) {
+      if (!rawJournalLimitReported) {
+        rawJournalLimitReported = true;
+        display.warn('Session data compression was disabled because its pending raw journal reached the safety limit.');
+      }
+      // Preserve the older batches from the raw journal before retiring the
+      // worker encoder. New messages continue through the identity encoder,
+      // so the journal cannot keep growing behind a slow worker.
+      switchToFallbackEncoder(encoder, true);
+    }
     if (key !== undefined) {
       upsertBuffer[key] = serializedMessage;
+      upsertMessageBytesCountByKey[key] = estimatedMessageBytesCount;
+      upsertRawBytesCountByKey[key] = rawMessageBytesCount;
+      upsertRawBytesCount += rawMessageBytesCount;
       flushController.notifyAfterAddMessage();
     } else {
-      encoder.write(getMessageText([serializedMessage], encoder.isEmpty()), function (realMessageBytesCount) {
-        flushController.notifyAfterAddMessage(realMessageBytesCount - estimatedMessageBytesCount);
+      if (encoder.isAsync || encoderFallback || rawFallbackBatchActive) {
+        fallbackMessagesBuffer.push(serializedMessage);
+        fallbackMessagesBufferBytesCount += rawMessageBytesCount;
+      }
+      var writeEncoder = encoder;
+      var writeBatchGeneration = currentBatchGeneration;
+      writeEncoder.write(getMessageText([serializedMessage], writeEncoder.isEmpty()), function (realMessageBytesCount, error) {
+        if (writeBatchGeneration === currentBatchGeneration) {
+          flushController.notifyAfterAddMessage(error ? undefined : realMessageBytesCount - estimatedMessageBytesCount);
+        }
+        if (error) {
+          // A stream-scoped worker error may recover before finish(). Switch
+          // immediately so a later successful compressed chunk cannot hide
+          // the loss of messages written before the error.
+          switchToFallbackEncoder(writeEncoder);
+        }
       });
     }
   }
   function hasMessageFor(key) {
     return key !== undefined && upsertBuffer[key] !== undefined;
   }
-  function remove(key) {
-    var removedMessage = upsertBuffer[key];
+  function remove(key, keepDurationLimitTimeout) {
     delete upsertBuffer[key];
-    var messageBytesCount = encoder.estimateEncodedBytesCount(removedMessage);
-    flushController.notifyAfterRemoveMessage(messageBytesCount);
+    var messageBytesCount = upsertMessageBytesCountByKey[key];
+    delete upsertMessageBytesCountByKey[key];
+    upsertRawBytesCount -= upsertRawBytesCountByKey[key] || 0;
+    delete upsertRawBytesCountByKey[key];
+    flushController.notifyAfterRemoveMessage(messageBytesCount, keepDurationLimitTimeout);
   }
   function process(message) {
     var processedMessage = '';
@@ -5290,50 +6215,145 @@ function createBatch(options) {
       return;
     }
     if (hasMessageFor(key)) {
-      remove(key);
+      // Keep the original flush deadline while replacing an upsert. Otherwise,
+      // a frequently updated View can postpone its flush indefinitely when it
+      // is the only message in the batch.
+      remove(key, true);
     }
     push(serializedMessage, estimatedMessageBytesCount, key);
   }
   function flush(event) {
-    var upsertMessages = values(upsertBuffer).join(sendContentTypeByJson ? ',' : '\n');
+    var hasCurrentRawMessages = fallbackMessagesBuffer.length > 0 || !isEmptyObject(upsertBuffer);
+    if (!hasCurrentRawMessages && pendingRawBatches.length === 0 && (!event || !event.messagesCount) && encoder.isEmpty()) {
+      return;
+    }
+    currentBatchGeneration += 1;
+    var flushedEncoder = encoder;
+    var upsertMessageValues = values(upsertBuffer);
+    var upsertMessages = upsertMessageValues.join(sendContentTypeByJson ? ',' : '\n');
     upsertBuffer = {};
+    upsertMessageBytesCountByKey = {};
+    upsertRawBytesCountByKey = {};
+    upsertRawBytesCount = 0;
+    var rawFallbackFlush = rawFallbackBatchActive;
+    var fallbackMessages = flushedEncoder.isAsync || encoderFallback || rawFallbackFlush ? fallbackMessagesBuffer.concat(upsertMessageValues) : undefined;
+    fallbackMessagesBuffer = [];
+    fallbackMessagesBufferBytesCount = 0;
+    rawFallbackBatchActive = false;
     var isPageExit = isPageExitReason(event.reason);
     var send = isPageExit ? request.sendOnExit : request.send;
-    if (isPageExit &&
-    // Note: checking that the encoder is async is not strictly needed, but it's an optimization:
-    // if the encoder is async we need to send two requests in some cases (one for encoded data
-    // and the other for non-encoded data). But if it's not async, we don't have to worry about
-    // it and always send a single request.
-    encoder.isAsync) {
-      var encoderResult = encoder.finishSync();
+    var pendingRawBatch = !isPageExit && flushedEncoder.isAsync ? addPendingRawBatch(fallbackMessages) : undefined;
+    if (isPageExit && (
+    // A previous asynchronous encoder may already have fallen back while
+    // its raw journal is still waiting for finish(). Page exit must promote
+    // that journal even when the current encoder is now synchronous.
+    flushedEncoder.isAsync || pendingRawBatches.length > 0)) {
+      var encoderResult = flushedEncoder.finishSync();
+      var pendingMessages = consumePendingRawMessages().concat(fallbackMessages || []);
+      if (encoderResult.error) {
+        switchToFallbackEncoder(flushedEncoder, false);
+      }
 
-      // Send encoded messages
-      if (encoderResult.outputBytesCount) {
-        send(formatPayloadFromEncoder(encoderResult, sendContentTypeByJson));
-      }
-      // Send messages that are not yet encoded at this point
-      var pendingMessages = [...encoderResult.pendingData, upsertMessages].filter(Boolean).join('\n');
-      if (pendingMessages) {
-        send({
-          data: pendingMessages,
-          bytesCount: computeBytesCount(pendingMessages)
-        });
-      }
+      // A synchronous finish can contain a compressed prefix from an older
+      // unfinished batch and raw framing from a newer one. Neither part is a
+      // valid standalone payload. Send the raw journal instead; it preserves
+      // complete original messages and exact finish boundaries.
+      sendMessages(send, pendingMessages, sendContentTypeByJson, bytesLimit);
     } else {
       if (upsertMessages) {
-        var text = getMessageText([upsertMessages], encoder.isEmpty());
+        var text = getMessageText([upsertMessages], flushedEncoder.isEmpty());
         if (sendContentTypeByJson) {
           text += ']';
         }
-        encoder.write(text);
+        flushedEncoder.write(text);
       } else {
         if (sendContentTypeByJson) {
-          encoder.write(']');
+          flushedEncoder.write(']');
         }
       }
-      encoder.finish(function (encoderResult) {
-        send(formatPayloadFromEncoder(encoderResult));
+      flushedEncoder.finish(function (encoderResult) {
+        if (pendingRawBatch && !releasePendingRawBatch(pendingRawBatch)) {
+          // A page-exit flush already sent this batch from the raw journal.
+          return;
+        }
+        if (encoderResult.error) {
+          switchToFallbackEncoder(flushedEncoder);
+          sendMessages(send, fallbackMessages, sendContentTypeByJson, bytesLimit);
+          return;
+        }
+        if (rawFallbackFlush) {
+          sendMessages(send, fallbackMessages, sendContentTypeByJson, bytesLimit);
+          return;
+        }
+        if (encoderResult.outputBytesCount) {
+          send(formatPayloadFromEncoder(encoderResult, sendContentTypeByJson));
+        } else {
+          sendMessages(send, fallbackMessages, sendContentTypeByJson, bytesLimit);
+        }
       });
+    }
+  }
+  function addPendingRawBatch(messages) {
+    var batch = {
+      messages: messages || [],
+      bytesCount: computeRawMessagesBytesCount(messages),
+      isActive: true
+    };
+    pendingRawBatches.push(batch);
+    pendingRawBatchesBytesCount += batch.bytesCount;
+    return batch;
+  }
+  function releasePendingRawBatch(batch) {
+    if (!batch.isActive) {
+      return false;
+    }
+    batch.isActive = false;
+    var index = pendingRawBatches.indexOf(batch);
+    if (index !== -1) {
+      pendingRawBatches.splice(index, 1);
+    }
+    pendingRawBatchesBytesCount = Math.max(0, pendingRawBatchesBytesCount - batch.bytesCount);
+    return true;
+  }
+  function consumePendingRawMessages() {
+    var messages = [];
+    pendingRawBatches.forEach(function (batch) {
+      batch.isActive = false;
+      messages = messages.concat(batch.messages);
+    });
+    pendingRawBatches = [];
+    pendingRawBatchesBytesCount = 0;
+    return messages;
+  }
+  function drainPendingRawBatches() {
+    var batches = pendingRawBatches;
+    pendingRawBatches = [];
+    pendingRawBatchesBytesCount = 0;
+    batches.forEach(function (batch) {
+      batch.isActive = false;
+      sendMessages(request.send, batch.messages, sendContentTypeByJson, bytesLimit);
+    });
+  }
+  function switchToFallbackEncoder(failedEncoder) {
+    let drainPending = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+    if (!encoderFallback || encoder !== failedEncoder) {
+      return;
+    }
+    var createFallbackEncoder = encoderFallback;
+    encoderFallback = undefined;
+    encoder = createFallbackEncoder();
+    // The flush controller accounted the current batch with the failed
+    // encoder's estimate. Keep its original messages until the identity
+    // encoder flushes so the raw payload can still honor the batch limit.
+    rawFallbackBatchActive = fallbackMessagesBuffer.length > 0 || !isEmptyObject(upsertBuffer);
+    if (fallbackMessagesBuffer.length) {
+      encoder.write(getMessageText(fallbackMessagesBuffer, encoder.isEmpty()));
+    }
+    if (drainPending) {
+      drainPendingRawBatches();
+    }
+    if (failedEncoder.stop) {
+      failedEncoder.stop();
     }
   }
   return {
@@ -5342,6 +6362,49 @@ function createBatch(options) {
     upsert: addOrUpdate,
     stop: flushSubscription.unsubscribe
   };
+}
+function computeRawMessagesBytesCount(messages) {
+  if (!messages || !messages.length) {
+    return 0;
+  }
+  return messages.reduce(function (bytesCount, message) {
+    return bytesCount + computeBytesCount(message) + 1;
+  }, 0);
+}
+function sendMessages(send, messages, sendContentTypeByJson, bytesLimit) {
+  if (!messages) {
+    return;
+  }
+  var filteredMessages = messages.filter(Boolean);
+  if (!filteredMessages.length) {
+    return;
+  }
+  var messagesBuffer = [];
+  var messagesBufferBytesCount = sendContentTypeByJson ? 2 : 0;
+  filteredMessages.forEach(function (message) {
+    var separatorBytesCount = messagesBuffer.length ? 1 : 0;
+    var messageBytesCount = computeBytesCount(message);
+    if (messagesBuffer.length && typeof bytesLimit === 'number' && messagesBufferBytesCount + separatorBytesCount + messageBytesCount > bytesLimit) {
+      sendMessagesBuffer(send, messagesBuffer, messagesBufferBytesCount, sendContentTypeByJson);
+      messagesBuffer = [];
+      messagesBufferBytesCount = sendContentTypeByJson ? 2 : 0;
+      separatorBytesCount = 0;
+    }
+    messagesBuffer.push(message);
+    messagesBufferBytesCount += separatorBytesCount + messageBytesCount;
+  });
+  sendMessagesBuffer(send, messagesBuffer, messagesBufferBytesCount, sendContentTypeByJson);
+}
+function sendMessagesBuffer(send, messages, messagesBytesCount, sendContentTypeByJson) {
+  var data = sendContentTypeByJson ? '[' + messages.join(',') + ']' : messages.join('\n');
+  if (!data) {
+    return;
+  }
+  send({
+    data: data,
+    type: sendContentTypeByJson ? 'application/json;charset=UTF-8' : undefined,
+    bytesCount: messagesBytesCount
+  });
 }
 function formatPayloadFromEncoder(encoderResult, sendContentTypeByJson) {
   var data;
@@ -5360,7 +6423,7 @@ function formatPayloadFromEncoder(encoderResult, sendContentTypeByJson) {
   }
   return {
     data: data,
-    type: sendContentTypeByJson ? 'application/json;UTF-8' : undefined,
+    type: sendContentTypeByJson ? 'application/json;charset=UTF-8' : undefined,
     bytesCount: encoderResult.outputBytesCount,
     encoding: encoderResult.encoding
   };
@@ -5369,7 +6432,7 @@ function formatPayloadFromEncoder(encoderResult, sendContentTypeByJson) {
 
 
 
-// type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
+// type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire' | 'view_created'
 
 /**
  * Returns a "flush controller", responsible of notifying when flushing a pool of pending data needs
@@ -5377,29 +6440,35 @@ function formatPayloadFromEncoder(encoderResult, sendContentTypeByJson) {
  * but relies on invariants described in each method documentation to keep a coherent state.
  */
 function createFlushController(_ref) {
-  let {
-    messagesLimit,
-    bytesLimit,
-    durationLimit,
-    pageExitObservable,
-    sessionExpireObservable
-  } = _ref;
+  let messagesLimit = _ref.messagesLimit,
+    bytesLimit = _ref.bytesLimit,
+    durationLimit = _ref.durationLimit,
+    pageExitObservable = _ref.pageExitObservable,
+    sessionExpireObservable = _ref.sessionExpireObservable,
+    flushRequestObservable = _ref.flushRequestObservable;
   var pageExitSubscription = pageExitObservable.subscribe(function (event) {
-    return flush(event.reason);
+    // An asynchronous encoder can still own raw journals from an earlier
+    // flush after the controller's current counters reached zero. Give the
+    // batch one last page-exit notification so it can promote those journals.
+    return flush(event.reason, true);
   });
   var sessionExpireSubscription = sessionExpireObservable.subscribe(function () {
     return flush('session_expire');
   });
+  var flushRequestSubscription = flushRequestObservable && flushRequestObservable.subscribe(flush);
   var flushObservable = new Observable(function () {
     return function () {
       pageExitSubscription.unsubscribe();
       sessionExpireSubscription.unsubscribe();
+      if (flushRequestSubscription) {
+        flushRequestSubscription.unsubscribe();
+      }
     };
   });
   var currentBytesCount = 0;
   var currentMessagesCount = 0;
-  function flush(flushReason) {
-    if (currentMessagesCount === 0) {
+  function flush(flushReason, flushWhenEmpty) {
+    if (currentMessagesCount === 0 && !flushWhenEmpty) {
       return;
     }
     var messagesCount = currentMessagesCount;
@@ -5473,11 +6542,13 @@ function createFlushController(_ref) {
      * @param messageBytesCount: the message bytes count that was added to the pool. Should
      * correspond to the sum of bytes counts passed to `notifyBeforeAddMessage` and
      * `notifyAfterAddMessage`.
+     * @param keepDurationLimitTimeout: keeps the current deadline when the removed message is
+     * synchronously replaced by another one.
      */
-    notifyAfterRemoveMessage: function (messageBytesCount) {
+    notifyAfterRemoveMessage: function (messageBytesCount, keepDurationLimitTimeout) {
       currentBytesCount -= messageBytesCount;
       currentMessagesCount -= 1;
-      if (currentMessagesCount === 0) {
+      if (currentMessagesCount === 0 && !keepDurationLimitTimeout) {
         cancelDurationLimitTimeout();
       }
     }
@@ -5495,14 +6566,17 @@ function startBatchWithReplica(configuration, primary, reportError, pageExitObse
   function createBatchFromConfig(configuration, batchConfiguration) {
     return batchFactoryImp({
       encoder: batchConfiguration.encoder,
-      request: createHttpRequest(batchConfiguration.endpoint, configuration.batchBytesLimit, configuration.retryMaxSize, reportError),
+      encoderFallback: batchConfiguration.encoderFallback,
+      request: batchConfiguration.request || createHttpRequest(batchConfiguration.endpoint, configuration.batchBytesLimit, configuration.retryMaxSize, reportError),
       flushController: createFlushController({
         messagesLimit: configuration.batchMessagesLimit,
         bytesLimit: configuration.batchBytesLimit,
         durationLimit: configuration.flushTimeout,
         pageExitObservable: pageExitObservable,
-        sessionExpireObservable: sessionExpireObservable
+        sessionExpireObservable: sessionExpireObservable,
+        flushRequestObservable: batchConfiguration.flushRequestObservable
       }),
+      bytesLimit: configuration.batchBytesLimit,
       messageBytesLimit: configuration.messageBytesLimit,
       sendContentTypeByJson: configuration.sendContentTypeByJson
     });
@@ -5533,6 +6607,11 @@ function getEventBridge() {
   }
 
   // return {
+  //   getVisitorId() {
+  //     if (typeof eventBridgeGlobal.getVisitorid === 'function') {
+  //       return eventBridgeGlobal.getVisitorid()
+  //     }
+  //   },
   //   getCapabilities() {
   //     return JSON.parse(
   //       (eventBridgeGlobal.getCapabilities &&
@@ -5554,15 +6633,19 @@ function getEventBridge() {
   //   },
   //   send(eventType, event, viewId) {
   //     const view = viewId ? { id: viewId } : undefined
-  //     eventBridgeGlobal.sendEvent(
-  //       JSON.stringify({ name: eventType, data: event, view })
-  //     )
+  //     try {
+  //       eventBridgeGlobal.sendEvent(
+  //         JSON.stringify({ name: eventType, data: event, view })
+  //       )
+  //     } catch (e) {
+  //       // unload postmessage error
+  //     }
   //   }
   // }
 }
-const BridgeCapability = {
-  RECORDS: 'records'
-};
+// export const BridgeCapability = {
+//   RECORDS: 'records'
+// }
 function bridgeSupports(capability) {
   const bridge = getEventBridge();
   return !!bridge && bridge.getCapabilities().includes(capability);
@@ -5612,89 +6695,25 @@ function willSyntheticsInjectRum() {
   return Boolean(window._GUANCE_SYNTHETICS_INJECTS_RUM || cookie_getCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME));
 }
 function getSyntheticsTestId() {
-  var value = window._GUANCE_SYNTHETICS_PUBLIC_ID || getCookie(SYNTHETICS_TEST_ID_COOKIE_NAME);
+  var value = typeof window._GUANCE_SYNTHETICS_PUBLIC_ID === 'string' ? window._GUANCE_SYNTHETICS_PUBLIC_ID : getCookie(SYNTHETICS_TEST_ID_COOKIE_NAME);
   return typeof value === 'string' ? value : undefined;
 }
 function getSyntheticsResultId() {
-  var value = window._GUANCE_SYNTHETICS_RESULT_ID || getCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME);
+  var value = typeof window._GUANCE_SYNTHETICS_RESULT_ID === 'string' ? window._GUANCE_SYNTHETICS_RESULT_ID : getCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME);
   return typeof value === 'string' ? value : undefined;
 }
-;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/typeof.js
-function _typeof(o) {
-  "@babel/helpers - typeof";
-
-  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
-    return typeof o;
-  } : function (o) {
-    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-  }, _typeof(o);
-}
-
-;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/toPrimitive.js
-
-function toPrimitive(t, r) {
-  if ("object" != _typeof(t) || !t) return t;
-  var e = t[Symbol.toPrimitive];
-  if (void 0 !== e) {
-    var i = e.call(t, r || "default");
-    if ("object" != _typeof(i)) return i;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
-  }
-  return ("string" === r ? String : Number)(t);
-}
-
-;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/toPropertyKey.js
-
-
-function toPropertyKey(t) {
-  var i = toPrimitive(t, "string");
-  return "symbol" == _typeof(i) ? i : i + "";
-}
-
-;// CONCATENATED MODULE: ../../node_modules/@babel/runtime/helpers/esm/defineProperty.js
-
-function _defineProperty(e, r, t) {
-  return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
-    value: t,
-    enumerable: !0,
-    configurable: !0,
-    writable: !0
-  }) : e[r] = t, e;
-}
-
 ;// CONCATENATED MODULE: ../core/esm/helper/serialisation/contextManager.js
-
-function ownKeys(e, r) {
-  var t = Object.keys(e);
-  if (Object.getOwnPropertySymbols) {
-    var o = Object.getOwnPropertySymbols(e);
-    r && (o = o.filter(function (r) {
-      return Object.getOwnPropertyDescriptor(e, r).enumerable;
-    })), t.push.apply(t, o);
-  }
-  return t;
-}
-function _objectSpread(e) {
-  for (var r = 1; r < arguments.length; r++) {
-    var t = null != arguments[r] ? arguments[r] : {};
-    r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
-      _defineProperty(e, r, t[r]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
-      Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
-    });
-  }
-  return e;
-}
 
 
 
 
 function ensureProperties(context, propertiesConfig, name) {
-  const newContext = _objectSpread({}, context);
-  for (const [key, {
-    required,
-    type
-  }] of Object.entries(propertiesConfig)) {
+  const newContext = tools_assign({}, context);
+  Object.entries(propertiesConfig).forEach(function (propertyEntry) {
+    const key = propertyEntry[0];
+    const propertyConfiguration = propertyEntry[1];
+    const required = propertyConfiguration.required;
+    const type = propertyConfiguration.type;
     /**
      * Ensure specified properties are strings as defined here:
      */
@@ -5704,21 +6723,21 @@ function ensureProperties(context, propertiesConfig, name) {
     if (required && !(key in context)) {
       display.warn("The property ".concat(key, " of ").concat(name, " context is required; context will not be sent to the intake."));
     }
-  }
+  });
   return newContext;
 }
 function createContextManager() {
   let name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-  let {
-    customerDataTracker,
-    propertiesConfig = {}
-  } = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  let _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+    customerDataTracker = _ref.customerDataTracker,
+    _ref$propertiesConfig = _ref.propertiesConfig,
+    propertiesConfig = _ref$propertiesConfig === void 0 ? {} : _ref$propertiesConfig;
   let context = {};
   const changeObservable = new Observable();
   const contextManager = {
     getContext: () => deepClone(context),
     setContext: newContext => {
-      if (getType(newContext) === 'object') {
+      if (tools_getType(newContext) === 'object') {
         context = sanitize(ensureProperties(newContext, propertiesConfig, name));
         customerDataTracker === null || customerDataTracker === void 0 || customerDataTracker.updateCustomerData(context);
       } else {
@@ -5727,9 +6746,14 @@ function createContextManager() {
       changeObservable.notify();
     },
     setContextProperty: (key, property) => {
-      context[key] = sanitize(ensureProperties({
-        [key]: property
-      }, propertiesConfig, name)[key]);
+      const propertyContext = {};
+      Object.defineProperty(propertyContext, key, {
+        configurable: true,
+        enumerable: true,
+        value: property,
+        writable: true
+      });
+      context[key] = sanitize(ensureProperties(propertyContext, propertiesConfig, name)[key]);
       customerDataTracker === null || customerDataTracker === void 0 || customerDataTracker.updateCustomerData(context);
       changeObservable.notify();
     },
@@ -5805,6 +6829,7 @@ function removeStorageListeners() {
 
 
 
+
 // RUM and logs batch bytes limit is 16KB
 // ensure that we leave room for other event attributes and maintain a decent amount of event per batch
 // (3KB (customer data) + 1KB (other attributes)) * 4 (events per batch) = 16KB
@@ -5823,7 +6848,7 @@ const CustomerDataCompressionStatus = {
 };
 function createCustomerDataTrackerManager() {
   let compressionStatus = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : CustomerDataCompressionStatus.Disabled;
-  const customerDataTrackers = new Map();
+  const customerDataTrackers = new sdkMap_SDKMap();
   let alreadyWarned = false;
   function checkCustomerDataLimit() {
     let initialBytesCount = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
@@ -5879,13 +6904,12 @@ function createCustomerDataTracker(checkCustomerDataLimit) {
 
   // Throttle the bytes computation to minimize the impact on performance.
   // Especially useful if the user call context APIs synchronously multiple times in a row
-  const {
-    throttled: computeBytesCountThrottled,
-    cancel: cancelComputeBytesCount
-  } = throttle(context => {
-    bytesCountCache = computeBytesCount(jsonStringify_jsonStringify(context));
-    checkCustomerDataLimit();
-  }, BYTES_COMPUTATION_THROTTLING_DELAY);
+  const _throttle = throttle(context => {
+      bytesCountCache = computeBytesCount(jsonStringify_jsonStringify(context));
+      checkCustomerDataLimit();
+    }, BYTES_COMPUTATION_THROTTLING_DELAY),
+    computeBytesCountThrottled = _throttle.throttled,
+    cancelComputeBytesCount = _throttle.cancel;
   const resetBytesCount = () => {
     cancelComputeBytesCount();
     bytesCountCache = 0;
@@ -5941,7 +6965,7 @@ function createIdentityEncoder() {
       return result;
     },
     estimateEncodedBytesCount: function (data) {
-      return data.length;
+      return typeof data === 'number' ? data : data.length;
     }
   };
 }
@@ -5957,7 +6981,7 @@ function sanitizeUser(newUser) {
   // We shallow clone only to prevent mutation of user data.
   var user = tools_assign({}, newUser);
   var keys = ['id', 'name', 'email'];
-  each(keys, function (key) {
+  tools_each(keys, function (key) {
     if (key in user) {
       user[key] = String(user[key]);
     }
@@ -5969,7 +6993,7 @@ function sanitizeUser(newUser) {
  * Simple check to ensure user is valid
  */
 function checkUser(newUser) {
-  var isValid = getType(newUser) === 'object';
+  var isValid = tools_getType(newUser) === 'object';
   if (!isValid) {
     display.error('Unsupported user:', newUser);
   }
@@ -5977,27 +7001,6 @@ function checkUser(newUser) {
 }
 ;// CONCATENATED MODULE: ../core/esm/user/index.js
 
-;// CONCATENATED MODULE: ../core/esm/helper/polyfills.js
-// ie11 supports WeakMap but not WeakSet
-var PLACEHOLDER = 1;
-function polyfills_WeakSet(initialValues) {
-  this.map = new WeakMap();
-  if (initialValues) {
-    initialValues.forEach(function (value) {
-      this.map.set(value, PLACEHOLDER);
-    });
-  }
-}
-polyfills_WeakSet.prototype.add = function (value) {
-  this.map.set(value, PLACEHOLDER);
-  return this;
-};
-polyfills_WeakSet.prototype.delete = function (value) {
-  return this.map.delete(value);
-};
-polyfills_WeakSet.prototype.has = function (value) {
-  return this.map.has(value);
-};
 ;// CONCATENATED MODULE: ../core/esm/helper/displayAlreadyInitializedError.js
 
 function displayAlreadyInitializedError(sdkName, initConfiguration) {
@@ -6038,6 +7041,7 @@ function displayAlreadyInitializedError(sdkName, initConfiguration) {
 
 
 
+// export * from './browser/webSocketObservable'
 
 
 
@@ -6058,8 +7062,9 @@ function displayAlreadyInitializedError(sdkName, initConfiguration) {
 
 
 
-
+// export * from './helper/polyfills'
 // export * from './telemetry/telemetry'
+
 
 
 
@@ -6089,17 +7094,15 @@ function startRumSessionManager(configuration, lifeCycle) {
   var sessionManager = startSessionManager(configuration, RUM_SESSION_KEY, function (rawTrackingType) {
     return computeSessionState(configuration, rawTrackingType);
   });
-  sessionManager.expireObservable.subscribe(function () {
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED);
+  sessionManager.expireObservable.subscribe(function (sessionExpirationTime) {
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, sessionExpirationTime);
   });
   sessionManager.renewObservable.subscribe(function () {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED);
   });
   sessionManager.sessionStateUpdateObservable.subscribe(_ref => {
-    let {
-      previousState,
-      newState
-    } = _ref;
+    let previousState = _ref.previousState,
+      newState = _ref.newState;
     if (!previousState.hasError && newState.hasError) {
       const sessionEntity = sessionManager.findSession();
       if (sessionEntity) {
@@ -6110,7 +7113,11 @@ function startRumSessionManager(configuration, lifeCycle) {
     if (!previousState.forcedSession && newState.forcedSession) {
       const sessionEntity = sessionManager.findSession();
       if (sessionEntity) {
+        sessionEntity.id = newState.id;
         sessionEntity.isSessionForced = true;
+        // Publish only after the current history entry becomes collectable.
+        // Renewed sessions already create and publish their own View.
+        lifeCycle.notify(LifeCycleEventType.SESSION_FORCED);
       }
     }
   });
@@ -6123,9 +7130,9 @@ function startRumSessionManager(configuration, lifeCycle) {
       if (!isTypeTracked(session.trackingType) && !session.isSessionForced) {
         return;
       }
-      const isErrorSession = session.trackingType === RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITHOUT_SESSION_REPLAY || session.trackingType === RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_SESSION_REPLAY || session.trackingType === RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_ERROR_SESSION_REPLAY;
+      const isErrorSession = !session.isSessionForced && (session.trackingType === RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITHOUT_SESSION_REPLAY || session.trackingType === RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_SESSION_REPLAY || session.trackingType === RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_ERROR_SESSION_REPLAY);
       let plan = RumSessionPlan.WITHOUT_SESSION_REPLAY;
-      if (session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_AND_WITH_SESSION_REPLAY || session.trackingType === RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_SESSION_REPLAY) {
+      if (session.isSessionForced || session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_AND_WITH_SESSION_REPLAY || session.trackingType === RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_SESSION_REPLAY) {
         plan = RumSessionPlan.WITH_SESSION_REPLAY;
       } else if (session.trackingType === RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_ERROR_SESSION_REPLAY || session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_AND_WITH_ERROR_SESSION_REPLAY) {
         plan = RumSessionPlan.WITH_ERROR_SESSION_REPLAY;
@@ -6138,20 +7145,31 @@ function startRumSessionManager(configuration, lifeCycle) {
         isErrorSession: isErrorSession,
         sessionErrorTimestamp: session.ets,
         isSessionForced: session.isSessionForced,
-        sessionReplayAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY || plan === RumSessionPlan.WITH_ERROR_SESSION_REPLAY || session.isSessionForced
+        sessionReplayAllowed: plan === RumSessionPlan.WITH_SESSION_REPLAY || plan === RumSessionPlan.WITH_ERROR_SESSION_REPLAY
       };
     },
     expire: sessionManager.expire,
+    keepSessionAlive: sessionManager.expandOrRenewSession,
+    startSession: function (options) {
+      if (!applyStartSessionOptions(configuration, options)) {
+        return;
+      }
+      sessionManager.renewSession();
+    },
     expireObservable: sessionManager.expireObservable,
     sessionStateUpdateObservable: sessionManager.sessionStateUpdateObservable,
     setErrorForSession: () => sessionManager.updateSessionState({
       hasError: '1',
       ets: timeStampNow()
     }),
-    setForcedSession: () => {
-      sessionManager.updateSessionState({
-        forcedSession: '1'
-      });
+    setForcedSession: options => {
+      sessionManager.forceSession(options && options.refreshView ? previousState => {
+        // Activation and renewal already publish a View. Only an
+        // explicit public call needs another update when already forced.
+        if (previousState && previousState.forcedSession) {
+          lifeCycle.notify(LifeCycleEventType.SESSION_FORCED);
+        }
+      } : undefined);
     }
   };
 }
@@ -6177,6 +7195,8 @@ function startRumSessionManagerStub() {
   //     return session
   //   },
   //   expire: noop,
+  //   keepSessionAlive: noop,
+  //   startSession: noop,
   //   expireObservable: new Observable(),
   //   setErrorForSession: function () {
   //     session.sessionErrorTimestamp = timeStampNow()
@@ -6187,13 +7207,24 @@ function startRumSessionManagerStub() {
   //   setForcedSession: noop
   // }
 }
+function applyStartSessionOptions(configuration, options) {
+  if (options === undefined) {
+    return true;
+  }
+  if (!options || typeof options !== 'object' || options.sessionSampleRate !== undefined && !isPercentage(options.sessionSampleRate)) {
+    display.error('startSession options should contain a sessionSampleRate between 0 and 100');
+    return false;
+  }
+  if (options.sessionSampleRate !== undefined) {
+    configuration.sessionSampleRate = options.sessionSampleRate;
+  }
+  return true;
+}
 function computeSessionState(configuration, rawTrackingType) {
-  const {
-    sessionSampleRate,
-    sessionOnErrorSampleRate,
-    sessionReplaySampleRate,
-    sessionReplayOnErrorSampleRate
-  } = configuration;
+  const sessionSampleRate = configuration.sessionSampleRate,
+    sessionOnErrorSampleRate = configuration.sessionOnErrorSampleRate,
+    sessionReplaySampleRate = configuration.sessionReplaySampleRate,
+    sessionReplayOnErrorSampleRate = configuration.sessionReplayOnErrorSampleRate;
   const isSession = performDraw(sessionSampleRate);
   const isErrorSession = performDraw(sessionOnErrorSampleRate);
   const isSessionReplay = performDraw(sessionReplaySampleRate);
@@ -6251,7 +7282,7 @@ var ANONYMOUS_ID_EXPIRATION = 60 * 24 * ONE_HOUR;
 function initUsrCookie(cookieOptions) {
   var usrCacheId = cookie_getCookie(USR_ID_COOKIE_NAME, cookieOptions);
   if (!usrCacheId) {
-    usrCacheId = UUID();
+    usrCacheId = tools_UUID();
     setCookie(USR_ID_COOKIE_NAME, usrCacheId, ANONYMOUS_ID_EXPIRATION, cookieOptions);
   }
   return usrCacheId;
@@ -6259,7 +7290,7 @@ function initUsrCookie(cookieOptions) {
 function initUsrLocalStorage() {
   var usrCacheId = localStorage.getItem(USR_ID_COOKIE_NAME);
   if (!usrCacheId) {
-    usrCacheId = UUID();
+    usrCacheId = tools_UUID();
     localStorage.setItem(USR_ID_COOKIE_NAME, usrCacheId);
   }
   return usrCacheId;
@@ -6293,12 +7324,14 @@ function createDOMMutationObservable() {
     var observer = new MutationObserver(monitor(function () {
       return observable.notify();
     }));
-    observer.observe(document, {
-      attributes: true,
-      characterData: true,
-      childList: true,
-      subtree: true
-    });
+    try {
+      observer.observe(document, {
+        attributes: true,
+        characterData: true,
+        childList: true,
+        subtree: true
+      });
+    } catch (err) {}
     return function () {
       return observer.disconnect();
     };
@@ -6349,14 +7382,15 @@ function createLocationChangeObservable(location) {
   return new Observable(function (observable) {
     var _trackHistory = trackHistory(onLocationChange);
     var _trackHash = trackHash(onLocationChange);
-    function onLocationChange() {
+    function onLocationChange(navigationType) {
       if (currentLocation.href === location.href) {
         return;
       }
       var newLocation = shallowClone(location);
       observable.notify({
         newLocation: newLocation,
-        oldLocation: currentLocation
+        oldLocation: currentLocation,
+        navigationType: navigationType
       });
       currentLocation = newLocation;
     }
@@ -6370,13 +7404,19 @@ function trackHistory(onHistoryChange) {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   var pushState = instrumentMethod(getHistoryInstrumentationTarget('pushState'), 'pushState', function (params) {
     var onPostCall = params.onPostCall;
-    onPostCall(onHistoryChange);
+    onPostCall(function () {
+      onHistoryChange('push');
+    });
   });
   var replaceState = instrumentMethod(getHistoryInstrumentationTarget('replaceState'), 'replaceState', function (params) {
     var onPostCall = params.onPostCall;
-    onPostCall(onHistoryChange);
+    onPostCall(function () {
+      onHistoryChange('replace');
+    });
   });
-  var popState = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange);
+  var popState = addEventListener(window, DOM_EVENT.POP_STATE, function () {
+    onHistoryChange('traverse');
+  });
   return {
     stop: function () {
       pushState.stop();
@@ -6386,7 +7426,14 @@ function trackHistory(onHistoryChange) {
   };
 }
 function trackHash(onHashChange) {
-  return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange);
+  if (window.navigation && window.navigation.addEventListener) {
+    return addEventListener(window.navigation, 'currententrychange', function (event) {
+      onHashChange(event.navigationType);
+    });
+  }
+  return addEventListener(window, DOM_EVENT.HASH_CHANGE, function () {
+    onHashChange('push');
+  });
 }
 function getHistoryInstrumentationTarget(methodName) {
   // Ideally we should always instument the method on the prototype, however some frameworks (e.g [Next.js](https://github.com/vercel/next.js/blob/d3f5532065f3e3bb84fb54bd2dfd1a16d0f03a21/packages/next/src/client/components/app-router.tsx#L429))
@@ -6396,33 +7443,33 @@ function getHistoryInstrumentationTarget(methodName) {
 ;// CONCATENATED MODULE: ./src/domain/rumEventsCollection/resource/resourceUtils.js
 
 var FAKE_INITIAL_DOCUMENT = 'initial_document';
-var RESOURCE_TYPES = [[ResourceType.DOCUMENT, function (initiatorType) {
+var RESOURCE_TYPES = [[enums_ResourceType.DOCUMENT, function (initiatorType) {
   return FAKE_INITIAL_DOCUMENT === initiatorType;
-}], [ResourceType.XHR, function (initiatorType) {
+}], [enums_ResourceType.XHR, function (initiatorType) {
   return 'xmlhttprequest' === initiatorType;
-}], [ResourceType.FETCH, function (initiatorType) {
+}], [enums_ResourceType.FETCH, function (initiatorType) {
   return 'fetch' === initiatorType;
-}], [ResourceType.BEACON, function (initiatorType) {
+}], [enums_ResourceType.BEACON, function (initiatorType) {
   return 'beacon' === initiatorType;
-}], [ResourceType.CSS, function (_, path) {
+}], [enums_ResourceType.CSS, function (_, path) {
   return path.match(/\.css$/i) !== null;
-}], [ResourceType.JS, function (_, path) {
+}], [enums_ResourceType.JS, function (_, path) {
   return path.match(/\.js$/i) !== null;
-}], [ResourceType.IMAGE, function (initiatorType, path) {
+}], [enums_ResourceType.IMAGE, function (initiatorType, path) {
   return includes(['image', 'img', 'icon'], initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg|ico)$/i) !== null;
-}], [ResourceType.FONT, function (_, path) {
+}], [enums_ResourceType.FONT, function (_, path) {
   return path.match(/\.(woff|eot|woff2|ttf)$/i) !== null;
-}], [ResourceType.MEDIA, function (initiatorType, path) {
+}], [enums_ResourceType.MEDIA, function (initiatorType, path) {
   return includes(['audio', 'video'], initiatorType) || path.match(/\.(mp3|mp4)$/i) !== null;
 }]];
 function computeResourceEntryType(entry) {
   var url = entry.name;
   if (!isValidUrl(url)) {
-    return ResourceType.OTHER;
+    return enums_ResourceType.OTHER;
   }
   var path = getPathName(url);
-  var type = ResourceType.OTHER;
-  each(RESOURCE_TYPES, function (res) {
+  var type = enums_ResourceType.OTHER;
+  tools_each(RESOURCE_TYPES, function (res) {
     var _type = res[0],
       isType = res[1];
     if (isType(entry.initiatorType, path)) {
@@ -6501,6 +7548,70 @@ function isCacheHit(entry) {
   // fall back to duration checking (non-RT2 or cross-origin)
   return entry.duration < 30;
 }
+//  interface PerformanceResourceDetails {
+//   redirect?: PerformanceResourceDetailsElement
+//   dns?: PerformanceResourceDetailsElement
+//   connect?: PerformanceResourceDetailsElement
+//   ssl?: PerformanceResourceDetailsElement
+//   firstByte: PerformanceResourceDetailsElement
+//   download: PerformanceResourceDetailsElement
+//   fmp:
+// }
+// page_fmp	float		首屏时间(用于衡量用户什么时候看到页面的主要内容)，跟FCP的时长非常接近，这里我们就用FCP的时间作为首屏时间	firstPaintContentEnd - firstPaintContentStart
+// page_fpt	float		首次渲染时间，即白屏时间(从请求开始到浏览器开始解析第一批HTML文档字节的时间差。)	responseEnd - fetchStart
+// page_tti	float		首次可交互时间(浏览器完成所有HTML解析并且完成DOM构建，此时浏览器开始加载资源。)	domInteractive - fetchStart
+// page_firstbyte	float		首包时间	responseStart - domainLookupStart
+// page_dom_ready	float		DOM Ready时间(如果页面有同步执行的JS，则同步JS执行时间=ready-tti。)	domContentLoadEventEnd - fetchStart
+// page_load	float		页面完全加载时间(load=首次渲染时间+DOM解析耗时+同步JS执行+资源加载耗时。)	loadEventStart - fetchStart
+// page_dns	float		dns解析时间	domainLookupEnd - domainLookupStart
+// page_tcp	float		tcp连接时间	connectEnd - connectStart
+// page_ssl	float		ssl安全连接时间(仅适用于https)	connectEnd - secureConnectionStart
+// page_ttfb	float		请求响应耗时	responseStart - requestStart
+// page_trans	float		内容传输时间	responseEnd - responseStart
+// page_dom	float		DOM解析耗时	domInteractive - responseEnd
+// page_resource_load_time	float		资源加载时间	loadEventStart - domContentLoadedEventEnd
+
+//  navigationStart：当前浏览器窗口的前一个网页关闭，发生unload事件时的Unix毫秒时间戳。如果没有前一个网页，则等于fetchStart属性。
+
+// ·   unloadEventStart：如果前一个网页与当前网页属于同一个域名，则返回前一个网页的unload事件发生时的Unix毫秒时间戳。如果没有前一个网页，或者之前的网页跳转不是在同一个域名内，则返回值为0。
+
+// ·   unloadEventEnd：如果前一个网页与当前网页属于同一个域名，则返回前一个网页unload事件的回调函数结束时的Unix毫秒时间戳。如果没有前一个网页，或者之前的网页跳转不是在同一个域名内，则返回值为0。
+
+// ·   redirectStart：返回第一个HTTP跳转开始时的Unix毫秒时间戳。如果没有跳转，或者不是同一个域名内部的跳转，则返回值为0。
+
+// ·   redirectEnd：返回最后一个HTTP跳转结束时（即跳转回应的最后一个字节接受完成时）的Unix毫秒时间戳。如果没有跳转，或者不是同一个域名内部的跳转，则返回值为0。
+
+// ·   fetchStart：返回浏览器准备使用HTTP请求读取文档时的Unix毫秒时间戳。该事件在网页查询本地缓存之前发生。
+
+// ·   domainLookupStart：返回域名查询开始时的Unix毫秒时间戳。如果使用持久连接，或者信息是从本地缓存获取的，则返回值等同于fetchStart属性的值。
+
+// ·   domainLookupEnd：返回域名查询结束时的Unix毫秒时间戳。如果使用持久连接，或者信息是从本地缓存获取的，则返回值等同于fetchStart属性的值。
+
+// ·   connectStart：返回HTTP请求开始向服务器发送时的Unix毫秒时间戳。如果使用持久连接（persistent connection），则返回值等同于fetchStart属性的值。
+
+// ·   connectEnd：返回浏览器与服务器之间的连接建立时的Unix毫秒时间戳。如果建立的是持久连接，则返回值等同于fetchStart属性的值。连接建立指的是所有握手和认证过程全部结束。
+
+// ·   secureConnectionStart：返回浏览器与服务器开始安全链接的握手时的Unix毫秒时间戳。如果当前网页不要求安全连接，则返回0。
+
+// ·   requestStart：返回浏览器向服务器发出HTTP请求时（或开始读取本地缓存时）的Unix毫秒时间戳。
+
+// ·   responseStart：返回浏览器从服务器收到（或从本地缓存读取）第一个字节时的Unix毫秒时间戳。
+
+// ·   responseEnd：返回浏览器从服务器收到（或从本地缓存读取）最后一个字节时（如果在此之前HTTP连接已经关闭，则返回关闭时）的Unix毫秒时间戳。
+
+// ·   domLoading：返回当前网页DOM结构开始解析时（即Document.readyState属性变为“loading”、相应的readystatechange事件触发时）的Unix毫秒时间戳。
+
+// ·   domInteractive：返回当前网页DOM结构结束解析、开始加载内嵌资源时（即Document.readyState属性变为“interactive”、相应的readystatechange事件触发时）的Unix毫秒时间戳。
+
+// ·   domContentLoadedEventStart：返回当前网页DOMContentLoaded事件发生时（即DOM结构解析完毕、所有脚本开始运行时）的Unix毫秒时间戳。
+
+// ·   domContentLoadedEventEnd：返回当前网页所有需要执行的脚本执行完成时的Unix毫秒时间戳。
+
+// ·   domComplete：返回当前网页DOM结构生成时（即Document.readyState属性变为“complete”，以及相应的readystatechange事件发生时）的Unix毫秒时间戳。
+
+// ·   loadEventStart：返回当前网页load事件的回调函数开始时的Unix毫秒时间戳。如果该事件还没有发生，返回0。
+
+// ·   loadEventEnd：返回当前网页load事件的回调函数运行结束时的Unix毫秒时间戳。如果该事件还没有发生，返回0
 function computePerformanceResourceDetails(entry) {
   if (!hasValidResourceEntryTimings(entry)) {
     return undefined;
@@ -6883,13 +7994,11 @@ function processPageStates(pageStateEntries, eventStartTime, maxPageStateEntries
     return;
   }
   return pageStateEntries.slice(-maxPageStateEntriesSelectable).reverse().map(_ref => {
-    let {
-      state,
-      startTime
-    } = _ref;
+    let state = _ref.state,
+      startTime = _ref.startTime;
     return {
       state,
-      start: toServerDuration(tools_elapsed(eventStartTime, startTime))
+      start: tools_toServerDuration(tools_elapsed(eventStartTime, startTime))
     };
   });
 }
@@ -6946,7 +8055,7 @@ function processAction(action, pageStateHistory) {
         count: action.counts.errorCount
       },
       id: action.id,
-      loadingTime: discardNegativeDuration(toServerDuration(action.duration)),
+      loadingTime: discardNegativeDuration(tools_toServerDuration(action.duration)),
       frustration: {
         type: action.frustrationTypes
       },
@@ -6971,14 +8080,14 @@ function processAction(action, pageStateHistory) {
   var customerContext = !isAutoAction(action) ? action.context : undefined;
   var actionEvent = extend2Lev({
     action: {
-      id: UUID(),
+      id: tools_UUID(),
       target: {
         name: action.name
       },
       type: action.type
     },
     date: action.startClocks.timeStamp,
-    type: RumEventType.ACTION,
+    type: enums_RumEventType.ACTION,
     view: {
       in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, action.startClocks.relative)
     }
@@ -6997,31 +8106,80 @@ function isAutoAction(action) {
   return action.type === ActionType.CLICK;
   //   return action.type !== ActionType.CUSTOM
 }
+;// CONCATENATED MODULE: ./src/domain/encoderStreamId.js
+var EncoderStreamId = {
+  REPLAY: 1,
+  RUM: 2,
+  RUM_INITIAL_VIEW: 3
+};
 ;// CONCATENATED MODULE: ./src/transport/startRumBatch.js
 
-// import { DeflateEncoderStreamId } from '../domain/deflate'
+
 function startRumBatch(configuration, lifeCycle, telemetryEventObservable, reportError, pageExitObservable, sessionExpireObservable, createEncoder) {
+  const rumEncoder = createEncoder(EncoderStreamId.RUM);
+  // Both batches share the same retry queue and bandwidth limits.
+  const request = createHttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit, configuration.retryMaxSize, reportError);
+  const flushRequestObservable = new Observable();
+  let immediateViewBatch;
+  let immediateViewEncoder;
   const batch = startBatchWithReplica(configuration, {
     endpoint: configuration.rumEndpoint,
-    encoder: createEncoder(2) // DeflateEncoderStreamId.RUM
+    request,
+    encoder: rumEncoder,
+    encoderFallback: rumEncoder.isAsync ? createIdentityEncoder : undefined
   }, reportError, pageExitObservable, sessionExpireObservable);
-  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, function (serverRumEvent) {
+  const rumEventSubscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, function (serverRumEvent) {
     // NOTE: upsert 和 add 其实是同一个方法；只是 upsert 会根据 key 来覆盖之前的内容
-    if (serverRumEvent.type === RumEventType.VIEW) {
+    if (serverRumEvent.type === enums_RumEventType.VIEW) {
       batch.upsert(serverRumEvent, serverRumEvent.view.id);
     } else {
       batch.add(serverRumEvent);
     }
   });
-  // telemetryEventObservable.subscribe(function (event) {
+  function sendImmediateView(event, reason) {
+    if (!immediateViewBatch) {
+      immediateViewEncoder = createEncoder(EncoderStreamId.RUM_INITIAL_VIEW);
+      immediateViewBatch = startBatchWithReplica(configuration, {
+        request,
+        encoder: immediateViewEncoder,
+        encoderFallback: immediateViewEncoder.isAsync ? createIdentityEncoder : undefined,
+        flushRequestObservable
+      }, reportError,
+      // The regular batch already owns the exit copy. Do not promote an
+      // older first version from this encoder's journal on the same exit.
+      new Observable(), sessionExpireObservable);
+    }
+    // Send initial and forced-session Views separately. The normal batch retains
+    // each View's latest version for its original deadline and exit beacon,
+    // including rapid routes whose first fetches have not completed yet.
+    immediateViewBatch.upsert(event, event.view.id);
+    flushRequestObservable.notify(reason);
+  }
+  const initialViewSubscription = lifeCycle.subscribe(LifeCycleEventType.RUM_VIEW_FIRST_COLLECTED, event => sendImmediateView(event, 'view_created'));
+  const forcedViewSubscription = lifeCycle.subscribe(LifeCycleEventType.RUM_VIEW_FORCED_COLLECTED, event => sendImmediateView(event, 'session_forced'));
+  // const telemetrySubscription = telemetryEventObservable.subscribe(function (event) {
   //   batch.add(event)
   // })
-  return batch;
+  return {
+    flushObservable: batch.flushObservable,
+    add: batch.add,
+    upsert: batch.upsert,
+    stop: function () {
+      rumEventSubscription.unsubscribe();
+      initialViewSubscription.unsubscribe();
+      forcedViewSubscription.unsubscribe();
+      // telemetrySubscription.unsubscribe()
+      batch.stop();
+      if (immediateViewBatch) {
+        immediateViewBatch.stop();
+        if (immediateViewEncoder.stop) {
+          immediateViewEncoder.stop();
+        }
+      }
+    }
+  };
 }
 ;// CONCATENATED MODULE: ./src/domain/assembly.js
-
-function assembly_ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function assembly_objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? assembly_ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : assembly_ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 
 var SessionType = {
   SYNTHETICS: 'synthetics',
@@ -7040,23 +8198,39 @@ const ROOT_MODIFIABLE_FIELD_PATHS = {
 };
 var modifiableFieldPathsByEvent = {};
 function startRumAssembly(configuration, lifeCycle, sessionManager, userSessionManager, viewContexts, urlContexts, actionContexts, displayContext, getCommonContext, reportError) {
-  modifiableFieldPathsByEvent[RumEventType.VIEW] = assembly_objectSpread(assembly_objectSpread({}, USER_CUSTOMIZABLE_FIELD_PATHS), VIEW_MODIFIABLE_FIELD_PATHS);
-  modifiableFieldPathsByEvent[RumEventType.ERROR] = tools_assign({
+  let getDeviceInfoImp = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : getDeviceInfoWithHighEntropyValues;
+  modifiableFieldPathsByEvent[enums_RumEventType.VIEW] = tools_assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS);
+  modifiableFieldPathsByEvent[enums_RumEventType.ERROR] = tools_assign({
     'error.message': 'string',
     'error.stack': 'string',
     'error.resource.url': 'string'
   }, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS, ROOT_MODIFIABLE_FIELD_PATHS);
-  modifiableFieldPathsByEvent[RumEventType.RESOURCE] = tools_assign({
+  modifiableFieldPathsByEvent[enums_RumEventType.RESOURCE] = tools_assign({
     'resource.url': 'string'
   }, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS, ROOT_MODIFIABLE_FIELD_PATHS);
-  modifiableFieldPathsByEvent[RumEventType.ACTION] = tools_assign({
+  modifiableFieldPathsByEvent[enums_RumEventType.ACTION] = tools_assign({
     'action.target.name': 'string'
   }, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS, ROOT_MODIFIABLE_FIELD_PATHS);
-  modifiableFieldPathsByEvent[RumEventType.LONG_TASK] = tools_assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS);
+  modifiableFieldPathsByEvent[enums_RumEventType.LONG_TASK] = tools_assign({}, USER_CUSTOMIZABLE_FIELD_PATHS, VIEW_MODIFIABLE_FIELD_PATHS);
   var eventRateLimiters = {};
-  eventRateLimiters[RumEventType.ERROR] = createEventRateLimiter(RumEventType.ERROR, configuration.eventRateLimiterThreshold, reportError);
-  eventRateLimiters[RumEventType.ACTION] = createEventRateLimiter(RumEventType.ACTION, configuration.eventRateLimiterThreshold, reportError);
-  lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, function (data) {
+  eventRateLimiters[enums_RumEventType.ERROR] = createEventRateLimiter(enums_RumEventType.ERROR, configuration.eventRateLimiterThreshold, reportError);
+  eventRateLimiters[enums_RumEventType.ACTION] = createEventRateLimiter(enums_RumEventType.ACTION, configuration.eventRateLimiterThreshold, reportError);
+  var pendingRawEvents = createBoundedBuffer();
+  // Context objects belong to the existing View history. Weak references do
+  // not retain ended Views or require a second history of every collected ID.
+  var collectedViews = new WeakSet();
+  var resolvedDeviceInfo;
+  getDeviceInfoImp(function (deviceInfo) {
+    resolvedDeviceInfo = deviceInfo;
+    pendingRawEvents.drain();
+  });
+  lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, function assemble(data) {
+    if (!resolvedDeviceInfo) {
+      pendingRawEvents.add(function () {
+        assemble(data);
+      });
+      return;
+    }
     var startTime = data.startTime;
     var rawRumEvent = data.rawRumEvent;
     var savedCommonContext = data.savedCommonContext;
@@ -7088,7 +8262,7 @@ function startRumAssembly(configuration, lifeCycle, sessionManager, userSessionM
         application: {
           id: configuration.applicationId
         },
-        device: deviceInfo,
+        device: resolvedDeviceInfo,
         webview: {},
         env: configuration.env || '',
         service: viewContext.service || configuration.service || 'browser',
@@ -7126,7 +8300,13 @@ function startRumAssembly(configuration, lifeCycle, sessionManager, userSessionM
       };
       var rumEvent = extend2Lev(rumContext, viewContext, rawRumEvent);
       var serverRumEvent = withSnakeCaseKeys(rumEvent);
-      var context = extend2Lev({}, commonContext.context, viewContext.context, customerContext);
+      var context = extend2Lev({}, commonContext.context, viewContext.context, customerContext, rawRumEvent.context);
+      if (configuration.visitorId && configuration.visitorId.enabled) {
+        var visitorId = rawRumEvent.type === enums_RumEventType.RESOURCE && rawRumEvent.context && rawRumEvent.context.visitor_id || commonContext.visitorId || savedCommonContext && getCommonContext().visitorId;
+        if (visitorId) {
+          context.visitor_id = visitorId;
+        }
+      }
       if (!isEmptyObject(context)) {
         serverRumEvent.context = context;
       }
@@ -7159,6 +8339,17 @@ function startRumAssembly(configuration, lifeCycle, sessionManager, userSessionM
           delete serverRumEvent.context;
         }
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent);
+        if (serverRumEvent.type === enums_RumEventType.VIEW) {
+          if (!collectedViews.has(viewContext)) {
+            collectedViews.add(viewContext);
+            lifeCycle.notify(LifeCycleEventType.RUM_VIEW_FIRST_COLLECTED, serverRumEvent);
+          } else if (data.isForcedSessionUpdate) {
+            // A sampled View may already have been sent before the user was
+            // identified. Deliver this activation update without flushing
+            // unrelated events or waiting for the regular batch deadline.
+            lifeCycle.notify(LifeCycleEventType.RUM_VIEW_FORCED_COLLECTED, serverRumEvent);
+          }
+        }
       }
     }
   });
@@ -7168,7 +8359,7 @@ function shouldSend(event, beforeSend, domainContext, eventRateLimiters) {
     var result = limitModification(event, modifiableFieldPathsByEvent[event.type], function (event) {
       return beforeSend(event, domainContext);
     });
-    if (result === false && event.type !== RumEventType.VIEW) {
+    if (result === false && event.type !== enums_RumEventType.VIEW) {
       return false;
     }
     if (result === false) {
@@ -7182,7 +8373,7 @@ function shouldSend(event, beforeSend, domainContext, eventRateLimiters) {
   return !rateLimitReached;
 }
 function needToAssembleWithAction(event) {
-  return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1;
+  return [enums_RumEventType.ERROR, enums_RumEventType.RESOURCE, enums_RumEventType.LONG_TASK].indexOf(event.type) !== -1;
 }
 function getSessionType() {
   return window._DATAFLUX_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS;
@@ -7297,9 +8488,18 @@ function startUrlContexts(lifeCycle, locationChangeObservable, location) {
   var previousViewUrl;
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, function (data) {
     var viewUrl = location.href;
+    var viewLocation = location;
+    if (data.url) {
+      try {
+        viewLocation = buildUrl(data.url, location.href);
+        viewUrl = viewLocation.href;
+      } catch (error) {
+        // Fall back to the browser location for invalid framework URLs.
+      }
+    }
     urlContextHistory.add(buildUrlContext({
       url: viewUrl,
-      location: location,
+      location: viewLocation,
       referrer: !previousViewUrl ? document.referrer : previousViewUrl
     }), data.startClocks.relative);
     previousViewUrl = viewUrl;
@@ -7332,10 +8532,19 @@ function startUrlContexts(lifeCycle, locationChangeObservable, location) {
       referrer: data.referrer,
       host: data.location.host,
       path: path,
-      pathGroup: replaceNumberCharByPath(path),
-      urlQuery: getQueryParamsFromUrl(data.location.href),
+      pathGroup: tools_replaceNumberCharByPath(path),
+      urlQuery: getLocationQuery(data.location),
       pathname: pathname
     };
+  }
+  function getLocationQuery(location) {
+    var urlQuery = typeof location.search === 'string' ? getURLSearchParams(location.search) : tools_getQueryParamsFromUrl(location.href.split('#')[0]);
+    var hash = location.hash;
+    var hashQueryIndex = hash && hash.indexOf('#/') === 0 ? hash.indexOf('?') : -1;
+    if (hashQueryIndex >= 0) {
+      tools_assign(urlQuery, getURLSearchParams(hash.slice(hashQueryIndex)));
+    }
+    return urlQuery;
   }
   return {
     findUrl: function (startTime) {
@@ -7379,12 +8588,13 @@ function startViewContexts(lifeCycle) {
       context: view.context,
       id: view.id,
       name: view.name,
+      path: tools_urlParse(view.url || location.href).getParse().Path,
       startClocks: view.startClocks
     };
   }
   return {
-    findView: function (startTime) {
-      return viewContextHistory.find(startTime);
+    findView: function (startTime, options) {
+      return viewContextHistory.find(startTime, options);
     },
     stop: function () {
       viewContextHistory.stop();
@@ -7406,14 +8616,14 @@ function trackConsoleError(errorObservable) {
 ;// CONCATENATED MODULE: ./src/domain/rumEventsCollection/error/trackReportError.js
 
 function trackReportError(configuration, errorObservable) {
-  var subscription = initReportObservable(configuration, [(RawReportType.cspViolation, RawReportType.intervention)]).subscribe(function (reportError) {
+  var subscription = initReportObservable(configuration, [RawReportType.cspViolation, RawReportType.intervention]).subscribe(function (reportError) {
     errorObservable.notify({
       startClocks: clocksNow(),
       message: reportError.message,
       stack: reportError.stack,
-      type: reportError.subtype,
-      source: errorTools_ErrorSource.REPORT,
-      handling: enums_ErrorHandling.UNHANDLED
+      type: reportError.type,
+      source: ErrorSource.REPORT,
+      handling: ErrorHandling.UNHANDLED
     });
   });
   return {
@@ -7432,23 +8642,30 @@ function startErrorCollection(lifeCycle, configuration, sessionManager, pageStat
   trackConsoleError(errorObservable);
   trackRuntimeError(errorObservable);
   trackReportError(configuration, errorObservable);
-  var session = sessionManager.findTrackedSession();
-  let hasError = session && session.isErrorSession && session.sessionHasError;
-  if (session && session.isErrorSession) {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, function () {
-      hasError = false;
-    });
-  }
-  errorObservable.subscribe(function (error) {
-    if (session && session.isErrorSession && !hasError) {
+  let hasError = false;
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, function () {
+    hasError = false;
+  });
+  var markSessionOnError = function () {
+    const session = sessionManager.findTrackedSession();
+    if (shouldMarkSessionOnError(session) && !hasError && !session.sessionHasError) {
       sessionManager.setErrorForSession();
       hasError = true;
     }
+  };
+  errorObservable.subscribe(function (error) {
+    markSessionOnError();
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
       error: error
     });
   });
-  return doStartErrorCollection(lifeCycle, pageStateHistory);
+  var errorCollection = doStartErrorCollection(lifeCycle, pageStateHistory);
+  return {
+    addError: function (providedError, savedCommonContext) {
+      markSessionOnError();
+      errorCollection.addError(providedError, savedCommonContext);
+    }
+  };
 }
 function doStartErrorCollection(lifeCycle, pageStateHistory) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, function (error) {
@@ -7467,8 +8684,8 @@ function doStartErrorCollection(lifeCycle, pageStateHistory) {
         handlingStack: providedError.handlingStack,
         startClocks: providedError.startClocks,
         nonErrorPrefix: NonErrorPrefix.PROVIDED,
-        source: errorTools_ErrorSource.CUSTOM,
-        handling: enums_ErrorHandling.HANDLED
+        source: ErrorSource.CUSTOM,
+        handling: ErrorHandling.HANDLED
       });
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         customerContext: providedError.context,
@@ -7482,7 +8699,7 @@ function processError(error, pageStateHistory) {
   var rawRumEvent = {
     date: error.startClocks.timeStamp,
     error: {
-      id: UUID(),
+      id: tools_UUID(),
       message: error.message,
       source: error.source,
       stack: error.stack,
@@ -7492,7 +8709,7 @@ function processError(error, pageStateHistory) {
       causes: error.causes,
       source_type: 'browser'
     },
-    type: RumEventType.ERROR,
+    type: enums_RumEventType.ERROR,
     view: {
       in_foreground: pageStateHistory.wasInPageStateAt(PageState.ACTIVE, error.startClocks.relative)
     }
@@ -7504,6 +8721,9 @@ function processError(error, pageStateHistory) {
       error: error.originalError
     }
   };
+}
+function shouldMarkSessionOnError(session) {
+  return session && (session.isErrorSession || session.errorSessionReplayAllowed === true);
 }
 ;// CONCATENATED MODULE: ./src/domain/rumEventsCollection/view/trackFirstContentfulPaint.js
 
@@ -7542,6 +8762,12 @@ var STABLE_ATTRIBUTES = [DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
 
 
 
+/**
+ * Internal marker used to represent a shadow root boundary. This is not a valid CSS selector and
+ * needs to be split before querying each successive shadow root.
+ */
+var SHADOW_DOM_MARKER = '::shadow ';
+
 // Selectors to use if they target a single element on the whole document. Those selectors are
 // considered as "stable" and uniquely identify an element regardless of the page state. If we find
 // one, we should consider the selector "complete" and stop iterating over ancestors.
@@ -7557,43 +8783,51 @@ function getSelectorFromElement(targetElement, actionNameAttribute) {
     // parents, and we cannot determine if it's unique in the document.
     return;
   }
-  let targetElementSelector;
-  let currentElement = targetElement;
+  var subtrees = getAllSubtreeTargets(targetElement);
+  var selectorParts = [];
+  for (var index = 0; index < subtrees.length; index += 1) {
+    var subtree = subtrees[index];
+    var selector = getSelectorFromElementWithinSubtree(subtree.target, subtree.rootNode, actionNameAttribute);
+    if (!selector) {
+      return;
+    }
+    selectorParts.push(selector);
+  }
+  return selectorParts.join(SHADOW_DOM_MARKER);
+}
+
+/**
+ * Return each root and target pair from the document down to the target element.
+ */
+function getAllSubtreeTargets(element) {
+  var result = [];
+  var currentTarget = element;
+  while (currentTarget) {
+    var rootNode = typeof currentTarget.getRootNode === 'function' ? currentTarget.getRootNode() : currentTarget.ownerDocument;
+    result.push({
+      rootNode: rootNode,
+      target: currentTarget
+    });
+    if (isNodeShadowRoot(rootNode)) {
+      currentTarget = rootNode.host;
+    } else {
+      break;
+    }
+  }
+  return result.reverse();
+}
+function getSelectorFromElementWithinSubtree(targetElement, rootNode, actionNameAttribute) {
+  var targetElementSelector;
+  var currentElement = targetElement;
   while (currentElement && currentElement.nodeName !== 'HTML') {
-    const globallyUniqueSelector = findSelector(currentElement, GLOBALLY_UNIQUE_SELECTOR_GETTERS, isSelectorUniqueGlobally, actionNameAttribute, targetElementSelector);
+    const globallyUniqueSelector = findSelector(currentElement, rootNode, GLOBALLY_UNIQUE_SELECTOR_GETTERS, isSelectorUniqueWithinRoot, actionNameAttribute, targetElementSelector);
     if (globallyUniqueSelector) {
       return globallyUniqueSelector;
     }
-    const uniqueSelectorAmongChildren = findSelector(currentElement, UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS, isSelectorUniqueAmongSiblings, actionNameAttribute, targetElementSelector);
+    const uniqueSelectorAmongChildren = findSelector(currentElement, rootNode, UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS, isSelectorUniqueAmongSiblings, actionNameAttribute, targetElementSelector);
     targetElementSelector = uniqueSelectorAmongChildren || combineSelector(getPositionSelector(currentElement), targetElementSelector);
     currentElement = currentElement.parentElement;
   }
-  //   while (element && element.nodeName !== 'HTML') {
-  //     var globallyUniqueSelector = findSelector(
-  //       element,
-  //       GLOBALLY_UNIQUE_SELECTOR_GETTERS,
-  //       isSelectorUniqueGlobally,
-  //       actionNameAttribute,
-  //       targetElementSelector
-  //     )
-  //     if (globallyUniqueSelector) {
-  //       return globallyUniqueSelector
-  //     }
-
-  //     var uniqueSelectorAmongChildren = findSelector(
-  //       element,
-  //       UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS,
-  //       isSelectorUniqueAmongSiblings,
-  //       actionNameAttribute,
-  //       targetElementSelector
-  //     )
-  //     targetElementSelector =
-  //       uniqueSelectorAmongChildren ||
-  //       combineSelector(getPositionSelector(element), targetElementSelector)
-
-  //     element = element.parentElement
-  //   }
-
   return targetElementSelector;
 }
 function isGeneratedValue(value) {
@@ -7650,7 +8884,8 @@ function getStableAttributeSelector(element, actionNameAttribute) {
   }
 }
 function getPositionSelector(element) {
-  var sibling = element.parentElement && element.parentElement.firstElementChild;
+  var parentNode = element.parentNode;
+  var sibling = parentNode && parentNode.firstElementChild;
   var elementIndex = 1;
   while (sibling && sibling !== element) {
     if (sibling.tagName === element.tagName) {
@@ -7659,25 +8894,26 @@ function getPositionSelector(element) {
     sibling = sibling.nextElementSibling;
   }
   var tagName = cssEscape(element.tagName);
+  // 伪元素需要做特殊处理，没有nth-of-type选择器
   if (/^::/.test(tagName)) {
     return tagName;
   }
   return tagName + ':nth-of-type(' + elementIndex + ')';
 }
-function findSelector(element, selectorGetters, predicate, actionNameAttribute, childSelector) {
+function findSelector(element, rootNode, selectorGetters, predicate, actionNameAttribute, childSelector) {
   for (var i = 0; i < selectorGetters.length; i++) {
     var selectorGetter = selectorGetters[i];
     var elementSelector = selectorGetter(element, actionNameAttribute);
     if (!elementSelector) {
       continue;
     }
-    if (predicate(element, elementSelector, childSelector)) {
+    if (predicate(element, rootNode, elementSelector, childSelector)) {
       return combineSelector(elementSelector, childSelector);
     }
   }
 }
-function isSelectorUniqueGlobally(element, elementSelector, childSelector) {
-  return element.ownerDocument.querySelectorAll(combineSelector(elementSelector, childSelector)).length === 1;
+function isSelectorUniqueWithinRoot(element, rootNode, elementSelector, childSelector) {
+  return rootNode.querySelectorAll(combineSelector(elementSelector, childSelector)).length === 1;
 }
 /**
  * Check whether the selector is unique among the element siblings. In other words, it returns true
@@ -7689,7 +8925,7 @@ function isSelectorUniqueGlobally(element, elementSelector, childSelector) {
  * direct descendent of the element parent. This should not impact results too much: if it
  * inaccurately returns false, we'll just fall back to another strategy.
  */
-function isSelectorUniqueAmongSiblings(currentElement, currentElementSelector, childSelector) {
+function isSelectorUniqueAmongSiblings(currentElement, rootNode, currentElementSelector, childSelector) {
   let isSiblingMatching;
   if (childSelector === undefined) {
     // If the child selector is undefined (meaning `currentElement` is the target element, not one
@@ -7700,10 +8936,16 @@ function isSelectorUniqueAmongSiblings(currentElement, currentElementSelector, c
     const scopedSelector = supportScopeSelector() ? combineSelector("".concat(currentElementSelector, ":scope"), childSelector) : combineSelector(currentElementSelector, childSelector);
     isSiblingMatching = sibling => sibling.querySelector(scopedSelector) !== null;
   }
-  const parent = currentElement.parentElement;
-  let sibling = parent.firstElementChild;
+  let sibling = currentElement.previousElementSibling;
   while (sibling) {
-    if (sibling !== currentElement && isSiblingMatching(sibling)) {
+    if (isSiblingMatching(sibling)) {
+      return false;
+    }
+    sibling = sibling.previousElementSibling;
+  }
+  sibling = currentElement.nextElementSibling;
+  while (sibling) {
+    if (isSiblingMatching(sibling)) {
       return false;
     }
     sibling = sibling.nextElementSibling;
@@ -7877,7 +9119,7 @@ function waitAfterLoadEvent(callback) {
  * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
  * multiple values, only the most recent one should be used.
  * Documentation: https://web.dev/lcp/
- * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getLCP.ts
+ * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/onLCP.ts
  */
 // It happens in some cases like sleep mode or some browser implementations
 var LCP_MAXIMUM_DELAY = 10 * ONE_MINUTE;
@@ -7930,13 +9172,13 @@ function trackFirstHidden(viewStart, eventTarget) {
   if (typeof eventTarget === 'undefined') {
     eventTarget = window;
   }
-  if (document.visibilityState === 'hidden') {
+  if (document.visibilityState === 'hidden' && !document.prerendering) {
     return {
       getTimeStamp: () => 0,
       stop: tools_noop
     };
   }
-  if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+  if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE) && !document.prerendering) {
     const firstHiddenEntry = performance.getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE).filter(entry => entry.name === 'hidden').find(entry => entry.startTime >= viewStart.relative);
     if (firstHiddenEntry) {
       return {
@@ -7946,16 +9188,15 @@ function trackFirstHidden(viewStart, eventTarget) {
     }
   }
   let timeStamp = Infinity;
-  const {
-    stop
-  } = addEventListeners(eventTarget, [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE], event => {
-    if (event.type === DOM_EVENT.PAGE_HIDE || document.visibilityState === 'hidden') {
-      timeStamp = event.timeStamp;
-      stop();
-    }
-  }, {
-    capture: true
-  });
+  const _addEventListeners = addEventListeners(eventTarget, [DOM_EVENT.PAGE_HIDE, DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.PRERENDERING_CHANGE], event => {
+      if (event.type === DOM_EVENT.PAGE_HIDE || document.visibilityState === 'hidden') {
+        timeStamp = event.timeStamp;
+        stop();
+      }
+    }, {
+      capture: true
+    }),
+    stop = _addEventListeners.stop;
   return {
     getTimeStamp: function () {
       return timeStamp;
@@ -8174,7 +9415,7 @@ function doWaitPageActivityEnd(pageActivityObservable, pageActivityEndCallback, 
     if (hasCompleted) {
       return;
     }
-    stop();
+    stop && stop();
     pageActivityEndCallback(event);
   }
   return {
@@ -8218,7 +9459,7 @@ function createPageActivityObservable(lifeCycle, domMutationObservable, configur
     var stopTrackingWindowOpen = _trackWindowOpen.stop;
     return function () {
       stopTrackingWindowOpen();
-      each(subscriptions, function (s) {
+      tools_each(subscriptions, function (s) {
         s.unsubscribe();
       });
     };
@@ -8246,10 +9487,15 @@ function trackLoadingTime(lifeCycle, domMutationObservable, configuration, loadT
   var firstHidden = trackFirstHidden(viewStart);
   function invokeCallbackIfAllCandidatesAreReceived() {
     if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
-      var loadingTime = Math.max.apply(Math, loadingTimeCandidates);
-      if (loadingTime < firstHidden.getTimeStamp() - viewStart.relative) {
-        callback(loadingTime);
+      var firstHiddenTime = firstHidden.getTimeStamp() - viewStart.relative;
+      var visibleLoadingTimeCandidates = loadingTimeCandidates.filter(function (loadingTime) {
+        return loadingTime < firstHiddenTime;
+      });
+      if (visibleLoadingTimeCandidates.length === 0) {
+        return;
       }
+      var loadingTime = Math.max.apply(Math, visibleLoadingTimeCandidates);
+      callback(loadingTime);
     }
   }
   var _waitPageActivityEnd = waitPageActivityEnd(lifeCycle, domMutationObservable, configuration, function (event) {
@@ -8447,18 +9693,20 @@ var getInteractionCount = function () {
 ;// CONCATENATED MODULE: ./src/domain/rumEventsCollection/actions/interactionSelectorCache.js
 
 
+
 // Maximum duration for click actions
 const CLICK_ACTION_MAX_DURATION = 10 * ONE_SECOND;
-const interactionSelectorCache = new Map();
+const interactionSelectorCache = new sdkMap_SDKMap();
 function getInteractionSelector(relativeTimestamp) {
   const selector = interactionSelectorCache.get(relativeTimestamp);
   interactionSelectorCache.delete(relativeTimestamp);
   return selector;
 }
 function updateInteractionSelector(relativeTimestamp, selector) {
+  var now = relativeNow();
   interactionSelectorCache.set(relativeTimestamp, selector);
   interactionSelectorCache.forEach(function (_, relativeTimestamp) {
-    if (elapsed(relativeTimestamp, relativeNow()) > CLICK_ACTION_MAX_DURATION) {
+    if (elapsed(relativeTimestamp, now) > CLICK_ACTION_MAX_DURATION) {
       interactionSelectorCache.delete(relativeTimestamp);
     }
   });
@@ -8675,26 +9923,26 @@ function trackEventCounts(data) {
     frustrationCount: 0
   };
   var subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, function (event) {
-    if (event.type === RumEventType.VIEW || !isChildEvent(event)) {
+    if (event.type === enums_RumEventType.VIEW || !isChildEvent(event)) {
       return;
     }
     switch (event.type) {
-      case RumEventType.ERROR:
+      case enums_RumEventType.ERROR:
         eventCounts.errorCount += 1;
         callback();
         break;
-      case RumEventType.ACTION:
+      case enums_RumEventType.ACTION:
         if (event.action.frustration) {
           eventCounts.frustrationCount += event.action.frustration.type.length;
         }
         eventCounts.actionCount += 1;
         callback();
         break;
-      case RumEventType.LONG_TASK:
+      case enums_RumEventType.LONG_TASK:
         eventCounts.longTaskCount += 1;
         callback();
         break;
-      case RumEventType.RESOURCE:
+      case enums_RumEventType.RESOURCE:
         eventCounts.resourceCount += 1;
         callback();
         break;
@@ -8722,7 +9970,47 @@ function trackViewEventCounts(lifeCycle, viewId, onChange) {
     eventCounts: _trackEventCounts.eventCounts
   };
 }
+;// CONCATENATED MODULE: ./src/domain/rumEventsCollection/view/trackSoftNavigationMetrics.js
+
+var SOFT_NAVIGATION = 'soft-navigation';
+function trackSoftNavigationMetrics(callback) {
+  if (!window.PerformanceObserver) {
+    return tools_noop;
+  }
+
+  // Reuse one observer for both final API entry types to keep this optional
+  // Chrome-only enhancement small.
+  var observer;
+  try {
+    observer = new window.PerformanceObserver(monitor(function (entries) {
+      entries.getEntries().forEach(callback);
+    }));
+    observer.observe({
+      type: SOFT_NAVIGATION,
+      buffered: true
+    });
+  } catch (_unused) {
+    if (observer) {
+      observer.disconnect();
+    }
+    return tools_noop;
+  }
+  try {
+    observer.observe({
+      type: 'interaction-contentful-paint',
+      buffered: true
+    });
+  } catch (_unused2) {
+    // Keep FCP and navigation type when an implementation exposes soft
+    // navigations before interaction contentful paint.
+  }
+  return function () {
+    observer.disconnect();
+  };
+}
 ;// CONCATENATED MODULE: ./src/domain/rumEventsCollection/view/trackViews.js
+
+
 
 
 
@@ -8730,53 +10018,104 @@ function trackViewEventCounts(lifeCycle, viewId, onChange) {
 var THROTTLE_VIEW_UPDATE_PERIOD = 3000;
 var SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE;
 var KEEP_TRACKING_AFTER_VIEW_DELAY = 5 * ONE_MINUTE;
-function trackViews(location, lifeCycle, domMutationObservable, configuration, locationChangeObservable, areViewsTrackedAutomatically, initialViewOptions) {
+function trackViews(location, lifeCycle, domMutationObservable, configuration, locationChangeObservable, areViewsTrackedAutomatically, initialViewOptions, recorderApi) {
+  var eventBridgeAvailable = canUseEventBridge();
+  var maxViewDuration = eventBridgeAvailable ? Infinity : SESSION_TIME_OUT_DELAY;
+  var isWebViewActive = !eventBridgeAvailable || document.visibilityState !== 'hidden' && document.hasFocus();
   var activeViews = new Set();
-  function startNewView(loadingType, startClocks, viewOptions) {
-    var newlyCreatedView = newView(lifeCycle, domMutationObservable, configuration, location, loadingType, startClocks, viewOptions);
+  function startNewView(loadingType, startClocks, viewOptions, canMatchSoftNavigation, fallbackNavigationType) {
+    var newlyCreatedView = newView(lifeCycle, domMutationObservable, configuration, location, loadingType, startClocks, viewOptions, canMatchSoftNavigation, fallbackNavigationType, recorderApi, maxViewDuration);
     activeViews.add(newlyCreatedView);
     newlyCreatedView.stopObservable.subscribe(function () {
       activeViews.delete(newlyCreatedView);
+      if (softNavigationView === newlyCreatedView) {
+        softNavigationView = undefined;
+      }
     });
+    if (!isWebViewActive) {
+      newlyCreatedView.end({
+        sessionIsActive: false
+      });
+      newlyCreatedView.stop();
+    }
     return newlyCreatedView;
   }
   var currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions);
+  var softNavigationView;
+  var softNavigationInteractionId;
+  var softNavigationMetricsTracking = trackSoftNavigationMetrics(function (entry) {
+    if (entry.entryType === 'soft-navigation') {
+      softNavigationView = findSoftNavigationView(activeViews, entry);
+      softNavigationInteractionId = entry.interactionId;
+      if (softNavigationView) {
+        softNavigationView.$rSetSoftNavigationMetrics(entry.navigationType, entry.duration, getSoftNavigationLcp(configuration, entry.getLargestInteractionContentfulPaint ? entry.getLargestInteractionContentfulPaint() : entry.largestInteractionContentfulPaint));
+      }
+    } else if (softNavigationView && softNavigationInteractionId === entry.interactionId) {
+      softNavigationView.$rSetSoftNavigationMetrics(undefined, undefined, getSoftNavigationLcp(configuration, entry));
+    }
+  });
+  var stopWebViewLifecycleTracking = tools_noop;
+  var forcedSessionSubscription;
   startViewLifeCycle();
-  var locationChangeSubscription;
-  if (areViewsTrackedAutomatically) {
-    locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable);
-  }
+  var pendingNavigation;
+  var locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable);
   function startViewLifeCycle() {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, function () {
+    function renewCurrentView() {
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
         name: currentView.name,
         service: currentView.service,
         version: currentView.version,
         context: currentView.contextManager.getContext()
       });
-    });
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, function () {
+    }
+    function endWebView() {
       currentView.end({
         sessionIsActive: false
       });
+      currentView.stop();
+    }
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewCurrentView);
+    forcedSessionSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_FORCED, function () {
+      currentView.update({
+        isForcedSessionUpdate: true
+      });
     });
-    // // End the current view on page unload
-    // lifeCycle.subscribe(
-    //   LifeCycleEventType.PAGE_EXITED,
-    //   function (pageExitEvent) {
-    //     if (pageExitEvent.reason === PageExitReason.UNLOADING) {
-    //       currentView.end()
-    //     }
-    //   }
-    // )
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, function (sessionExpirationTime) {
+      var sessionExpirationClocks;
+      if (typeof sessionExpirationTime === 'number' && sessionExpirationTime >= currentView.startClocks.timeStamp) {
+        const origin = clocksOrigin();
+        sessionExpirationClocks = {
+          relative: tools_elapsed(origin.timeStamp, sessionExpirationTime),
+          timeStamp: sessionExpirationTime
+        };
+      }
+      currentView.end({
+        sessionIsActive: false,
+        endClocks: sessionExpirationClocks
+      });
+    });
+    if (eventBridgeAvailable) {
+      function updateWebViewLifecycle(event) {
+        var nextIsActive = document.visibilityState !== 'hidden' && event.type !== 'blur';
+        if (nextIsActive !== isWebViewActive) {
+          isWebViewActive = nextIsActive;
+          isWebViewActive ? renewCurrentView() : endWebView();
+        }
+      }
+      stopWebViewLifecycleTracking = addEventListeners(window, ['blur', 'focus', 'resume', 'visibilitychange'], updateWebViewLifecycle).stop;
+    }
   }
   function renewViewOnLocationChange(locationChangeObservable) {
     return locationChangeObservable.subscribe(function (params) {
       var oldLocation = params.oldLocation;
       var newLocation = params.newLocation;
       if (areDifferentLocation(oldLocation, newLocation)) {
+        if (!areViewsTrackedAutomatically) {
+          pendingNavigation = [newLocation.href, params.navigationType];
+          return;
+        }
         currentView.end();
-        currentView = startNewView(ViewLoadingType.ROUTE_CHANGE);
+        currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, undefined, true, params.navigationType);
         return;
       }
     });
@@ -8789,10 +10128,15 @@ function trackViews(location, lifeCycle, domMutationObservable, configuration, l
       currentView.addTiming(name, time);
     },
     startView: function (options, startClocks) {
+      var fallbackNavigationType;
+      if (pendingNavigation && pendingNavigation[0] === location.href) {
+        fallbackNavigationType = pendingNavigation[1];
+      }
+      pendingNavigation = undefined;
       currentView.end({
         endClocks: startClocks
       });
-      currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options);
+      currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options, true, fallbackNavigationType);
     },
     setViewContext: context => {
       currentView.contextManager.setContext(context);
@@ -8808,6 +10152,9 @@ function trackViews(location, lifeCycle, domMutationObservable, configuration, l
       if (locationChangeSubscription) {
         locationChangeSubscription.unsubscribe();
       }
+      stopWebViewLifecycleTracking();
+      forcedSessionSubscription.unsubscribe();
+      softNavigationMetricsTracking();
       currentView.end();
       activeViews.forEach(function (view) {
         view.stop();
@@ -8815,12 +10162,12 @@ function trackViews(location, lifeCycle, domMutationObservable, configuration, l
     }
   };
 }
-function newView(lifeCycle, domMutationObservable, configuration, initialLocation, loadingType, startClocks, viewOptions) {
+function newView(lifeCycle, domMutationObservable, configuration, initialLocation, loadingType, startClocks, viewOptions, canMatchSoftNavigation, fallbackNavigationType, recorderApi, maxViewDuration) {
   // Setup initial values
   if (startClocks === undefined) {
     startClocks = clocksNow();
   }
-  var id = UUID();
+  var id = tools_UUID();
   var stopObservable = new Observable();
   var customTimings = {};
   var documentVersion = 0;
@@ -8846,7 +10193,8 @@ function newView(lifeCycle, domMutationObservable, configuration, initialLocatio
     name: name,
     startClocks: startClocks,
     service: service,
-    version: version
+    version: version,
+    url: viewOptions && viewOptions.url
   };
   lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent);
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent);
@@ -8869,14 +10217,39 @@ function newView(lifeCycle, domMutationObservable, configuration, initialLocatio
   };
   var stopInitialViewMetricsTracking = _trackInitialViewTimings.stop;
   var initialViewMetrics = _trackInitialViewTimings.initialViewMetrics;
+  var navigationType = fallbackNavigationType;
   var _trackViewEventCounts = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate);
   var stopEventCountsTracking = _trackViewEventCounts.stop;
   var eventCounts = _trackViewEventCounts.eventCounts;
 
   // Session keep alive
   var keepAliveIntervalId = timer_setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL);
+  var replayWasRecording = Boolean(recorderApi && typeof recorderApi.isRecording === 'function' && recorderApi.isRecording());
+  function updateReplayRecordingState(isRecording) {
+    if (replayWasRecording === isRecording) {
+      return;
+    }
+    replayWasRecording = isRecording;
+    if (endClocks === undefined) {
+      // Recorder start/stop boundaries need an immediate View update. The
+      // existing five-minute View keepalive already covers long-lived active
+      // Views, so Replay must not add a second one-minute upload loop.
+      triggerViewUpdate();
+    }
+  }
+  var replayRecordingStateSubscription;
+  var hasReplayRecordingStateObservable = Boolean(recorderApi && recorderApi.recordingStateObservable && typeof recorderApi.recordingStateObservable.subscribe === 'function');
+  if (hasReplayRecordingStateObservable) {
+    replayRecordingStateSubscription = recorderApi.recordingStateObservable.subscribe(updateReplayRecordingState);
+  }
   const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_EXITED, pageMayExitEvent => {
-    if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
+    var isReplayRecording = recorderApi && typeof recorderApi.isRecording === 'function' && recorderApi.isRecording();
+    if (pageMayExitEvent.reason === PageExitReason.UNLOADING && (!isReplayRecording || !hasReplayRecordingStateObservable) || pageMayExitEvent.reason !== PageExitReason.UNLOADING && isReplayRecording) {
+      // Replay segments flush at every page-exit boundary. Keep the View
+      // duration aligned with those boundaries only while Replay is active;
+      // unloading remains the existing update boundary for every RUM view.
+      // An active recorder with a state observable publishes its final View
+      // after stop, so do not publish the same unload boundary twice here.
       triggerViewUpdate();
     }
   });
@@ -8895,12 +10268,13 @@ function newView(lifeCycle, domMutationObservable, configuration, initialLocatio
     triggerBeforeViewUpdate();
     throttled();
   }
-  function triggerViewUpdate() {
+  function triggerViewUpdate(options) {
     cancelScheduleViewUpdate();
     triggerBeforeViewUpdate();
     documentVersion += 1;
     var currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp;
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      isForcedSessionUpdate: Boolean(options && options.isForcedSessionUpdate),
       customTimings: customTimings,
       documentVersion: documentVersion,
       id: id,
@@ -8909,21 +10283,24 @@ function newView(lifeCycle, domMutationObservable, configuration, initialLocatio
       version: version,
       context: contextManager.getContext(),
       loadingType: loadingType,
+      navigationType: navigationType,
       location: location,
       startClocks: startClocks,
       commonViewMetrics: getCommonViewMetrics(),
       initialViewMetrics: initialViewMetrics,
-      duration: tools_elapsed(startClocks.timeStamp, currentEnd),
+      duration: Math.min(tools_elapsed(startClocks.timeStamp, currentEnd), maxViewDuration),
       isActive: endClocks === undefined,
       sessionIsActive: sessionIsActive,
       eventCounts: eventCounts
     });
   }
   var result = {
+    update: triggerViewUpdate,
     name: name,
     service: service,
     version: version,
     contextManager: contextManager,
+    startClocks: startClocks,
     stopObservable: stopObservable,
     end: function (options) {
       if (endClocks) {
@@ -8939,6 +10316,9 @@ function newView(lifeCycle, domMutationObservable, configuration, initialLocatio
         endClocks: endClocks
       });
       timer_clearInterval(keepAliveIntervalId);
+      if (replayRecordingStateSubscription) {
+        replayRecordingStateSubscription.unsubscribe();
+      }
       setViewEnd(endClocks.relative);
       stopCommonViewMetricsTracking();
       pageMayExitSubscription.unsubscribe();
@@ -8964,9 +10344,47 @@ function newView(lifeCycle, domMutationObservable, configuration, initialLocatio
     setViewName(updatedName) {
       name = updatedName;
       triggerViewUpdate();
+    },
+    $rSetSoftNavigationMetrics: function (softNavigationType, firstContentfulPaint, largestContentfulPaint) {
+      navigationType = softNavigationType || navigationType;
+      if (typeof firstContentfulPaint === 'number') {
+        initialViewMetrics.firstContentfulPaint = firstContentfulPaint;
+      }
+      if (largestContentfulPaint) {
+        initialViewMetrics.largestContentfulPaint = largestContentfulPaint;
+      }
+      scheduleViewUpdate();
     }
   };
+  result.$rLocation = location;
+  if (canMatchSoftNavigation) {
+    result.$rSoftNavigationStart = startClocks.relative;
+  }
   return result;
+}
+function findSoftNavigationView(activeViews, softNavigation) {
+  // History tracking creates the View before Chrome emits its paint-backed
+  // soft-navigation entry. Enrich that View instead of creating a duplicate.
+  var matchingView;
+  var closestStart = Infinity;
+  activeViews.forEach(function (view) {
+    var startDelay = view.$rSoftNavigationStart - softNavigation.startTime;
+    if (startDelay >= -1 && startDelay < closestStart && view.$rLocation.href === softNavigation.name) {
+      matchingView = view;
+      closestStart = startDelay;
+    }
+  });
+  return matchingView;
+}
+function getSoftNavigationLcp(configuration, entry) {
+  var candidate = entry && entry.largestContentfulPaint;
+  var renderTime = candidate && (candidate.renderTime || candidate.loadTime);
+  if (renderTime) {
+    return {
+      value: Math.max(renderTime - entry.startTime, 0),
+      targetSelector: candidate.element && getSelectorFromElement(candidate.element, configuration.actionNameAttribute)
+    };
+  }
 }
 
 /**
@@ -8989,7 +10407,7 @@ function startViewCollection(lifeCycle, configuration, location, domMutationObse
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, function (view) {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi, pageStateHistory));
   });
-  return trackViews(location, lifeCycle, domMutationObservable, configuration, locationChangeObservable, !configuration.trackViewsManually, initialViewOptions);
+  return trackViews(location, lifeCycle, domMutationObservable, configuration, locationChangeObservable, !configuration.trackViewsManually, initialViewOptions, recorderApi);
 }
 function computePerformanceViewDetails(navigationTimings) {
   if (!navigationTimings) {
@@ -9005,25 +10423,25 @@ function computePerformanceViewDetails(navigationTimings) {
     domContentLoadedEventEnd = navigationTimings.domContentLoadedEventEnd;
   var details = {};
   if (isNumber(responseEnd) && isNumber(fetchStart) && responseEnd !== fetchStart && responseEnd > fetchStart) {
-    details.fpt = toServerDuration(responseEnd - fetchStart);
-    var apdexLevel = parseInt((responseEnd - fetchStart) / 1000);
+    details.fpt = tools_toServerDuration(responseEnd - fetchStart);
+    var apdexLevel = parseInt((responseEnd - fetchStart) / 1000); // 秒数取整
     details.apdexLevel = apdexLevel > 9 ? 9 : apdexLevel;
   }
   if (isNumber(domInteractive) && isNumber(fetchStart) && domInteractive !== fetchStart && domInteractive > fetchStart) {
-    details.tti = toServerDuration(domInteractive - fetchStart);
+    details.tti = tools_toServerDuration(domInteractive - fetchStart);
   }
   if (isNumber(domContentLoaded) && isNumber(fetchStart) && domContentLoaded !== fetchStart && domContentLoaded > fetchStart) {
-    details.dom_ready = toServerDuration(domContentLoaded - fetchStart);
+    details.dom_ready = tools_toServerDuration(domContentLoaded - fetchStart);
   }
   // Make sure a connection occurred
   if (isNumber(loadEventEnd) && isNumber(fetchStart) && loadEventEnd !== fetchStart && loadEventEnd > fetchStart) {
-    details.load = toServerDuration(loadEventEnd - fetchStart);
+    details.load = tools_toServerDuration(loadEventEnd - fetchStart);
   }
   if (isNumber(loadEventStart) && isNumber(domContentLoadedEventEnd) && loadEventStart !== domContentLoadedEventEnd && loadEventStart > domContentLoadedEventEnd) {
-    details.resource_load_time = toServerDuration(loadEventStart - domContentLoadedEventEnd);
+    details.resource_load_time = tools_toServerDuration(loadEventStart - domContentLoadedEventEnd);
   }
   if (isNumber(domComplete) && isNumber(domInteractive) && domComplete !== domInteractive && domComplete > domInteractive) {
-    details.dom = toServerDuration(domComplete - domInteractive);
+    details.dom = tools_toServerDuration(domComplete - domInteractive);
   }
   return details;
 }
@@ -9038,7 +10456,7 @@ function processViewUpdate(view, configuration, recorderApi, pageStateHistory) {
       view_update_time: view.documentVersion
     },
     date: view.startClocks.timeStamp,
-    type: RumEventType.VIEW,
+    type: enums_RumEventType.VIEW,
     view: {
       action: {
         count: view.eventCounts.actionCount
@@ -9049,40 +10467,41 @@ function processViewUpdate(view, configuration, recorderApi, pageStateHistory) {
       cumulative_layout_shift: findByPath(view.commonViewMetrics, 'cumulativeLayoutShift.value'),
       cumulative_layout_shift_time: findByPath(view.commonViewMetrics, 'cumulativeLayoutShift.time'),
       cumulative_layout_shift_target_selector: findByPath(view.commonViewMetrics, 'cumulativeLayoutShift.targetSelector'),
-      first_byte: toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.firstByte')),
-      dom_complete: toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.domComplete')),
-      dom_content_loaded: toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.domContentLoaded')),
-      dom_interactive: toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.domInteractive')),
+      first_byte: tools_toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.firstByte')),
+      dom_complete: tools_toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.domComplete')),
+      dom_content_loaded: tools_toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.domContentLoaded')),
+      dom_interactive: tools_toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.domInteractive')),
       error: {
         count: view.eventCounts.errorCount
       },
-      first_contentful_paint: toServerDuration(findByPath(view.initialViewMetrics, 'firstContentfulPaint')),
-      first_input_delay: toServerDuration(findByPath(view.initialViewMetrics, 'firstInput.delay')),
-      first_input_time: toServerDuration(findByPath(view.initialViewMetrics, 'firstInput.time')),
+      first_contentful_paint: tools_toServerDuration(findByPath(view.initialViewMetrics, 'firstContentfulPaint')),
+      first_input_delay: tools_toServerDuration(findByPath(view.initialViewMetrics, 'firstInput.delay')),
+      first_input_time: tools_toServerDuration(findByPath(view.initialViewMetrics, 'firstInput.time')),
       first_input_target_selector: findByPath(view.initialViewMetrics, 'firstInput.targetSelector'),
-      interaction_to_next_paint: toServerDuration(findByPath(view.commonViewMetrics, 'interactionToNextPaint.value')),
+      interaction_to_next_paint: tools_toServerDuration(findByPath(view.commonViewMetrics, 'interactionToNextPaint.value')),
       interaction_to_next_paint_target_selector: findByPath(view.commonViewMetrics, 'interactionToNextPaint.targetSelector'),
       is_active: view.isActive,
       name: view.name,
-      largest_contentful_paint: toServerDuration(findByPath(view.initialViewMetrics, 'largestContentfulPaint.value')),
+      largest_contentful_paint: tools_toServerDuration(findByPath(view.initialViewMetrics, 'largestContentfulPaint.value')),
       largest_contentful_paint_element_selector: findByPath(view.initialViewMetrics, 'largestContentfulPaint.targetSelector'),
-      load_event: toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.loadEvent')),
-      loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
+      load_event: tools_toServerDuration(findByPath(view.initialViewMetrics, 'navigationTimings.loadEvent')),
+      loading_time: discardNegativeDuration(tools_toServerDuration(view.commonViewMetrics.loadingTime)),
       loading_type: view.loadingType,
+      navigation_type: view.navigationType,
       long_task: {
         count: view.eventCounts.longTaskCount
       },
       resource: {
         count: view.eventCounts.resourceCount
       },
-      time_spent: toServerDuration(view.duration)
+      time_spent: tools_toServerDuration(view.duration)
     },
     display: view.commonViewMetrics.scroll ? {
       scroll: {
         max_depth: view.commonViewMetrics.scroll.maxDepth,
         max_depth_scroll_top: view.commonViewMetrics.scroll.maxDepthScrollTop,
         max_scroll_height: view.commonViewMetrics.scroll.maxScrollHeight,
-        max_scroll_height_time: toServerDuration(view.commonViewMetrics.scroll.maxScrollHeightTime)
+        max_scroll_height_time: tools_toServerDuration(view.commonViewMetrics.scroll.maxScrollHeightTime)
       }
     } : undefined,
     session: {
@@ -9094,12 +10513,13 @@ function processViewUpdate(view, configuration, recorderApi, pageStateHistory) {
     }
   };
   if (!isEmptyObject(view.customTimings)) {
-    viewEvent.view.custom_timings = mapValues(view.customTimings, toServerDuration);
+    viewEvent.view.custom_timings = mapValues(view.customTimings, tools_toServerDuration);
   }
   viewEvent = extend2Lev(viewEvent, {
     view: computePerformanceViewDetails(view.initialViewMetrics.navigationTimings)
   });
   return {
+    isForcedSessionUpdate: view.isForcedSessionUpdate,
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,
     domainContext: {
@@ -9118,7 +10538,7 @@ function processViewUpdate(view, configuration, recorderApi, pageStateHistory) {
 // import { isTraceSampled } from './sampler'
 function isTracingOption(item) {
   var expectedItem = item;
-  return getType(expectedItem) === 'object' && isMatchOption(expectedItem.match) && isString(expectedItem.traceType);
+  return tools_getType(expectedItem) === 'object' && isMatchOption(expectedItem.match) && isString(expectedItem.traceType);
 }
 function clearTracingIfNeeded(context) {
   if (context.status === 0 && !context.isAborted) {
@@ -9132,9 +10552,9 @@ function startTracer(configuration, sessionManager) {
     clearTracingIfNeeded: clearTracingIfNeeded,
     traceFetch: function (context) {
       return injectHeadersIfTracingAllowed(configuration, context, sessionManager, function (tracingHeaders) {
-        if (context.input instanceof Request && (!context.init || !context.init.headers)) {
+        if (isRequest(context.input) && (!context.init || !context.init.headers)) {
           context.input = new Request(context.input);
-          each(tracingHeaders, function (value, key) {
+          tools_each(tracingHeaders, function (value, key) {
             context.input.headers.append(key, value);
           });
         } else {
@@ -9145,17 +10565,18 @@ function startTracer(configuration, sessionManager) {
               headers.push([key, value]);
             });
           } else if (isArray(context.init.headers)) {
-            each(context.init.headers, function (header) {
+            tools_each(context.init.headers, function (header) {
               headers.push(header);
             });
           } else if (context.init.headers) {
-            each(context.init.headers, function (value, key) {
+            tools_each(context.init.headers, function (value, key) {
               headers.push([key, value]);
             });
           }
           // context.init.headers = headers.concat(objectEntries(tracingHeaders))
+          // 转换成对象，兼容部分
           var headersMap = {};
-          each(headers.concat(objectEntries(tracingHeaders)), function (header) {
+          tools_each(headers.concat(objectEntries(tracingHeaders)), function (header) {
             headersMap[header[0]] = header[1];
           });
           context.init.headers = headersMap;
@@ -9164,7 +10585,7 @@ function startTracer(configuration, sessionManager) {
     },
     traceXhr: function (context, xhr) {
       return injectHeadersIfTracingAllowed(configuration, context, sessionManager, function (tracingHeaders) {
-        each(tracingHeaders, function (value, name) {
+        tools_each(tracingHeaders, function (value, name) {
           xhr.setRequestHeader(name, value);
         });
       });
@@ -9191,7 +10612,19 @@ function injectHeadersIfTracingAllowed(configuration, context, sessionManager, i
   //   configuration.tracingSampleRate
   // )
 
-  // if (!traceSampled) return
+  const session = sessionManager.findTrackedSession();
+  if (!session && !configuration.allowTraceHeaderWithoutSession) {
+    return;
+  }
+  var tracingOption = find(configuration.allowedTracingUrls, function (tracingOption) {
+    return matchList([tracingOption.match], context.url, true);
+  });
+  if (!tracingOption) {
+    return;
+  }
+  const traceSampled = session ? isTraceSampled(session.id, configuration.tracingSampleRate) : performDraw(configuration.tracingSampleRate);
+
+  //   if (!traceSampled) return
   // var tracer,
   //   traceType = tracingOption.traceType
   // switch (traceType) {
@@ -9232,6 +10665,17 @@ function injectHeadersIfTracingAllowed(configuration, context, sessionManager, i
   //   if (getType(result) === 'object') {
   //     each(result, function (value, key) {
   //       if (getType(value) === 'string') {
+  //         if (
+  //           context.visitorId &&
+  //           configuration.visitorId &&
+  //           configuration.visitorId.enabled &&
+  //           key.toLowerCase() === configuration.visitorId.header
+  //         ) {
+  //           display.warn(
+  //             'injectTraceHeader cannot overwrite the SDK-managed Visitor ID header.'
+  //           )
+  //           return
+  //         }
   //         headers[key] = value
   //       }
   //     })
@@ -9275,6 +10719,7 @@ function trackXhr(lifeCycle, configuration, tracer) {
           status: context.status,
           traceId: context.traceId,
           traceSampled: context.traceSampled,
+          visitorId: context.visitorId,
           type: RequestType.XHR,
           url: context.url,
           xhr: context.xhr,
@@ -9320,7 +10765,8 @@ function trackFetch(lifeCycle, configuration, tracer) {
             status: context.status,
             traceId: context.traceId,
             traceSampled: context.traceSampled,
-            requestHeaderContexts: (_context$init = context.init) === null || _context$init === void 0 ? void 0 : _context$init.headers,
+            visitorId: context.visitorId,
+            requestHeaderContexts: ((_context$init = context.init) === null || _context$init === void 0 ? void 0 : _context$init.headers) || (isRequest(context.input) ? context.input.headers : undefined),
             type: RequestType.FETCH,
             url: context.url,
             response: context.response,
@@ -9361,7 +10807,7 @@ function waitForResponseToComplete(context, callback) {
 ;// CONCATENATED MODULE: ./src/domain/rumEventsCollection/resource/matchRequestResourceEntry.js
 
 
-var alreadyMatchedEntries = new polyfills_WeakSet();
+
 /**
  * Look for corresponding timing in resource timing buffer
  *
@@ -9375,44 +10821,50 @@ var alreadyMatchedEntries = new polyfills_WeakSet();
  * - if two following timings match (OPTIONS request), return the timing for the actual request
  * - otherwise we can't decide, return undefined
  */
-function matchRequestResourceEntry(request) {
-  if (!performance || !('getEntriesByName' in performance)) {
-    return;
-  }
-  var sameNameEntries = performance.getEntriesByName(request.url, 'resource');
-  if (!sameNameEntries.length || !('toJSON' in sameNameEntries[0])) {
-    return;
-  }
-  var candidates = filter(sameNameEntries, function (entry) {
-    return !alreadyMatchedEntries.has(entry);
-  });
-  candidates = filter(candidates, function (entry) {
-    return hasValidResourceEntryDuration(entry) && hasValidResourceEntryTimings(entry);
-  });
-  candidates = filter(candidates, function (entry) {
-    return isBetween(entry, request.startClocks.relative, endTime({
-      startTime: request.startClocks.relative,
-      duration: request.duration
-    }));
-  });
-  let lastEntry = undefined;
-  if (candidates.length > 1) {
-    let startTimeDuration = Number.MAX_SAFE_INTEGER;
-    candidates.forEach(entry => {
-      const _startTimeDuration = Math.abs(entry.startTime - request.startClocks.relative);
-      if (_startTimeDuration < startTimeDuration) {
-        startTimeDuration = _startTimeDuration;
-        lastEntry = entry;
+function createRequestResourceEntryMatcher() {
+  var alreadyMatchedEntries = new WeakSet();
+  return {
+    matchRequestResourceEntry: function (request) {
+      if (!performance || !('getEntriesByName' in performance)) {
+        return;
       }
-    });
-  } else if (candidates.length === 1) {
-    lastEntry = candidates[0];
-  }
-  if (lastEntry) {
-    alreadyMatchedEntries.add(lastEntry);
-    return lastEntry.toJSON();
-  }
-  return;
+      var sameNameEntries = performance.getEntriesByName(request.url, 'resource');
+      if (!sameNameEntries.length || !('toJSON' in sameNameEntries[0])) {
+        return;
+      }
+      var candidates = filter(sameNameEntries, function (entry) {
+        return !alreadyMatchedEntries.has(entry);
+      });
+      candidates = filter(candidates, function (entry) {
+        return hasValidResourceEntryDuration(entry) && hasValidResourceEntryTimings(entry);
+      });
+      candidates = filter(candidates, function (entry) {
+        return isBetween(entry, request.startClocks.relative, endTime({
+          startTime: request.startClocks.relative,
+          duration: request.duration
+        }));
+      });
+      let lastEntry = undefined;
+      if (candidates.length > 1) {
+        // 取值和 request startTime 间隔更接近的
+        let startTimeDuration = Number.MAX_SAFE_INTEGER;
+        candidates.forEach(entry => {
+          const _startTimeDuration = Math.abs(entry.startTime - request.startClocks.relative);
+          if (_startTimeDuration < startTimeDuration) {
+            startTimeDuration = _startTimeDuration;
+            lastEntry = entry;
+          }
+        });
+      } else if (candidates.length === 1) {
+        lastEntry = candidates[0];
+      }
+      if (lastEntry) {
+        alreadyMatchedEntries.add(lastEntry);
+        return lastEntry.toJSON();
+      }
+      return;
+    }
+  };
 }
 function endTime(timing) {
   return addDuration(timing.startTime, timing.duration);
@@ -9448,16 +10900,35 @@ function retrieveInitialDocumentResourceTiming(configuration, callback) {
 
 
 
-function startResourceCollection(lifeCycle, configuration, pageStateHistory, taskQueue, retrieveInitialDocumentResourceTimingImpl) {
+function startResourceCollection(lifeCycle, configuration, pageStateHistory, taskQueue, retrieveInitialDocumentResourceTimingImpl, resourceTrackerManager) {
   if (taskQueue === undefined) {
     taskQueue = createTaskQueue();
   }
   if (typeof retrieveInitialDocumentResourceTimingImpl === 'undefined') {
     retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming;
   }
+  if (resourceTrackerManager) {
+    resourceTrackerManager.setFlushTrackedResource(function (rawEvent) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent);
+    });
+  }
+  var requestResourceEntryMatcher = createRequestResourceEntryMatcher();
+  // var webSocketSubscription = lifeCycle.subscribe(
+  //   LifeCycleEventType.WEBSOCKET_COMPLETED,
+  //   function (event) {
+  //     try {
+  //       lifeCycle.notify(
+  //         LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+  //         processWebSocket(event)
+  //       )
+  //     } catch (error) {
+  //       addTelemetryError(error)
+  //     }
+  //   }
+  // )
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, function (request) {
     handleResource(function () {
-      return processRequest(request, pageStateHistory);
+      return processRequest(request, pageStateHistory, requestResourceEntryMatcher);
     });
   });
   var performanceResourceSubscription = createPerformanceObservable(configuration, {
@@ -9483,14 +10954,22 @@ function startResourceCollection(lifeCycle, configuration, pageStateHistory, tas
   });
   function handleResource(computeRawEvent) {
     taskQueue.push(function () {
-      const rawEvent = computeRawEvent();
-      if (rawEvent) {
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent);
+      try {
+        const rawEvent = computeRawEvent();
+        if (rawEvent) {
+          if (resourceTrackerManager && rawEvent.domainContext && rawEvent.domainContext.resourceTrackerId && resourceTrackerManager.trackRequestResource(rawEvent.domainContext.resourceTrackerId, rawEvent)) {
+            return;
+          }
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent);
+        }
+      } catch (error) {
+        // addTelemetryError(error)
       }
     });
   }
   return {
     stop: function () {
+      // webSocketSubscription.unsubscribe()
       performanceResourceSubscription.unsubscribe();
     },
     addResource: (resource, savedCommonContext) => {
@@ -9502,18 +10981,66 @@ function startResourceCollection(lifeCycle, configuration, pageStateHistory, tas
     }
   };
 }
-function processRequest(request, pageStateHistory) {
-  var matchingTiming = matchRequestResourceEntry(request);
+function processWebSocket(event) {
+  var duration = event.endClocks.timeStamp - event.startClocks.timeStamp;
+  var urlObj = urlParse(event.url).getParse();
+  return {
+    startTime: event.startClocks.relative,
+    rawRumEvent: {
+      date: event.startClocks.timeStamp,
+      type: RumEventType.RESOURCE,
+      resource: {
+        id: UUID(),
+        type: ResourceType.WEBSOCKET,
+        url: event.url,
+        urlHost: urlObj.Host,
+        urlPath: urlObj.Path,
+        urlPathGroup: replaceNumberCharByPath(urlObj.Path),
+        urlQuery: getQueryParamsFromUrl(event.url),
+        duration: toServerDuration(duration),
+        websocket: {
+          connectionId: event.connectionId,
+          handshakeSucceeded: event.handshakeSucceeded,
+          startTime: event.startClocks.timeStamp,
+          endTime: event.endClocks.timeStamp,
+          startViewId: event.startViewId,
+          endViewId: event.endViewId,
+          endViewPath: event.endViewPath,
+          trackingEndReason: event.trackingEndReason,
+          closeCode: event.closeCode,
+          closeReason: event.closeReason,
+          wasClean: event.wasClean,
+          messagesIn: event.messagesIn,
+          messagesOut: event.messagesOut,
+          timeToFirstMessageIn: toServerDuration(event.firstMessageInOffset),
+          timeToFirstMessageOut: toServerDuration(event.firstMessageOutOffset),
+          lastMessageInAt: event.lastMessageInAt,
+          longestInboundSilence: toServerDuration(event.longestInboundSilence),
+          inboundIdleDurationBeforeClose: toServerDuration(event.inboundIdleDurationBeforeClose),
+          bufferedAmountMax: event.bufferedAmountMax,
+          protocol: event.protocol,
+          setupDuration: toServerDuration(event.setupDuration)
+        }
+      }
+    },
+    domainContext: {
+      isWebSocket: true,
+      webSocket: event.webSocket
+    }
+  };
+}
+function processRequest(request, pageStateHistory, requestResourceEntryMatcher) {
+  var matchingTiming = requestResourceEntryMatcher.matchRequestResourceEntry(request);
   var startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks;
   var tracingInfo = computeRequestTracingInfo(request);
-  var type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH;
+  var type = request.type === RequestType.XHR ? enums_ResourceType.XHR : enums_ResourceType.FETCH;
   var correspondingTimingOverrides = matchingTiming ? computeResourceEntryMetrics(matchingTiming) : undefined;
   var duration = computeRequestDuration(pageStateHistory, startClocks, request.duration);
-  var urlObj = urlParse(request.url).getParse();
+  var urlObj = tools_urlParse(request.url).getParse();
   var resourceEvent = extend2Lev({
     date: startClocks.timeStamp,
     resource: {
-      id: UUID(),
+      id: tools_UUID(),
       type: type,
       duration: duration,
       method: request.method,
@@ -9522,13 +11049,18 @@ function processRequest(request, pageStateHistory) {
       url: isLongDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
       urlHost: urlObj.Host,
       urlPath: urlObj.Path,
-      urlPathGroup: replaceNumberCharByPath(urlObj.Path),
-      urlQuery: getQueryParamsFromUrl(request.url),
+      urlPathGroup: tools_replaceNumberCharByPath(urlObj.Path),
+      urlQuery: tools_getQueryParamsFromUrl(request.url),
       deliveryType: matchingTiming && computeResourceEntryDeliveryType(matchingTiming),
       protocol: matchingTiming && computeResourceEntryProtocol(matchingTiming)
     },
-    type: RumEventType.RESOURCE
+    type: enums_RumEventType.RESOURCE
   }, tracingInfo, correspondingTimingOverrides);
+  if (request.visitorId) {
+    resourceEvent.context = {
+      visitor_id: request.visitorId
+    };
+  }
   return {
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
@@ -9541,7 +11073,8 @@ function processRequest(request, pageStateHistory) {
       requestInit: request.init,
       error: request.error,
       isAborted: request.isAborted,
-      handlingStack: request.handlingStack
+      handlingStack: request.handlingStack,
+      resourceTrackerId: getResourceTrackerIdFromRequest(request)
     }
   };
 }
@@ -9550,24 +11083,24 @@ function processResourceEntry(entry, configuration) {
   var tracingInfo = computeResourceEntryTracingInfo(entry);
   var type = computeResourceEntryType(entry);
   var entryMetrics = computeResourceEntryMetrics(entry);
-  var urlObj = urlParse(entry.name).getParse();
+  var urlObj = tools_urlParse(entry.name).getParse();
   var resourceEvent = extend2Lev({
     date: startClocks.timeStamp,
     resource: {
-      id: UUID(),
+      id: tools_UUID(),
       type: type,
       url: entry.name,
       urlHost: urlObj.Host,
       urlPath: urlObj.Path,
-      urlPathGroup: replaceNumberCharByPath(urlObj.Path),
-      urlQuery: getQueryParamsFromUrl(entry.name),
+      urlPathGroup: tools_replaceNumberCharByPath(urlObj.Path),
+      urlQuery: tools_getQueryParamsFromUrl(entry.name),
       method: 'GET',
       status: discardZeroStatus(entry.responseStatus),
       statusGroup: getStatusGroup(entry.responseStatus),
       deliveryType: computeResourceEntryDeliveryType(entry),
       protocol: computeResourceEntryProtocol(entry)
     },
-    type: RumEventType.RESOURCE
+    type: enums_RumEventType.RESOURCE
   }, tracingInfo, entryMetrics);
   return {
     startTime: startClocks.relative,
@@ -9581,10 +11114,10 @@ function processCustomResource(resource) {
   var resourceEvent = {
     date: resource.startClocks.timeStamp,
     resource: {
-      id: UUID(),
+      id: tools_UUID(),
       type: resource.type
     },
-    type: RumEventType.RESOURCE
+    type: enums_RumEventType.RESOURCE
   };
   return {
     customerContext: resource.context,
@@ -9613,12 +11146,12 @@ function computeRequestTracingInfo(request) {
       traceId: request.traceId
     },
     resource: {
-      id: UUID()
+      id: tools_UUID()
     }
   };
 }
 function computeRequestDuration(pageStateHistory, startClocks, duration) {
-  return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, startClocks.relative, duration) ? toServerDuration(duration) : undefined;
+  return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, startClocks.relative, duration) ? tools_toServerDuration(duration) : undefined;
 }
 function computeResourceEntryTracingInfo(entry) {
   return entry.traceId ? {
@@ -9633,6 +11166,32 @@ function computeResourceEntryTracingInfo(entry) {
  */
 function discardZeroStatus(statusCode) {
   return statusCode === 0 ? undefined : statusCode;
+}
+function getResourceTrackerIdFromRequest(request) {
+  return getHeaderValue(request.requestHeaderContexts, 'x-rum-resource-id');
+}
+function getHeaderValue(headers, key) {
+  if (!headers || !key) {
+    return undefined;
+  }
+  var normalizedKey = String(key).toLowerCase();
+  if (typeof headers.get === 'function') {
+    return headers.get(key) || headers.get(normalizedKey) || undefined;
+  }
+  if (Array.isArray(headers)) {
+    for (var i = 0; i < headers.length; i += 1) {
+      var headerEntry = headers[i];
+      if (Array.isArray(headerEntry) && String(headerEntry[0]).toLowerCase() === normalizedKey) {
+        return headerEntry[1];
+      }
+    }
+    return undefined;
+  }
+  for (var headerKey in headers) {
+    if (String(headerKey).toLowerCase() === normalizedKey) {
+      return headers[headerKey];
+    }
+  }
 }
 ;// CONCATENATED MODULE: ./src/boot/rum.js
 
@@ -9656,7 +11215,9 @@ function discardZeroStatus(statusCode) {
 
 
 
-function startRum(configuration, recorderApi, customerDataTrackerManager, getCommonContext, initialViewOptions, createEncoder) {
+// import { startWebSocketCollection } from '../domain/rumEventsCollection/resource/webSocketCollection'
+
+function startRum(configuration, recorderApi, customerDataTrackerManager, getCommonContext, initialViewOptions, createEncoder, resourceTrackerManager) {
   var cleanupTasks = [];
   var lifeCycle = new LifeCycle();
   // var telemetry = startRumTelemetry(configuration)
@@ -9712,19 +11273,25 @@ function startRum(configuration, recorderApi, customerDataTrackerManager, getCom
   //     }
   //   }
   // })
-  const {
-    addTiming,
-    startView,
-    setViewName,
-    setViewContext,
-    setViewContextProperty,
-    getViewContext,
-    stop: stopViewCollection
-  } = startViewCollection(lifeCycle, configuration, location, domMutationObservable, locationChangeObservable, pageStateHistory, recorderApi, initialViewOptions);
+  const _startViewCollection = startViewCollection(lifeCycle, configuration, location, domMutationObservable, locationChangeObservable, pageStateHistory, recorderApi, initialViewOptions),
+    addTiming = _startViewCollection.addTiming,
+    startView = _startViewCollection.startView,
+    setViewName = _startViewCollection.setViewName,
+    setViewContext = _startViewCollection.setViewContext,
+    setViewContextProperty = _startViewCollection.setViewContextProperty,
+    getViewContext = _startViewCollection.getViewContext,
+    stopViewCollection = _startViewCollection.stop;
   cleanupTasks.push(stopViewCollection);
-  const _startResourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory);
+  const _startResourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory, undefined, undefined, resourceTrackerManager);
   var addResource = _startResourceCollection.addResource;
   cleanupTasks.push(_startResourceCollection.stop);
+  // if (configuration.trackWebSockets) {
+  //   var webSocketCollection = startWebSocketCollection(
+  //     lifeCycle,
+  //     viewContexts
+  //   )
+  //   cleanupTasks.unshift(webSocketCollection.stop)
+  // }
   // if (
   //   PerformanceObserver.supportedEntryTypes &&
   //   PerformanceObserver.supportedEntryTypes.includes(
@@ -9759,16 +11326,36 @@ function startRum(configuration, recorderApi, customerDataTrackerManager, getCom
     viewContexts: viewContexts,
     session: session,
     setForcedSession: function () {
-      session.setForcedSession();
+      session.setForcedSession({
+        refreshView: true
+      });
     },
     stopSession: function () {
       session.expire();
+    },
+    startSession: function (options) {
+      session.startSession(options);
     },
     getInternalContext: internalContext.get,
     stop: function () {
       cleanupTasks.forEach(function (task) {
         task();
       });
+    },
+    createResourceTrackerId: function () {
+      return resourceTrackerManager.createTrackerId();
+    },
+    setResourceContext: function (trackerId, context) {
+      resourceTrackerManager.setResourceContext(trackerId, context);
+    },
+    appendResourceContext: function (trackerId, context) {
+      resourceTrackerManager.appendResourceContext(trackerId, context);
+    },
+    finishResource: function (trackerId) {
+      resourceTrackerManager.finishResource(trackerId);
+    },
+    getResource: function (trackerId) {
+      return resourceTrackerManager.getResource(trackerId);
     }
   };
 }
@@ -9813,14 +11400,661 @@ function buildCommonContext(globalContextManager, userContextManager, recorderAp
     hasReplay: false // recorderApi.isRecording() ? true : undefined
   };
 }
+;// CONCATENATED MODULE: ./src/domain/plugins.js
+
+var PLUGIN_METHODS = ['onInit', 'onRumStart', 'getConfigurationTelemetry'];
+function validatePlugins(plugins) {
+  if (plugins === undefined) {
+    return true;
+  }
+  if (!isArray(plugins)) {
+    display.error('Plugins should be an array');
+    return false;
+  }
+  for (var i = 0; i < plugins.length; i += 1) {
+    var plugin = plugins[i];
+    if (!plugin || tools_getType(plugin.name) !== 'string' || plugin.name.length === 0) {
+      display.error('Plugins should have a non-empty string name');
+      return false;
+    }
+    for (var methodIndex = 0; methodIndex < PLUGIN_METHODS.length; methodIndex += 1) {
+      var methodName = PLUGIN_METHODS[methodIndex];
+      if (plugin[methodName] !== undefined && tools_getType(plugin[methodName]) !== 'function') {
+        display.error('Plugin ' + plugin.name + ' has an invalid ' + methodName + ' method');
+        return false;
+      }
+    }
+  }
+  return true;
+}
+function callPluginsMethod(plugins, methodName, parameter) {
+  if (!plugins) {
+    return;
+  }
+  tools_each(plugins, function (plugin) {
+    var method = plugin[methodName];
+    if (tools_getType(method) !== 'function') {
+      return;
+    }
+    catchUserErrors_catchUserErrors(function () {
+      return method.call(plugin, parameter);
+    }, plugin.name + ' plugin ' + methodName + ' threw an error:')();
+  });
+}
+function getPluginsTelemetry(plugins) {
+  var telemetry = [];
+  each(plugins || [], function (plugin) {
+    var pluginTelemetry = {
+      name: plugin.name
+    };
+    if (getType(plugin.getConfigurationTelemetry) === 'function') {
+      var configurationTelemetry = catchUserErrors(function () {
+        return plugin.getConfigurationTelemetry();
+      }, plugin.name + ' plugin getConfigurationTelemetry threw an error:')();
+      if (getType(configurationTelemetry) === 'object') {
+        pluginTelemetry = assign(pluginTelemetry, configurationTelemetry);
+      }
+    }
+    telemetry.push(pluginTelemetry);
+  });
+  return telemetry;
+}
 ;// CONCATENATED MODULE: ./src/boot/buildEnv.js
 var buildEnv = {
-  sdkVersion: "3.2.42",
+  sdkVersion: "3.3.21",
   sdkName: 'df_web_rum_sdk'
 };
+;// CONCATENATED MODULE: ./src/domain/tracing/traceIdentifier.js
+function TraceIdentifier() {
+  this.buffer = new Uint8Array(8);
+  getCrypto().getRandomValues(this.buffer);
+  this.buffer[0] = this.buffer[0] & 0x7f;
+}
+TraceIdentifier.prototype = {
+  // buffer: new Uint8Array(8),
+  toString: function (radix) {
+    var high = this.readInt32(0);
+    var low = this.readInt32(4);
+    var str = '';
+    do {
+      var mod = high % radix * 4294967296 + low;
+      high = Math.floor(high / radix);
+      low = Math.floor(mod / radix);
+      str = (mod % radix).toString(radix) + str;
+    } while (high || low);
+    return str;
+  },
+  toDecimalString: function () {
+    return this.toString(10);
+  },
+  /**
+   * Format used by OTel headers
+   */
+  toPaddedHexadecimalString() {
+    var traceId = this.toString(16);
+    return Array(17 - traceId.length).join('0') + traceId;
+  },
+  readInt32: function (offset) {
+    return this.buffer[offset] * 16777216 + (this.buffer[offset + 1] << 16) + (this.buffer[offset + 2] << 8) + this.buffer[offset + 3];
+  }
+};
+function getCrypto() {
+  return window.crypto || window.msCrypto;
+}
+function createRandomHexIdentifier(byteLength) {
+  var buffer = new Uint8Array(byteLength);
+  getCrypto().getRandomValues(buffer);
+  var parts = [];
+  for (var i = 0; i < buffer.length; i += 1) {
+    var hex = buffer[i].toString(16);
+    parts.push(hex.length === 1 ? '0' + hex : hex);
+  }
+  return parts.join('');
+}
+function normalizeHexIdentifier(value, allowedLengths) {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  var normalized = value.toLowerCase();
+  if (allowedLengths.indexOf(normalized.length) === -1) {
+    return undefined;
+  }
+  return /^[0-9a-f]+$/.test(normalized) ? normalized : undefined;
+}
+;// CONCATENATED MODULE: ./src/domain/visitorId/index.js
+
+// import { isAllowedRequestUrl } from '../rumEventsCollection/resource/resourceUtils'
+
+var VISITOR_ID_CONTEXT_KEY = 'visitor_id';
+var VISITOR_ID_STORAGE_KEY = '_gc_visitor_id';
+var DEFAULT_VISITOR_ID_TTL_HOURS = 24;
+var PERSISTENT_ID_PREFIX = 'p';
+var SESSION_ID_PREFIX = 's';
+var VISITOR_ID_PATTERN = /^[ps][0-9a-f]{32}$/;
+// var FETCH_INIT_FIELDS = [
+//   'method', 'headers', 'body', 'referrer', 'referrerPolicy', 'mode',
+//   'credentials', 'cache', 'redirect', 'integrity', 'keepalive', 'signal',
+//   'window', 'duplex', 'priority', 'attributionReporting', 'browsingTopics'
+// ]
+
+function startVisitorId(configuration) {
+  if (!configuration.visitorId.enabled) {
+    return createVisitorIdStub();
+  }
+  var manager = createVisitorIdManager(configuration.visitorId);
+  // var requestCollection = startVisitorIdRequestCollection(
+  //   configuration,
+  //   manager
+  // )
+
+  return {
+    getId: manager.getId,
+    reset: manager.reset,
+    stop: function () {
+      // requestCollection.stop()
+      manager.stop();
+    }
+  };
+}
+function createVisitorIdManager(visitorIdConfiguration, options) {
+  var browserManager = getNativeVisitorId() ? undefined : createBrowserVisitorIdManager(visitorIdConfiguration, options);
+  function getBrowserManager() {
+    if (!browserManager) {
+      browserManager = createBrowserVisitorIdManager(visitorIdConfiguration, options);
+    }
+    return browserManager;
+  }
+  return {
+    getId: function () {
+      return getNativeVisitorId() || getBrowserManager().getId();
+    },
+    reset: function () {
+      // The App owns native identity rotation. A Web-only reset would split it.
+      if (!getNativeVisitorId()) {
+        getBrowserManager().reset();
+      }
+    },
+    stop: function () {
+      if (browserManager) {
+        browserManager.stop();
+      }
+    }
+  };
+}
+function getNativeVisitorId() {
+  // try {
+  //   if (canUseEventBridge()) {
+  //     var id = getEventBridge().getVisitorId()
+  //     // Preserve the App value exactly, while keeping it safe for HTTP headers.
+  //     if (
+  //       typeof id === 'string' && id.length > 0 && id.length <= 256 &&
+  //       !/[^\x21-\x7e]/.test(id)
+  //     ) {
+  //       return id
+  //     }
+  //   }
+  // } catch (error) {
+  //   // Older or not-yet-ready native bridges must not break Web collection.
+  // }
+}
+function createBrowserVisitorIdManager(visitorIdConfiguration, options) {
+  if (options === undefined) {
+    options = {};
+  }
+  var getNow = options.getNow || timeStampNow;
+  var createIdentifier = options.createIdentifier || createIdentifierValue;
+  var localStorage = getStorage(options, 'localStorage');
+  var sessionStorage = getStorage(options, 'sessionStorage');
+  var ttl = visitorIdConfiguration.ttlHours * ONE_HOUR;
+  var currentRecord = loadOrCreateRecord();
+  var storageListener = localStorage ? addEventListener(window, DOM_EVENT.STORAGE, function (event) {
+    if (event.key !== VISITOR_ID_STORAGE_KEY) {
+      return;
+    }
+    if (event.storageArea && event.storageArea !== localStorage) {
+      return;
+    }
+    // Storage events may be queued before a later reset in this or another tab.
+    // Read the current value instead of replaying the event's stale snapshot.
+    var nextRecord = readRecord(localStorage, PERSISTENT_ID_PREFIX, getNow(), ttl);
+    if (nextRecord && currentRecord && compareRecords(nextRecord, currentRecord) < 0) {
+      return;
+    }
+    currentRecord = nextRecord;
+  }) : {
+    stop: tools_noop
+  };
+  function loadOrCreateRecord() {
+    var now = getNow();
+    var persistentRecord = readRecord(localStorage, PERSISTENT_ID_PREFIX, now, ttl);
+    var sessionRecord = readRecord(sessionStorage, SESSION_ID_PREFIX, now, ttl);
+    if (sessionRecord && persistentRecord) {
+      var order = compareRecords(sessionRecord, persistentRecord);
+      return order > 0 || order === 0 && sessionRecord.revision === undefined && persistentRecord.revision === undefined ? sessionRecord : persistentRecord;
+    }
+    if (sessionRecord || persistentRecord) {
+      return sessionRecord || persistentRecord;
+    }
+    return createAndPersistRecord(now);
+  }
+  function createAndPersistRecord(now) {
+    var identifier = createIdentifier();
+    // Date.now() can return the same value for several resets. Keep their order
+    // independently from the TTL timestamp, including when session cleanup fails.
+    var revision = 0;
+    [currentRecord, readRecord(localStorage, PERSISTENT_ID_PREFIX, now, ttl), readRecord(sessionStorage, SESSION_ID_PREFIX, now, ttl)].forEach(function (record) {
+      if (record && record.createdAt === now) {
+        revision = Math.max(revision, (record.revision || 0) + 1);
+      }
+    });
+    var persistentRecord = {
+      id: PERSISTENT_ID_PREFIX + identifier,
+      createdAt: now,
+      revision: revision
+    };
+    var storedPersistentRecord = writeRecord(localStorage, persistentRecord, PERSISTENT_ID_PREFIX, now, ttl);
+    if (storedPersistentRecord) {
+      try {
+        sessionStorage && sessionStorage.removeItem(VISITOR_ID_STORAGE_KEY);
+      } catch (error) {
+        // Ordering metadata still supersedes the stale session record.
+      }
+      return storedPersistentRecord;
+    }
+    var sessionRecord = {
+      id: SESSION_ID_PREFIX + identifier,
+      createdAt: now,
+      revision: revision
+    };
+    return writeRecord(sessionStorage, sessionRecord, SESSION_ID_PREFIX, now, ttl) || sessionRecord;
+  }
+  function ensureCurrentRecord() {
+    var now = getNow();
+    if (!isValidRecord(currentRecord, undefined, now, ttl)) {
+      currentRecord = loadOrCreateRecord();
+    }
+    return currentRecord;
+  }
+  return {
+    getId: function () {
+      return ensureCurrentRecord().id;
+    },
+    reset: function () {
+      currentRecord = createAndPersistRecord(getNow());
+    },
+    stop: storageListener.stop
+  };
+}
+
+// export function startVisitorIdRequestCollection(configuration, manager) {
+//   var xhrHeaderReservation
+//   var xhrSubscription = initXhrObservable().subscribe(function (context) {
+//     if (context.state === 'start') {
+//       context.visitorId = xhrHeaderReservation.apply(context)
+//     }
+//   })
+//   xhrHeaderReservation = startVisitorIdXhrHeaderReservation(
+//     configuration,
+//     manager
+//   )
+//   var fetchSubscription = initFetchObservable().subscribe(function (context) {
+//     if (
+//       context.state === 'start' &&
+//       shouldInjectVisitorId(configuration, context.url)
+//     ) {
+//       var visitorId = manager.getId()
+//       if (
+//         injectVisitorIdIntoFetch(
+//           context,
+//           configuration.visitorId.header,
+//           visitorId
+//         )
+//       ) {
+//         context.visitorId = visitorId
+//       }
+//     }
+//   })
+
+//   return {
+//     stop: function () {
+//       xhrHeaderReservation.stop()
+//       xhrSubscription.unsubscribe()
+//       fetchSubscription.unsubscribe()
+//     }
+//   }
+// }
+
+// export function shouldInjectVisitorId(configuration, url) {
+//   return (
+//     isAllowedRequestUrl(configuration, url) &&
+//     matchesVisitorIdUrl(configuration.visitorId.match, url)
+//   )
+// }
+
+// export function matchesVisitorIdUrl(matchOptions, url) {
+//   for (var index = 0; index < matchOptions.length; index += 1) {
+//     var matchOption = matchOptions[index]
+//     try {
+//       if (typeof matchOption === 'function' && matchOption(url)) {
+//         return true
+//       }
+//       if (matchOption instanceof RegExp) {
+//         var matched
+//         try {
+//           matchOption.lastIndex = 0
+//           matched = matchOption.test(url)
+//         } finally {
+//           matchOption.lastIndex = 0
+//         }
+//         if (matched) {
+//           return true
+//         }
+//       }
+//       if (
+//         typeof matchOption === 'string' &&
+//         url.indexOf(matchOption) === 0 &&
+//         getOrigin(matchOption) === getOrigin(url)
+//       ) {
+//         return true
+//       }
+//     } catch (error) {
+//       display.error('Visitor ID URL matcher threw an error:', error)
+//     }
+//   }
+//   return false
+// }
+
+// function injectVisitorIdIntoFetch(context, header, visitorId) {
+//   try {
+//     var originalInit = context.init
+//     if (
+//       originalInit != null &&
+//       typeof originalInit !== 'object' &&
+//       typeof originalInit !== 'function'
+//     ) {
+//       return
+//     }
+//     var init = shallowClone(originalInit)
+//     // RequestInit is a WebIDL dictionary: inherited and non-enumerable fields
+//     // count too. Materialize them so later tracing instrumentation preserves them.
+//     FETCH_INIT_FIELDS.forEach(function (field) {
+//       if (
+//         originalInit &&
+//         field in originalInit &&
+//         !Object.prototype.hasOwnProperty.call(init, field)
+//       ) {
+//         init[field] = originalInit[field]
+//       }
+//     })
+//     var headers = new Headers(
+//       init.headers === undefined && isRequest(context.input)
+//         ? context.input.headers
+//         : init.headers
+//     )
+//     if (headers.has(header)) {
+//       displayVisitorIdHeaderOverrideWarning('fetch')
+//     }
+//     headers.set(header, visitorId)
+//     init.headers = headers
+//     // Avoid constructing a Request here: that can consume the caller's body even
+//     // if a later header operation fails. Native fetch handles the body once.
+//     context.init = init
+//     return true
+//   } catch (error) {
+//     display.error('Unable to inject the Visitor ID header into fetch:', error)
+//   }
+// }
+
+// function startVisitorIdXhrHeaderReservation(configuration, manager) {
+//   var header = configuration.visitorId.header
+//   var matchedXhrs = new WeakSet()
+//   var callerHeaderXhrs = new WeakSet()
+//   var sentXhrs = new WeakSet()
+//   var injectedIds = new WeakMap()
+//   var originalOpen = XMLHttpRequest.prototype.open
+//   var stopped = false
+//   var openInstrumentation = function () {
+//     if (stopped) {
+//       return originalOpen.apply(this, arguments)
+//     }
+//     var xhr = this
+//     matchedXhrs.delete(xhr)
+//     callerHeaderXhrs.delete(xhr)
+//     sentXhrs.delete(xhr)
+//     injectedIds.delete(xhr)
+//     try {
+//       if (
+//         shouldInjectVisitorId(configuration, normalizeUrl(String(arguments[1])))
+//       ) {
+//         matchedXhrs.add(xhr)
+//       }
+//     } catch (error) {
+//       // Let native open() validate the URL and preserve its original exception.
+//     }
+//     try {
+//       // open() synchronously dispatches OPENED; handlers may set headers/send.
+//       return originalOpen.apply(xhr, arguments)
+//     } catch (error) {
+//       matchedXhrs.delete(xhr)
+//       callerHeaderXhrs.delete(xhr)
+//       sentXhrs.delete(xhr)
+//       injectedIds.delete(xhr)
+//       throw error
+//     }
+//   }
+//   XMLHttpRequest.prototype.open = openInstrumentation
+//   var originalSend = XMLHttpRequest.prototype.send
+//   var sendInstrumentation = function () {
+//     if (stopped || !matchedXhrs.has(this)) {
+//       return originalSend.apply(this, arguments)
+//     }
+//     var xhr = this
+//     var wasSent = sentXhrs.has(xhr)
+//     sentXhrs.add(xhr)
+//     try {
+//       return originalSend.apply(xhr, arguments)
+//     } catch (error) {
+//       // A failed first send leaves the native XHR open for header edits/retry.
+//       // A failed duplicate send must not reopen an already-sent reservation.
+//       if (!wasSent) {
+//         sentXhrs.delete(xhr)
+//       }
+//       throw error
+//     }
+//   }
+//   XMLHttpRequest.prototype.send = sendInstrumentation
+//   var originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader
+//   var setRequestHeaderInstrumentation = function (name, value) {
+//     if (
+//       !stopped &&
+//       typeof name === 'string' &&
+//       name.toLowerCase() === header &&
+//       matchedXhrs.has(this) &&
+//       !sentXhrs.has(this)
+//     ) {
+//       callerHeaderXhrs.add(this)
+//       return
+//     }
+//     return originalSetRequestHeader.apply(this, arguments)
+//   }
+//   XMLHttpRequest.prototype.setRequestHeader = setRequestHeaderInstrumentation
+
+//   return {
+//     apply: function (context) {
+//       var xhr = context.xhr
+//       if (!matchedXhrs.has(xhr)) {
+//         return
+//       }
+//       if (callerHeaderXhrs.delete(xhr)) {
+//         displayVisitorIdHeaderOverrideWarning('XHR')
+//       }
+//       if (injectedIds.has(xhr)) {
+//         // Native send() may throw before sending and leave the XHR reusable.
+//         // Headers cannot be replaced once set, so retain the first injected ID
+//         // even if resetVisitorId() was called before the retry.
+//         return injectedIds.get(xhr)
+//       }
+
+//       var visitorId = manager.getId()
+//       try {
+//         originalSetRequestHeader.call(xhr, header, visitorId)
+//         injectedIds.set(xhr, visitorId)
+//         return visitorId
+//       } catch (error) {
+//         display.error(
+//           'Unable to inject the Visitor ID header into XHR:',
+//           error
+//         )
+//         return
+//       }
+//     },
+//     stop: function () {
+//       stopped = true
+//       if (XMLHttpRequest.prototype.open === openInstrumentation) {
+//         XMLHttpRequest.prototype.open = originalOpen
+//       }
+//       if (XMLHttpRequest.prototype.send === sendInstrumentation) {
+//         XMLHttpRequest.prototype.send = originalSend
+//       }
+//       if (
+//         XMLHttpRequest.prototype.setRequestHeader ===
+//         setRequestHeaderInstrumentation
+//       ) {
+//         XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader
+//       }
+//     }
+//   }
+// }
+
+// function displayVisitorIdHeaderOverrideWarning(requestType) {
+//   display.warn(
+//     'Visitor ID header is already set on this ' +
+//       requestType +
+//       ' request. It was replaced with the SDK-managed value.'
+//   )
+// }
+
+function getStorage(options, storageName) {
+  if (Object.prototype.hasOwnProperty.call(options, storageName)) {
+    return options[storageName];
+  }
+  try {
+    return window[storageName];
+  } catch (error) {
+    return undefined;
+  }
+}
+function readRecord(storage, expectedPrefix, now, ttl) {
+  if (!storage) {
+    return undefined;
+  }
+  try {
+    return parseRecord(storage.getItem(VISITOR_ID_STORAGE_KEY), expectedPrefix, now, ttl);
+  } catch (error) {
+    return undefined;
+  }
+}
+function writeRecord(storage, record, expectedPrefix, now, ttl) {
+  if (!storage) {
+    return undefined;
+  }
+  try {
+    storage.setItem(VISITOR_ID_STORAGE_KEY, JSON.stringify(record));
+  } catch (error) {
+    return undefined;
+  }
+  var storedRecord = readRecord(storage, expectedPrefix, now, ttl);
+  return storedRecord && storedRecord.id === record.id && compareRecords(storedRecord, record) === 0 ? storedRecord : undefined;
+}
+function parseRecord(rawRecord, expectedPrefix, now, ttl) {
+  if (!rawRecord) {
+    return undefined;
+  }
+  try {
+    var record = JSON.parse(rawRecord);
+    return isValidRecord(record, expectedPrefix, now, ttl) ? record : undefined;
+  } catch (error) {
+    return undefined;
+  }
+}
+function isValidRecord(record, expectedPrefix, now, ttl) {
+  return !!record && VISITOR_ID_PATTERN.test(record.id) && (!expectedPrefix || record.id.charAt(0) === expectedPrefix) && typeof record.createdAt === 'number' && (record.revision === undefined || typeof record.revision === 'number' && isFinite(record.revision) && record.revision >= 0 && Math.floor(record.revision) === record.revision) && record.createdAt <= now && record.createdAt + ttl > now;
+}
+function compareRecords(first, second) {
+  return first.createdAt - second.createdAt || (first.revision || 0) - (second.revision || 0);
+}
+function createIdentifierValue() {
+  try {
+    return createRandomHexIdentifier(16);
+  } catch (error) {
+    return tools_UUID().replace(/-/g, '');
+  }
+}
+function createVisitorIdStub() {
+  return {
+    getId: tools_noop,
+    reset: tools_noop,
+    stop: tools_noop
+  };
+}
 ;// CONCATENATED MODULE: ./src/domain/configuration.js
 
 
+
+
+
+
+// var REPLAY_CANVAS_QUALITY_PRESETS = {
+//   low: {
+//     quality: 0.25,
+//     sampling: 1,
+//     autoInterval: 500,
+//     autoCooldown: 500,
+//     autoUnchangedBackoff: 5000,
+//     autoFailureBackoff: 7000,
+//     autoMaxPerRun: 1
+//   },
+//   medium: {
+//     quality: 0.4,
+//     sampling: 2,
+//     autoInterval: 250,
+//     autoCooldown: 250,
+//     autoUnchangedBackoff: 3000,
+//     autoFailureBackoff: 5000,
+//     autoMaxPerRun: 2
+//   },
+//   high: {
+//     quality: 0.5,
+//     sampling: 4,
+//     autoInterval: 125,
+//     autoCooldown: 125,
+//     autoUnchangedBackoff: 2000,
+//     autoFailureBackoff: 4000,
+//     autoMaxPerRun: 4
+//   }
+// }
+
+// var POSITIVE_REPLAY_CANVAS_OPTIONS = [
+//   ['replayCanvasMaxCanvasSize', 'Max Canvas Size'],
+//   ['replayCanvasMaxEncodedBytes', 'Max Encoded Bytes'],
+//   ['replayCanvasMaxConcurrentEncodes', 'Max Concurrent Encodes'],
+//   ['replayCanvasAutoInterval', 'Auto Interval'],
+//   ['replayCanvasAutoCooldown', 'Auto Cooldown'],
+//   ['replayCanvasAutoUnchangedBackoff', 'Auto Unchanged Backoff'],
+//   ['replayCanvasAutoFailureBackoff', 'Auto Failure Backoff'],
+//   ['replayCanvasAutoMaxPerRun', 'Auto Max Per Run']
+// ]
+
+var HTTP_HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9a-z]+$/;
+var FORBIDDEN_VISITOR_ID_HEADERS = (/* unused pure expression or super */ null && (['b3', 'traceparent', 'tracestate', 'uber-trace-id', 'sw8', 'x-gc-trace-id', 'x-gc-span-id', 'x-rum-resource-id']));
+var FORBIDDEN_VISITOR_ID_HEADER_FRAGMENTS = (/* unused pure expression or super */ null && (['authorization', 'authentication', 'api-key', 'api_key', 'apikey', 'auth-token', 'auth_token', 'access-token', 'access_token', 'session-token', 'session_token', 'refresh-token', 'refresh_token', 'id-token', 'id_token', 'security-token', 'security_token', 'csrf', 'xsrf', 'jwt', 'signature']));
+var FORBIDDEN_REQUEST_HEADERS = (/* unused pure expression or super */ null && (['accept-charset', 'accept-encoding', 'access-control-request-headers', 'access-control-request-method', 'authorization', 'connection', 'content-length', 'cookie', 'cookie2', 'date', 'dnt', 'expect', 'host', 'keep-alive', 'origin', 'permissions-policy', 'referer', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'via']));
+
+// function getReplayCanvasQualityPreset(value) {
+//   return typeof value === 'string'
+//     ? REPLAY_CANVAS_QUALITY_PRESETS[value]
+//     : undefined
+// }
 
 function validateAndBuildRumConfiguration(initConfiguration) {
   if (!initConfiguration.applicationId) {
@@ -9833,16 +12067,30 @@ function validateAndBuildRumConfiguration(initConfiguration) {
     display.error('Error Session  Sample Rate should be a number between 0 and 100');
     return;
   }
-  if (initConfiguration.sessionReplaySampleRate !== undefined && !isPercentage(initConfiguration.sessionReplaySampleRate)) {
-    display.error('Session Replay Sample Rate should be a number between 0 and 100');
-    return;
-  }
-  if (initConfiguration.sessionReplayOnErrorSampleRate !== undefined && !isPercentage(initConfiguration.sessionReplayOnErrorSampleRate)) {
-    display.error('Error Session Replay Sample Rate should be a number between 0 and 100');
-    return;
-  }
+  // if (
+  //   initConfiguration.sessionReplaySampleRate !== undefined &&
+  //   !isPercentage(initConfiguration.sessionReplaySampleRate)
+  // ) {
+  //   display.error(
+  //     'Session Replay Sample Rate should be a number between 0 and 100'
+  //   )
+  //   return
+  // }
+  // if (
+  //   initConfiguration.sessionReplayOnErrorSampleRate !== undefined &&
+  //   !isPercentage(initConfiguration.sessionReplayOnErrorSampleRate)
+  // ) {
+  //   display.error(
+  //     'Error Session Replay Sample Rate should be a number between 0 and 100'
+  //   )
+  //   return
+  // }
   var allowedTracingUrls = validateAndBuildTracingOptions(initConfiguration);
   if (!allowedTracingUrls) {
+    return;
+  }
+  var visitorId = validateAndBuildVisitorIdConfiguration(initConfiguration.visitorId);
+  if (!visitorId) {
     return;
   }
   //   if (initConfiguration.allowedTracingOrigins !== undefined) {
@@ -9865,33 +12113,260 @@ function validateAndBuildRumConfiguration(initConfiguration) {
     display.error('Excluded Activity Urls should be an array');
     return;
   }
+  if (!validatePlugins(initConfiguration.plugins)) {
+    return;
+  }
+  // if (
+  //   initConfiguration.replayCanvasMode !== undefined &&
+  //   initConfiguration.replayCanvasMode !== 'manual' &&
+  //   initConfiguration.replayCanvasMode !== 'auto'
+  // ) {
+  //   display.error("Replay Canvas Mode should be 'manual' or 'auto'")
+  //   return
+  // }
+  // if (
+  //   initConfiguration.replayCanvasQuality !== undefined &&
+  //   !(
+  //     getReplayCanvasQualityPreset(initConfiguration.replayCanvasQuality) ||
+  //     (typeof initConfiguration.replayCanvasQuality === 'number' &&
+  //       initConfiguration.replayCanvasQuality >= 0 &&
+  //       initConfiguration.replayCanvasQuality <= 1)
+  //   )
+  // ) {
+  //   display.error(
+  //     "Replay Canvas Quality should be 'low', 'medium', 'high', or a number between 0 and 1"
+  //   )
+  //   return
+  // }
+  // if (
+  //   initConfiguration.replayCanvasSampling !== undefined &&
+  //   !(
+  //     initConfiguration.replayCanvasSampling === 'all' ||
+  //     (isNumber(initConfiguration.replayCanvasSampling) &&
+  //       initConfiguration.replayCanvasSampling > 0)
+  //   )
+  // ) {
+  //   display.error(
+  //     "Replay Canvas Sampling should be 'all' or a positive number"
+  //   )
+  //   return
+  // }
+  // for (
+  //   var replayCanvasOptionIndex = 0;
+  //   replayCanvasOptionIndex < POSITIVE_REPLAY_CANVAS_OPTIONS.length;
+  //   replayCanvasOptionIndex += 1
+  // ) {
+  //   var replayCanvasOption =
+  //     POSITIVE_REPLAY_CANVAS_OPTIONS[replayCanvasOptionIndex]
+  //   var replayCanvasOptionValue = initConfiguration[replayCanvasOption[0]]
+  //   if (
+  //     replayCanvasOptionValue !== undefined &&
+  //     (!isNumber(replayCanvasOptionValue) || replayCanvasOptionValue <= 0)
+  //   ) {
+  //     display.error(
+  //       'Replay Canvas ' +
+  //         replayCanvasOption[1] +
+  //         ' should be a positive number'
+  //     )
+  //     return
+  //   }
+  // }
+
   var baseConfiguration = validateAndBuildConfiguration(initConfiguration);
   if (!baseConfiguration) {
     return;
   }
   var trackUserInteractions = !!isNullUndefinedDefaultValue(initConfiguration.trackUserInteractions, initConfiguration.trackInteractions);
+  // var replayCanvasMode = isNullUndefinedDefaultValue(
+  //   initConfiguration.replayCanvasMode,
+  //   'auto'
+  // )
+  // var replayCanvasQualityPreset = getReplayCanvasQualityPreset(
+  //   initConfiguration.replayCanvasQuality
+  // )
+  // var replayCanvasSampling = initConfiguration.replayCanvasSampling
+  // if (replayCanvasSampling === undefined || replayCanvasSampling === null) {
+  //   replayCanvasSampling = replayCanvasQualityPreset
+  //     ? replayCanvasQualityPreset.sampling
+  //     : 2
+  // }
+  // var replayCanvasAutoInterval = isNullUndefinedDefaultValue(
+  //   initConfiguration.replayCanvasAutoInterval,
+  //   replayCanvasQualityPreset
+  //     ? replayCanvasQualityPreset.autoInterval
+  //     : REPLAY_CANVAS_QUALITY_PRESETS.medium.autoInterval
+  // )
+  // var replayCanvasAutoCooldown = isNullUndefinedDefaultValue(
+  //   initConfiguration.replayCanvasAutoCooldown,
+  //   replayCanvasQualityPreset
+  //     ? replayCanvasQualityPreset.autoCooldown
+  //     : replayCanvasAutoInterval
+  // )
   return tools_assign({
     applicationId: initConfiguration.applicationId,
     actionNameAttribute: initConfiguration.actionNameAttribute,
+    enablePrivacyForActionName: isNullUndefinedDefaultValue(initConfiguration.enablePrivacyForActionName, false),
     sessionReplaySampleRate: isNullUndefinedDefaultValue(initConfiguration.sessionReplaySampleRate, 100),
     sessionOnErrorSampleRate: isNullUndefinedDefaultValue(initConfiguration.sessionOnErrorSampleRate, 0),
     sessionReplayOnErrorSampleRate: isNullUndefinedDefaultValue(initConfiguration.sessionReplayOnErrorSampleRate, 0),
     tracingSampleRate: isNullUndefinedDefaultValue(initConfiguration.tracingSampleRate, 100),
+    allowTraceHeaderWithoutSession: !!initConfiguration.allowTraceHeaderWithoutSession,
     allowedTracingUrls: allowedTracingUrls,
-    injectTraceHeader: initConfiguration.injectTraceHeader && catchUserErrors(initConfiguration.injectTraceHeader, 'injectTraceHeader threw an error:'),
-    generateTraceId: initConfiguration.generateTraceId && catchUserErrors(initConfiguration.generateTraceId, 'generateTraceId threw an error:'),
+    visitorId: visitorId,
+    injectTraceHeader: initConfiguration.injectTraceHeader && catchUserErrors_catchUserErrors(initConfiguration.injectTraceHeader, 'injectTraceHeader threw an error:'),
+    generateTraceId: initConfiguration.generateTraceId && catchUserErrors_catchUserErrors(initConfiguration.generateTraceId, 'generateTraceId threw an error:'),
     excludedActivityUrls: isNullUndefinedDefaultValue(initConfiguration.excludedActivityUrls, []),
-    workerUrl: initConfiguration.workerUrl,
+    // workerUrl: initConfiguration.workerUrl,
+    // replayCanvasWorkerUrl: initConfiguration.replayCanvasWorkerUrl,
     compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
     trackUserInteractions: trackUserInteractions,
+    trackWebSockets: isArray(initConfiguration.enableExperimentalFeatures) && initConfiguration.enableExperimentalFeatures.indexOf(ExperimentalFeature.TRACK_WEBSOCKETS) !== -1,
     enableLongAnimationFrame: !!initConfiguration.enableLongAnimationFrame,
     trackViewsManually: !!initConfiguration.trackViewsManually,
+    plugins: initConfiguration.plugins || [],
+    // sessionReplayWebGL: initConfiguration.sessionReplayWebGL,
+    // replayCanvasEnabled: !!initConfiguration.replayCanvasEnabled,
+    // replayCanvasMode: replayCanvasMode,
+    // replayCanvasSampling: replayCanvasSampling,
+    // replayCanvasQuality: isNullUndefinedDefaultValue(
+    //   replayCanvasQualityPreset
+    //     ? replayCanvasQualityPreset.quality
+    //     : initConfiguration.replayCanvasQuality,
+    //   0.4
+    // ),
+    // replayCanvasMimeType: isNullUndefinedDefaultValue(
+    //   initConfiguration.replayCanvasMimeType,
+    //   'image/webp'
+    // ),
+    // replayCanvasMaxCanvasSize: isNullUndefinedDefaultValue(
+    //   initConfiguration.replayCanvasMaxCanvasSize,
+    //   1280
+    // ),
+    // replayCanvasMaxEncodedBytes: isNullUndefinedDefaultValue(
+    //   initConfiguration.replayCanvasMaxEncodedBytes,
+    //   40000
+    // ),
+    // replayCanvasMaxConcurrentEncodes: isNullUndefinedDefaultValue(
+    //   initConfiguration.replayCanvasMaxConcurrentEncodes,
+    //   1
+    // ),
+    // replayCanvasAutoInterval: replayCanvasAutoInterval,
+    // replayCanvasAutoCooldown: replayCanvasAutoCooldown,
+    // replayCanvasAutoUnchangedBackoff: isNullUndefinedDefaultValue(
+    //   initConfiguration.replayCanvasAutoUnchangedBackoff,
+    //   replayCanvasQualityPreset
+    //     ? replayCanvasQualityPreset.autoUnchangedBackoff
+    //     : 3000
+    // ),
+    // replayCanvasAutoFailureBackoff: isNullUndefinedDefaultValue(
+    //   initConfiguration.replayCanvasAutoFailureBackoff,
+    //   replayCanvasQualityPreset
+    //     ? replayCanvasQualityPreset.autoFailureBackoff
+    //     : 5000
+    // ),
+    // replayCanvasAutoMaxPerRun: isNullUndefinedDefaultValue(
+    //   initConfiguration.replayCanvasAutoMaxPerRun,
+    //   replayCanvasQualityPreset
+    //     ? replayCanvasQualityPreset.autoMaxPerRun
+    //     : 2
+    // ),
+    // replayCanvasFlushImmediately: isNullUndefinedDefaultValue(
+    //   initConfiguration.replayCanvasFlushImmediately,
+    //   replayCanvasMode === 'manual'
+    // ),
     traceType: isNullUndefinedDefaultValue(initConfiguration.traceType, TraceType.DDTRACE),
     traceId128Bit: !!initConfiguration.traceId128Bit,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel) ? initConfiguration.defaultPrivacyLevel : DefaultPrivacyLevel.MASK_USER_INPUT,
-    shouldMaskNode: initConfiguration.shouldMaskNode && catchUserErrors(initConfiguration.shouldMaskNode, 'shouldMaskNode threw an error:')
+    shouldMaskNode: initConfiguration.shouldMaskNode && catchUserErrors_catchUserErrors(initConfiguration.shouldMaskNode, 'shouldMaskNode threw an error:')
+    // shouldRecordCanvas:
+    //   initConfiguration.shouldRecordCanvas &&
+    //   function (canvas) {
+    //     try {
+    //       return initConfiguration.shouldRecordCanvas(canvas)
+    //     } catch (error) {
+    //       display.error('shouldRecordCanvas threw an error:', error)
+    //       return false
+    //     }
+    //   }
   }, baseConfiguration, buildEnv);
 }
+function validateAndBuildVisitorIdConfiguration(visitorId) {
+  if (visitorId === undefined) {
+    return {
+      enabled: false
+    };
+  }
+  if (tools_getType(visitorId) !== 'object') {
+    display.error('Visitor ID configuration should be an object');
+    return;
+  }
+  if (visitorId.enabled !== undefined && typeof visitorId.enabled !== 'boolean') {
+    display.error('Visitor ID enabled should be a boolean');
+    return;
+  }
+  if (visitorId.enabled !== true) {
+    return {
+      enabled: false
+    };
+  }
+  // if (!isValidVisitorIdHeader(visitorId.header)) {
+  //   display.error(
+  //     'Visitor ID header should be a lowercase, writable HTTP header name and must not overlap authentication, CSRF, signature, tracing, or SDK resource tracking headers'
+  //   )
+  //   return
+  // }
+  // if (
+  //   !isArray(visitorId.match) ||
+  //   visitorId.match.length === 0 ||
+  //   visitorId.match.some(function (matchOption) {
+  //     return (
+  //       !isMatchOption(matchOption) ||
+  //       (isString(matchOption) && matchOption.length === 0)
+  //     )
+  //   })
+  // ) {
+  //   display.error(
+  //     'Visitor ID match should be a non-empty array of strings, RegExp values, or functions'
+  //   )
+  //   return
+  // }
+  if (visitorId.ttlHours !== undefined && (!isNumber(visitorId.ttlHours) || !isFinite(visitorId.ttlHours) || visitorId.ttlHours <= 0)) {
+    display.error('Visitor ID TTL should be a positive number of hours');
+    return;
+  }
+  return {
+    enabled: true,
+    // header: visitorId.header,
+    // match: visitorId.match.slice(),
+    ttlHours: isNullUndefinedDefaultValue(visitorId.ttlHours, DEFAULT_VISITOR_ID_TTL_HOURS)
+  };
+}
+
+// function isValidVisitorIdHeader(header) {
+//   if (
+//     !isString(header) ||
+//     header !== header.toLowerCase() ||
+//     !HTTP_HEADER_NAME_PATTERN.test(header)
+//   ) {
+//     return false
+//   }
+//   if (
+//     header.indexOf('proxy-') === 0 ||
+//     header.indexOf('sec-') === 0 ||
+//     header.indexOf('x-datadog-') === 0 ||
+//     header.indexOf('x-b3-') === 0 ||
+//     FORBIDDEN_VISITOR_ID_HEADER_FRAGMENTS.some(function (fragment) {
+//       return header.indexOf(fragment) !== -1
+//     })
+//   ) {
+//     return false
+//   }
+//   return (
+//     FORBIDDEN_REQUEST_HEADERS.indexOf(header) === -1 &&
+//     FORBIDDEN_VISITOR_ID_HEADERS.indexOf(header) === -1
+//   )
+// }
+
 /**
  * Handles allowedTracingUrls and processes legacy allowedTracingOrigins
  */
@@ -9912,7 +12387,7 @@ function validateAndBuildTracingOptions(initConfiguration) {
     // }
     // Convert from (MatchOption | TracingOption) to TracingOption, remove unknown properties
     var tracingOptions = [];
-    each(initConfiguration.allowedTracingUrls, function (option) {
+    tools_each(initConfiguration.allowedTracingUrls, function (option) {
       if (isMatchOption(option)) {
         tracingOptions.push({
           match: option,
@@ -10011,20 +12486,24 @@ function validateAndBuildTracingOptions(initConfiguration) {
 ;// CONCATENATED MODULE: ./src/boot/perStartRum.js
 
 
-// import { getType } from '@cloudcare/browser-core/src/helper/tools'
 
 function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRum) {
   var ignoreInitIfSyntheticsWillInjectRum = rumPublicApiOptions.ignoreInitIfSyntheticsWillInjectRum;
-  // var startDeflateWorker = rumPublicApiOptions.startDeflateWorker
+  // var startCompressionWorker = rumPublicApiOptions.startCompressionWorker
+  var overrideInitConfiguration = rumPublicApiOptions.overrideInitConfiguration;
   var bufferApiCalls = createBoundedBuffer();
   // var remoteConfigrationCallbacks = createBoundedBuffer()
   var firstStartViewCall;
-  var deflateWorker;
+  var compressionWorker;
   var cachedInitConfiguration;
   var cachedConfiguration;
   // var cachedRemoteConfiguration
+  var hasStarted;
+  var initializationPending;
+  // var pluginsRequireManualViewTracking
+  var resourceTrackerManager = rumPublicApiOptions.resourceTrackerManager;
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration) {
+    if (hasStarted || !cachedInitConfiguration || !cachedConfiguration) {
       return;
     }
     var initialViewOptions;
@@ -10041,7 +12520,8 @@ function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRu
       bufferApiCalls.remove(firstStartViewCall.callback);
       initialViewOptions = firstStartViewCall.options;
     }
-    var startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions);
+    var startRumResult = doStartRum(cachedConfiguration, compressionWorker, initialViewOptions);
+    hasStarted = true;
     bufferApiCalls.drain(startRumResult);
   }
   function doInit(initConfiguration, remoteConfiguration) {
@@ -10049,25 +12529,39 @@ function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRu
     // if (eventBridgeAvailable) {
     //   initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
     // }
+    if (overrideInitConfiguration) {
+      initConfiguration = overrideInitConfiguration(initConfiguration);
+    }
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
     cachedInitConfiguration = initConfiguration;
     // cachedRemoteConfiguration = remoteConfiguration
     // remoteConfigrationCallbacks.drain(cachedRemoteConfiguration)
-    // addTelemetryConfiguration(deepClone(initConfiguration))
     if (cachedConfiguration) {
       displayAlreadyInitializedError('DATAFLUX_RUM', initConfiguration);
       return;
     }
+    // var telemetryConfiguration = deepClone(initConfiguration)
+    // if (initConfiguration.plugins) {
+    //   telemetryConfiguration.plugins = getPluginsTelemetry(
+    //     initConfiguration.plugins
+    //   )
+    // }
+    // addTelemetryConfiguration(telemetryConfiguration)
     var configuration = validateAndBuildRumConfiguration(initConfiguration);
     if (!configuration) {
+      initializationPending = false;
       return;
+    }
+    if (rumPublicApiOptions.onConfigurationReady) {
+      rumPublicApiOptions.onConfigurationReady(configuration);
     }
 
     // if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
     //   display.warn(
     //     'No storage available for session. We will not send any data.'
     //   )
+    //   initializationPending = false
     //   return
     // }
 
@@ -10075,9 +12569,9 @@ function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRu
     //   configuration.compressIntakeRequests &&
     //   !configuration.sendContentTypeByJson &&
     //   !eventBridgeAvailable &&
-    //   startDeflateWorker
+    //   startCompressionWorker
     // ) {
-    //   deflateWorker = startDeflateWorker(
+    //   compressionWorker = startCompressionWorker(
     //     configuration,
     //     'RUM',
     //     // Worker initialization can fail asynchronously, especially in Firefox where even CSP
@@ -10085,13 +12579,15 @@ function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRu
     //     // data won't be sent to Datadog. We could improve this behavior in the future.
     //     noop
     //   )
-    //   if (!deflateWorker) {
-    //     // `startDeflateWorker` should have logged an error message explaining the issue
+    //   if (!compressionWorker) {
+    //     // The compression worker starter should have logged an error message explaining the issue
+    //     initializationPending = false
     //     return
     //   }
     // }
 
     cachedConfiguration = configuration;
+    initializationPending = false;
     // Instrumuent fetch to track network requests
     // This is needed in case the consent is not granted and some cutsomer
     // library (Apollo Client) is storing uninstrumented fetch to be used later
@@ -10100,24 +12596,47 @@ function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRu
     tryStartRum();
   }
   return {
-    init: function (initConfiguration) {
+    init: function (initConfiguration, publicApi) {
       if (!initConfiguration) {
         display.error('Missing configuration');
         return;
       }
       // Set the experimental feature flags as early as possible, so we can use them in most places
 
-      // Expose the initial configuration regardless of initialization success.
-      cachedInitConfiguration = initConfiguration;
       // If we are in a Synthetics test configured to automatically inject a RUM instance, we want
       // to completely discard the customer application RUM instance by ignoring their init() call.
       // But, we should not ignore the init() call from the Synthetics-injected RUM instance, so the
       // internal `ignoreInitIfSyntheticsWillInjectRum` option is here to bypass this condition.
       if (ignoreInitIfSyntheticsWillInjectRum && willSyntheticsInjectRum()) {
+        cachedInitConfiguration = initConfiguration;
         return;
       }
+      if (initializationPending || cachedConfiguration) {
+        displayAlreadyInitializedError('DATAFLUX_RUM', initConfiguration);
+        return;
+      }
+      // Expose the accepted configuration regardless of initialization success.
+      cachedInitConfiguration = initConfiguration;
+      if (!validatePlugins(initConfiguration.plugins)) {
+        return;
+      }
+      initializationPending = true;
+      if (rumPublicApiOptions.onInit) {
+        rumPublicApiOptions.onInit(initConfiguration, publicApi);
+      }
+      // pluginsRequireManualViewTracking =
+      //   !!initConfiguration.plugins &&
+      //   initConfiguration.trackViewsManually === true
       if (initConfiguration.remoteConfiguration) {
-        // fetchAndApplyRemoteConfiguration(initConfiguration, doInit)
+        // fetchAndApplyRemoteConfiguration(
+        //   initConfiguration,
+        //   function (remoteInitConfiguration, remoteConfiguration) {
+        //     if (pluginsRequireManualViewTracking) {
+        //       remoteInitConfiguration.trackViewsManually = true
+        //     }
+        //     doInit(remoteInitConfiguration, remoteConfiguration)
+        //   }
+        // )
       } else {
         doInit(initConfiguration);
       }
@@ -10136,7 +12655,12 @@ function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRu
     // },
     getInternalContext: tools_noop,
     stopSession: tools_noop,
-    setForcedSession: tools_noop,
+    startSession: function (options) {
+      bufferApiCalls.add(startRumResult => startRumResult.startSession(options));
+    },
+    setForcedSession: function () {
+      bufferApiCalls.add(startRumResult => startRumResult.setForcedSession());
+    },
     addTiming: function (name, time) {
       if (time === undefined) {
         time = timeStampNow();
@@ -10202,6 +12726,21 @@ function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRu
       bufferApiCalls.add(function (startRumResult) {
         startRumResult.addError(providedError, commonContext);
       });
+    },
+    createResourceTrackerId: function () {
+      return resourceTrackerManager.createTrackerId();
+    },
+    setResourceContext: function (trackerId, context) {
+      resourceTrackerManager.setResourceContext(trackerId, context);
+    },
+    appendResourceContext: function (trackerId, context) {
+      resourceTrackerManager.appendResourceContext(trackerId, context);
+    },
+    finishResource: function (trackerId) {
+      resourceTrackerManager.finishResource(trackerId);
+    },
+    getResource: function (trackerId) {
+      return resourceTrackerManager.getResource(trackerId);
     }
   };
 }
@@ -10216,7 +12755,241 @@ function createPreStartStrategy(rumPublicApiOptions, getCommonContext, doStartRu
 //       getEventBridge()?.getPrivacyLevel()
 //   })
 // }
+;// CONCATENATED MODULE: ./src/domain/rumEventsCollection/resource/resourceTrackerManager.js
+
+
+var RESOURCE_TRACKER_HEADER = 'x-rum-resource-id';
+var RESOURCE_TRACKER_TIMEOUT_MS = 30 * 1000;
+var RESOURCE_TRACKER_RETENTION_MS = 60 * 1000;
+var RESOURCE_TRACKER_ORPHAN_TTL_MS = 5 * 60 * 1000;
+var DEBUG_CLONE_MAX_DEPTH = 8;
+function createResourceTrackerManager() {
+  var trackers = new sdkMap_SDKMap();
+  var flushTrackedResource;
+  return {
+    createTrackerId: function () {
+      var trackerId = tools_UUID();
+      getOrCreateTracker(trackerId);
+      return trackerId;
+    },
+    setResourceContext: function (trackerId, context) {
+      var tracker = trackers.get(trackerId);
+      if (!tracker) {
+        return;
+      }
+      if (isTrackerImmutable(tracker)) {
+        return;
+      }
+      tracker.context = tools_assign({}, context || {});
+    },
+    appendResourceContext: function (trackerId, context) {
+      var tracker = trackers.get(trackerId);
+      if (!tracker) {
+        return;
+      }
+      if (isTrackerImmutable(tracker)) {
+        return;
+      }
+      tracker.context = tools_assign(tracker.context, context || {});
+    },
+    finishResource: function (trackerId) {
+      var tracker = trackers.get(trackerId);
+      if (!tracker) {
+        return;
+      }
+      tracker.finished = true;
+      if (tracker.status === 'request_collected') {
+        flushTracker(tracker, 'flushed');
+      } else if (tracker.status === 'created') {
+        tracker.status = 'finished';
+      }
+    },
+    getResource: function (trackerId) {
+      var tracker = trackers.get(trackerId);
+      if (!tracker) {
+        return undefined;
+      }
+      return cloneTrackerSnapshot(tracker);
+    },
+    trackRequestResource: function (trackerId, rawEvent) {
+      var tracker = trackers.get(trackerId);
+      if (!tracker) {
+        return false;
+      }
+      if (tracker.requestHeaderMatched || tracker.flushed) {
+        return false;
+      }
+      clearTrackerTimeout(tracker);
+      tracker.requestHeaderMatched = true;
+      tracker.rawResourceEvent = rawEvent.rawRumEvent;
+      tracker.startTime = rawEvent.startTime;
+      tracker.domainContext = rawEvent.domainContext;
+      tracker.resource = extractResourceSummary(rawEvent.rawRumEvent);
+      tracker.status = 'request_collected';
+      if (tracker.finished) {
+        flushTracker(tracker, 'flushed');
+      } else {
+        tracker.timeoutId = setTimeout(function () {
+          tracker.timeoutId = undefined;
+          if (tracker.status === 'request_collected') {
+            flushTracker(tracker, 'timeout_flushed');
+          }
+        }, RESOURCE_TRACKER_TIMEOUT_MS);
+      }
+      return true;
+    },
+    setFlushTrackedResource: function (handler) {
+      flushTrackedResource = handler;
+    },
+    getTrackerIdFromRequestHeaders: function (requestHeaders) {
+      return resourceTrackerManager_getHeaderValue(requestHeaders, RESOURCE_TRACKER_HEADER);
+    }
+  };
+  function getOrCreateTracker(trackerId) {
+    var tracker = trackers.get(trackerId);
+    if (!tracker) {
+      tracker = {
+        id: trackerId,
+        status: 'created',
+        context: {},
+        finished: false,
+        flushed: false,
+        requestHeaderMatched: false
+      };
+      trackers.set(trackerId, tracker);
+      tracker.orphanTimeoutId = setTimeout(function () {
+        tracker.status = 'cleared';
+        trackers.delete(tracker.id);
+      }, RESOURCE_TRACKER_ORPHAN_TTL_MS);
+    }
+    return tracker;
+  }
+  function flushTracker(tracker, status) {
+    if (tracker.flushed || !tracker.rawResourceEvent) {
+      tracker.status = status;
+      return;
+    }
+    clearTrackerTimeout(tracker);
+    tracker.flushed = true;
+    tracker.status = status;
+    if (!flushTrackedResource) {
+      scheduleTrackerClear(tracker);
+      return;
+    }
+    try {
+      flushTrackedResource({
+        startTime: tracker.startTime,
+        rawRumEvent: tracker.rawResourceEvent,
+        customerContext: tools_assign({}, tracker.context),
+        domainContext: tracker.domainContext
+      });
+    } catch (error) {
+      // addTelemetryError(error)
+    } finally {
+      scheduleTrackerClear(tracker);
+    }
+  }
+  function scheduleTrackerClear(tracker) {
+    clearTrackerTimeout(tracker);
+    tracker.clearTimeoutId = setTimeout(function () {
+      tracker.status = 'cleared';
+      trackers.delete(tracker.id);
+    }, RESOURCE_TRACKER_RETENTION_MS);
+  }
+}
+function clearTrackerTimeout(tracker) {
+  if (tracker.timeoutId) {
+    clearTimeout(tracker.timeoutId);
+    tracker.timeoutId = undefined;
+  }
+  if (tracker.orphanTimeoutId) {
+    clearTimeout(tracker.orphanTimeoutId);
+    tracker.orphanTimeoutId = undefined;
+  }
+  if (tracker.clearTimeoutId) {
+    clearTimeout(tracker.clearTimeoutId);
+    tracker.clearTimeoutId = undefined;
+  }
+}
+function isTrackerImmutable(tracker) {
+  return tracker.status === 'flushed' || tracker.status === 'timeout_flushed' || tracker.status === 'cleared';
+}
+function extractResourceSummary(rawRumEvent) {
+  var resource = rawRumEvent && rawRumEvent.resource;
+  if (!resource) {
+    return undefined;
+  }
+  return {
+    type: resource.type,
+    url: resource.url,
+    method: resource.method,
+    status: resource.status
+  };
+}
+function cloneTrackerSnapshot(tracker) {
+  return {
+    trackerId: tracker.id,
+    status: tracker.status,
+    context: deepClone(tracker.context),
+    resource: tracker.resource ? tools_assign({}, tracker.resource) : undefined,
+    rawRumEvent: tracker.rawResourceEvent ? cloneDebugRawRumEvent(tracker.rawResourceEvent) : undefined
+  };
+}
+function cloneDebugRawRumEvent(rawRumEvent) {
+  var clonedEvent = {};
+  for (var key in rawRumEvent) {
+    if (Object.prototype.hasOwnProperty.call(rawRumEvent, key)) {
+      clonedEvent[key] = cloneDebugObject(rawRumEvent[key], DEBUG_CLONE_MAX_DEPTH);
+    }
+  }
+  return clonedEvent;
+}
+function cloneDebugObject(value, depth) {
+  if (!value || typeof value !== 'object' || depth < 0) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    var clonedArray = [];
+    for (var i = 0; i < value.length; i += 1) {
+      clonedArray.push(cloneDebugObject(value[i], depth - 1));
+    }
+    return clonedArray;
+  }
+  var clonedObject = {};
+  for (var key in value) {
+    if (Object.prototype.hasOwnProperty.call(value, key)) {
+      clonedObject[key] = cloneDebugObject(value[key], depth - 1);
+    }
+  }
+  return clonedObject;
+}
+function resourceTrackerManager_getHeaderValue(headers, key) {
+  if (!headers || !key) {
+    return undefined;
+  }
+  var normalizedKey = String(key).toLowerCase();
+  if (typeof headers.get === 'function') {
+    return headers.get(key) || headers.get(normalizedKey) || undefined;
+  }
+  if (Array.isArray(headers)) {
+    for (var i = 0; i < headers.length; i += 1) {
+      var entry = headers[i];
+      if (Array.isArray(entry) && String(entry[0]).toLowerCase() === normalizedKey) {
+        return entry[1];
+      }
+    }
+    return undefined;
+  }
+  for (var headerKey in headers) {
+    if (String(headerKey).toLowerCase() === normalizedKey) {
+      return headers[headerKey];
+    }
+  }
+}
 ;// CONCATENATED MODULE: ./src/boot/rumPublicApi.js
+
+
+
 
 
 
@@ -10225,7 +12998,9 @@ function makeRumPublicApi(startRumImpl, recorderApi, options) {
   if (options === undefined) {
     options = {};
   }
+  var startVisitorIdImpl = options.startVisitorId || startVisitorId;
   const customerDataTrackerManager = createCustomerDataTrackerManager(CustomerDataCompressionStatus.Unknown);
+  const resourceTrackerManager = createResourceTrackerManager();
   const globalContextManager = createContextManager('global', {
     customerDataTracker: customerDataTrackerManager.getOrCreateTracker(CustomerDataType.GlobalContext)
   });
@@ -10243,27 +13018,78 @@ function makeRumPublicApi(startRumImpl, recorderApi, options) {
       }
     }
   });
-  function getCommonContext() {
-    return buildCommonContext(globalContextManager, userContextManager, recorderApi);
+  var visitorId = {
+    getId: tools_noop,
+    reset: tools_noop,
+    stop: tools_noop
+  };
+  function getGlobalContext() {
+    var context = globalContextManager.getContext();
+    var currentVisitorId = visitorId.getId();
+    if (currentVisitorId) {
+      context[VISITOR_ID_CONTEXT_KEY] = currentVisitorId;
+    }
+    return context;
   }
-  let strategy = createPreStartStrategy(options, getCommonContext, function doStartRum(configuration, deflateWorker, initialViewOptions) {
+  function getCommonContext() {
+    var commonContext = buildCommonContext(globalContextManager, userContextManager, recorderApi);
+    var currentVisitorId = visitorId.getId();
+    if (currentVisitorId) {
+      commonContext.context[VISITOR_ID_CONTEXT_KEY] = currentVisitorId;
+      // Keep the SDK value separate from customer fields in buffered snapshots.
+      commonContext.visitorId = currentVisitorId;
+    }
+    return commonContext;
+  }
+  let strategy;
+  function addPluginError(providedError) {
+    monitor_callMonitored(function () {
+      providedError = providedError || {};
+      strategy.addError(tools_assign({}, providedError, {
+        context: sanitize(providedError.context)
+      }), getCommonContext());
+      addTelemetryUsage({
+        feature: 'add-error'
+      });
+    });
+  }
+  strategy = createPreStartStrategy(tools_assign({}, options, {
+    resourceTrackerManager: resourceTrackerManager,
+    onInit: function (initConfiguration, publicApi) {
+      callPluginsMethod(initConfiguration.plugins, 'onInit', {
+        addError: addPluginError,
+        publicApi: publicApi,
+        rum: publicApi,
+        initConfiguration: initConfiguration
+      });
+    },
+    onConfigurationReady: function (configuration) {
+      visitorId.stop();
+      visitorId = startVisitorIdImpl(configuration);
+    }
+  }), getCommonContext, function doStartRum(configuration, compressionWorker, initialViewOptions) {
     if (configuration.storeContextsToLocal) {
       storeContextManager(configuration, globalContextManager, RUM_STORAGE_KEY, CustomerDataType.GlobalContext);
       storeContextManager(configuration, userContextManager, RUM_STORAGE_KEY, CustomerDataType.User);
     }
-    customerDataTrackerManager.setCompressionStatus(deflateWorker ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled);
-    var startRumResult = startRumImpl(configuration, recorderApi, customerDataTrackerManager, getCommonContext, initialViewOptions, deflateWorker && options.createDeflateEncoder ? function (streamId) {
-      return options.createDeflateEncoder(deflateWorker, streamId);
-    } : createIdentityEncoder);
+    customerDataTrackerManager.setCompressionStatus(compressionWorker ? CustomerDataCompressionStatus.Enabled : CustomerDataCompressionStatus.Disabled);
+    var startRumResult = startRumImpl(configuration, recorderApi, customerDataTrackerManager, getCommonContext, initialViewOptions, compressionWorker && options.createCompressionEncoder ? function (streamId) {
+      return options.createCompressionEncoder(compressionWorker, streamId);
+    } : createIdentityEncoder, resourceTrackerManager);
     // recorderApi.onRumStart(
     //   startRumResult.lifeCycle,
     //   configuration,
     //   startRumResult.session,
     //   startRumResult.viewContexts,
-    //   deflateWorker
+    //   compressionWorker
     // )
 
     strategy = createPostStartStrategy(strategy, startRumResult);
+    callPluginsMethod(configuration.plugins, 'onRumStart', {
+      addError: addPluginError,
+      publicApi: rumPublicApi,
+      rum: rumPublicApi
+    });
     return startRumResult;
   });
   const startView = monitor(function (options) {
@@ -10276,9 +13102,14 @@ function makeRumPublicApi(startRumImpl, recorderApi, options) {
     }
     // addTelemetryUsage({ feature: 'start-view' })
   });
-  var rumPublicApi = makePublicApi({
+
+  // const recorderPublicApi = options.makeRecorderPublicApi
+  //   ? options.makeRecorderPublicApi(recorderApi)
+  //   : {}
+
+  var rumPublicApi = makePublicApi(tools_assign({
     init: monitor(function (initConfiguration) {
-      strategy.init(initConfiguration);
+      strategy.init(initConfiguration, rumPublicApi);
     }),
     setViewName: monitor(name => {
       strategy.setViewName(name);
@@ -10314,10 +13145,10 @@ function makeRumPublicApi(startRumImpl, recorderApi, options) {
     }),
     // /** @deprecated: use getGlobalContext instead */
     // getRumGlobalContext: monitor(function () {
-    //   return globalContextManager.getContext()
+    //   return getGlobalContext()
     // }),
     getGlobalContext: monitor(function () {
-      return globalContextManager.getContext();
+      return getGlobalContext();
     }),
     // /** @deprecated: use setGlobalContext instead */
     // setRumGlobalContext: monitor(function (context) {
@@ -10330,6 +13161,12 @@ function makeRumPublicApi(startRumImpl, recorderApi, options) {
     }),
     clearGlobalContext: monitor(function () {
       return globalContextManager.clearContext();
+    }),
+    resetVisitorId: monitor(function () {
+      visitorId.reset();
+      addTelemetryUsage({
+        feature: 'reset-visitor-id'
+      });
     }),
     getInitConfiguration: monitor(function () {
       return deepClone(strategy.initConfiguration);
@@ -10344,34 +13181,34 @@ function makeRumPublicApi(startRumImpl, recorderApi, options) {
     // clearDebugSession: monitor(function () {}),
     // getDebugSession: monitor(function () {}),
     addResource: monitor(function (context) {
-      const handlingStack = createHandlingStack();
-      callMonitored(function () {
+      const handlingStack = errorTools_createHandlingStack();
+      monitor_callMonitored(function () {
         strategy.addResource({
           context: sanitize(context),
           startClocks: clocksNow(),
-          type: ResourceType.CUSTOM,
+          type: enums_ResourceType.CUSTOM,
           handlingStack: handlingStack
         });
         // addTelemetryUsage({ feature: 'add-resource' })
       });
     }),
     addTypeAction: monitor(function (name, type, context) {
-      const handlingStack = createHandlingStack();
-      callMonitored(function () {
+      const handlingStack = errorTools_createHandlingStack();
+      monitor_callMonitored(function () {
         const sourceType = sanitize(type);
         strategy.addAction({
           name: sanitize(name),
           context: sanitize(context),
           startClocks: clocksNow(),
-          type: getType(sourceType) === 'string' ? sourceType : ActionType.CUSTOM,
+          type: tools_getType(sourceType) === 'string' ? sourceType : ActionType.CUSTOM,
           handlingStack: handlingStack
         });
         // addTelemetryUsage({ feature: 'add-type-action' })
       });
     }),
     addAction: monitor(function (name, context) {
-      const handlingStack = createHandlingStack();
-      callMonitored(function () {
+      const handlingStack = errorTools_createHandlingStack();
+      monitor_callMonitored(function () {
         strategy.addAction({
           name: sanitize(name),
           context: sanitize(context),
@@ -10383,8 +13220,8 @@ function makeRumPublicApi(startRumImpl, recorderApi, options) {
       });
     }),
     addError: monitor(function (error, context) {
-      var handlingStack = createHandlingStack();
-      callMonitored(function () {
+      var handlingStack = errorTools_createHandlingStack();
+      monitor_callMonitored(function () {
         strategy.addError({
           error,
           // Do not sanitize error here, it is needed unserialized by computeRawError()
@@ -10429,22 +13266,35 @@ function makeRumPublicApi(startRumImpl, recorderApi, options) {
       strategy.stopSession();
       // addTelemetryUsage({ feature: 'stop-session' })
     }),
+    startSession: monitor(function (options) {
+      strategy.startSession(options);
+      addTelemetryUsage({
+        feature: 'start-session',
+        sessionSampleRate: options && options.sessionSampleRate
+      });
+    }),
     setForcedSession: monitor(function () {
       strategy.setForcedSession();
       addTelemetryUsage({
         feature: 'set-forced-session'
       });
+    }),
+    createResourceTrackerId: monitor(function () {
+      return resourceTrackerManager.createTrackerId();
+    }),
+    setResourceContext: monitor(function (trackerId, context) {
+      return resourceTrackerManager.setResourceContext(trackerId, sanitize(context));
+    }),
+    appendResourceContext: monitor(function (trackerId, context) {
+      return resourceTrackerManager.appendResourceContext(trackerId, sanitize(context));
+    }),
+    finishResource: monitor(function (trackerId) {
+      return resourceTrackerManager.finishResource(trackerId);
+    }),
+    getResource: monitor(function (trackerId) {
+      return resourceTrackerManager.getResource(trackerId);
     })
-    // startSessionReplayRecording: monitor(function (options) {
-    //   recorderApi.start(options)
-    //   addTelemetryUsage({
-    //     feature: 'start-session-replay-recording',
-    //     force: options && options.force
-    //   })
-    // }),
-    // stopSessionReplayRecording: monitor(recorderApi.stop),
-    // takeSubsequentFullSnapshot: monitor(recorderApi.takeSubsequentFullSnapshot)
-  });
+  }, {/* recorderPublicApi */}));
   return rumPublicApi;
 }
 function createPostStartStrategy(preStartStrategy, startRumResult) {
@@ -10453,22 +13303,83 @@ function createPostStartStrategy(preStartStrategy, startRumResult) {
       displayAlreadyInitializedError('DATAFLUX_RUM', initConfiguration);
     },
     initConfiguration: preStartStrategy.getInitConfiguration()
+    // getRemoteConfiguration: function (callback) {
+    //   preStartStrategy.getRemoteConfiguration(callback)
+    // }
   }, startRumResult);
 }
+;// CONCATENATED MODULE: ./src/boot/disabledRumPublicApi.js
+// A construction failure happens before init(), so its monitor cannot help.
+// Keep this fallback free of runtime collectors and browser instrumentation.
+function makeDisabledRumPublicApi(withReplay) {
+  function noop() {}
+  function emptyContext() {
+    return {};
+  }
+  var api = {};
+  var methods = ['init', 'setViewName', 'setViewContext', 'setViewContextProperty', 'addRumGlobalContext', 'setGlobalContextProperty', 'removeRumGlobalContext', 'removeGlobalContextProperty', 'setRumGlobalContext', 'setGlobalContext', 'clearGlobalContext', 'resetVisitorId', 'getInitConfiguration', 'getInternalContext', 'addDebugSession', 'clearDebugSession', 'getDebugSession', 'addResource', 'addTypeAction', 'addAction', 'addError', 'addTiming', 'setUser', 'setUserProperty', 'removeUserProperty', 'removeUser', 'clearUser', 'startView', 'stopSession', 'startSession', 'setForcedSession', 'setResourceContext', 'appendResourceContext', 'finishResource', 'getResource'];
+  // if (withReplay) {
+  //   methods = methods.concat([
+  //     'startSessionReplayRecording', 'stopSessionReplayRecording',
+  //     'takeSubsequentFullSnapshot', 'getSerializedNodeIdForDebug',
+  //     'getLastAutoCanvasSnapshotResultForDebug', 'getAutoCanvasSnapshotDebugHistoryForDebug',
+  //     'getLastCanvasMutationForDebug', 'getCanvasMutationHistoryForDebug',
+  //     'getLastDomMutationForDebug', 'getDomMutationHistoryForDebug',
+  //     'getLastReplaySegmentFlushForDebug', 'getReplaySegmentFlushHistoryForDebug',
+  //     'getReplayPerformanceForDebug', 'flushReplayMutationsForDebug'
+  //   ])
+  //   api.isRecording = function () { return false }
+  //   api.snapshotCanvas = function () {
+  //     return Promise.resolve({ ok: false, reason: 'not_recording' })
+  //   }
+  // }
+  methods.forEach(function (name) {
+    api[name] = noop;
+  });
+  api.getGlobalContext = api.getRumGlobalContext = api.getViewContext = api.getUser = emptyContext;
+  api.createResourceTrackerId = function () {
+    return '';
+  };
+  api.getRemoteConfiguration = noop;
+  api.onReady = function (callback) {
+    callback();
+  };
+  return api;
+}
+;// CONCATENATED MODULE: ./src/boot/rumEntryFactory.js
+
+
+
+
+function makeRumEntry(createRecorderApi, options) {
+  var datafluxRum;
+  try {
+    datafluxRum = makeRumPublicApi(startRum, createRecorderApi(), options);
+  } catch (error) {
+    datafluxRum = makeDisabledRumPublicApi(!!(options && options.makeRecorderPublicApi));
+    monitorError(error);
+  }
+  monitor_callMonitored(function () {
+    defineGlobal(getGlobalObject(), 'DATAFLUX_RUM', datafluxRum);
+  });
+  return datafluxRum;
+}
 ;// CONCATENATED MODULE: ./src/boot/rum.entry.js
-
-
-
 // import { startRecording } from './startRecording'
 // import { makeRecorderApi } from './recorderApi'
 // import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
-// var recorderApi = makeRecorderApi(startRecording)
-var datafluxRum = makeRumPublicApi(startRum, 'recorderApi', {
-  startDeflateWorker: null,
-  createDeflateEncoder: null
+
+// import { makeSessionReplayPublicApi } from './sessionReplayPublicApi'
+var datafluxRum = makeRumEntry(function () {
+  // return makeRecorderApi(startRecording)
+  return function () {};
+}, {
+  // startCompressionWorker: startDeflateWorker,
+  // createCompressionEncoder: createDeflateEncoder,
+  // makeRecorderPublicApi: makeSessionReplayPublicApi
 });
-defineGlobal(getGlobalObject(), 'DATAFLUX_RUM', datafluxRum);
 ;// CONCATENATED MODULE: ./src/index.js
+
 
 
 /******/ })()
