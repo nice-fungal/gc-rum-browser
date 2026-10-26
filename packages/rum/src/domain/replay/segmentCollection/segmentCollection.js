@@ -12,6 +12,10 @@ import {
 import { IncrementalSource, RecordType } from '../../../types'
 import { buildReplayPayload } from './buildReplayPayload'
 import { createSegment } from './segment'
+import {
+  isSessionReplayTimeAnchor,
+  SESSION_REPLAY_TIME_ANCHOR_BACKPRESSURE_RESERVE
+} from '../timeAnchor'
 
 export var SEGMENT_DURATION_LIMIT = 5 * ONE_SECOND
 /**
@@ -26,6 +30,7 @@ export var SEGMENT_BYTES_LIMIT = 60000
 var SEGMENT_FORM_DATA_ESTIMATED_OVERHEAD = 2 * 1024
 var SEGMENT_PENDING_RAW_BYTES_LIMIT = 4 * 1024 * 1024
 var LOCKED_SEGMENTS_LIMIT = 12
+var REPLAY_MEMORY_BUDGET_BYTES = 48 * 1024 * 1024
 var CANVAS_FLUSH_MIN_INTERVAL = 250
 var MAX_CONSECUTIVE_FULL_SNAPSHOT_FAILURES = 3
 
@@ -108,6 +113,7 @@ export function doStartSegmentCollection(
       ? options.pendingRawBytesLimit
       : SEGMENT_PENDING_RAW_BYTES_LIMIT
   var lockedSegments = []
+  var memoryBudget = options.memoryBudget
   var lockedBufferGeneration = 0
   var reportedDropReasons = {}
   var lastCanvasFlushAt = -Infinity
@@ -142,12 +148,15 @@ export function doStartSegmentCollection(
     $rLocked: isLocked,
     $rGeneration: activeBaselineGeneration
   }
+  if (memoryBudget) {
+    memoryBudget.$rSegment = getSegmentMemoryUsage
+  }
   function prepareRecordsBeforePageExit(pageExitEvent) {
     if (!options.beforePageExitFlush) {
       return
     }
     try {
-      options.beforePageExitFlush(pageExitEvent)
+      return options.beforePageExitFlush(pageExitEvent)
     } catch (error) {
       addTelemetryDebug(
         'Session Replay failed to prepare records before page exit.',
@@ -383,6 +392,10 @@ export function doStartSegmentCollection(
     if (!isPageExitReason(flushReason)) {
       return
     }
+    var exitState =
+      flushReason === PageExitReason.HIDDEN
+        ? PageExitReason.HIDDEN
+        : true
     if (flushReason === PageExitReason.UNLOADING) {
       unloadingTransportLatched = true
       if (unloadingDeliveryBytesRemaining === undefined) {
@@ -391,7 +404,7 @@ export function doStartSegmentCollection(
       drainRetryPayloadsForUnload()
     }
     inFlightSegmentFlushes.forEach(function (transport) {
-      transport.$rExit = true
+      transport.$rExit = exitState
     })
     // A dependent segment can finish encoding before its Full Snapshot and is
     // then removed from inFlightSegmentFlushes while waiting for the baseline
@@ -404,7 +417,7 @@ export function doStartSegmentCollection(
       pendingSegmentResultsByGeneration[baselineGeneration].forEach(function (
         segmentResult
       ) {
-        segmentResult.$rExit = true
+        segmentResult.$rExit = exitState
       })
     })
   }
@@ -499,8 +512,7 @@ export function doStartSegmentCollection(
     }
     var shouldUseExitTransport =
       !segmentResult.$rRegular &&
-      (segmentResult.$rExit ||
-        isPageExitReason(segmentResult.$rReason) ||
+      (segmentResult.$rExit === true ||
         unloadingTransportLatched)
     var estimatedDeliveryBytesCount =
       encoderResult.outputBytesCount +
@@ -526,12 +538,21 @@ export function doStartSegmentCollection(
     )
     payload.$rExitBytesCount = estimatedDeliveryBytesCount
     payload.$rEnforceOrder = true
+    payload.$rKeepalive = Boolean(
+      !shouldUseExitTransport &&
+        segmentResult.$rExit === PageExitReason.HIDDEN &&
+        estimatedDeliveryBytesCount <= SEGMENT_BYTES_LIMIT
+    )
     payload.$rIsValid = function () {
       return segmentResult.$rTransportGeneration.$rValid
     }
     payload.$rOnPermanentDrop = function (reason) {
       handlePermanentTransportDrop(segmentResult, reason)
     }
+    // Blob owns the encoded bytes after buildReplayPayload(). Release the
+    // original Uint8Array reference while transport callbacks keep only the
+    // generation metadata.
+    segmentResult.$rEncoder = undefined
 
     if (shouldUseExitTransport) {
       var exitDeliveryResult = httpRequest.sendOnExit(
@@ -571,9 +592,8 @@ export function doStartSegmentCollection(
   }
 
   function retainLockedSegment(segmentResult) {
-    // A hidden-page beacon intent is only relevant while the page is hidden.
-    // If an error-session buffer is later unlocked, drain it through the
-    // regular transport instead of retaining a stale sendOnExit decision.
+    // Locked error-session buffers are only delivered after checkout. Clear
+    // any historical page-exit hint so a later unlock uses regular transport.
     segmentResult.$rExit = false
     segmentResult.$rRegular = true
     if (replayResetNeeded) {
@@ -594,7 +614,12 @@ export function doStartSegmentCollection(
       lockedSegments.splice(0, latestFullSnapshotIndex)
     }
 
-    if (lockedSegments.length > LOCKED_SEGMENTS_LIMIT) {
+    if (
+      lockedSegments.length > LOCKED_SEGMENTS_LIMIT ||
+      (memoryBudget &&
+        getSegmentMemoryUsage() + memoryBudget.$rRecord() >
+          REPLAY_MEMORY_BUDGET_BYTES)
+    ) {
       // Incremental segments form a dependency chain. Keeping the anchor while
       // deleting a middle segment can leave later records referencing nodes the
       // player never received. Retire the whole lock generation and admit no
@@ -608,6 +633,29 @@ export function doStartSegmentCollection(
       // to start a clean segment.
       flushSegment('locked_buffer_capacity')
     }
+  }
+
+  function getLockedSegmentsBytesCount() {
+    return lockedSegments.reduce(function (bytesCount, segmentResult) {
+      var encoderResult = segmentResult.$rEncoder
+      return (
+        bytesCount +
+        (encoderResult &&
+          typeof encoderResult.outputBytesCount === 'number'
+          ? encoderResult.outputBytesCount
+          : 0)
+      )
+    }, 0)
+  }
+
+  function getSegmentMemoryUsage() {
+    return (
+      getPendingRawBytesCount() +
+      getLockedSegmentsBytesCount() +
+      (typeof httpRequest.$rPendingBytes === 'function'
+        ? httpRequest.$rPendingBytes()
+        : 0)
+    )
   }
 
   function drainLockedSegments() {
@@ -812,7 +860,10 @@ export function doStartSegmentCollection(
       const lockedGeneration = segmentState.$rLockGeneration
       const baselineGeneration = state.$rGeneration
       const transport = {
-        $rExit: isPageExitReason(flushReason),
+        $rExit:
+          flushReason === PageExitReason.HIDDEN
+            ? PageExitReason.HIDDEN
+            : isPageExitReason(flushReason),
         $rSequence: ++nextSegmentFlushSequence
       }
       clearTimeout(state.$rExpiration)
@@ -922,6 +973,12 @@ export function doStartSegmentCollection(
     const segmentState = state
     const segment = segmentState.$rSegment
     var synchronousEncoderError
+    var isTimeAnchor = isSessionReplayTimeAnchor(record)
+    var recordPendingRawBytesLimit = pendingRawBytesLimit
+    if (isTimeAnchor && recordPendingRawBytesLimit !== undefined) {
+      recordPendingRawBytesLimit +=
+        SESSION_REPLAY_TIME_ANCHOR_BACKPRESSURE_RESERVE
+    }
     var addResult = segment.addRecord(
       record,
       function (encodedBytesCount, error) {
@@ -966,7 +1023,11 @@ export function doStartSegmentCollection(
         scheduleReplayResetNotification()
       },
       ignoreSegmentBytesLimit ? undefined : SEGMENT_BYTES_LIMIT,
-      pendingRawBytesLimit,
+      // The SDK time anchor is a fixed, tiny, state-free boundary. Give it a
+      // small bounded reserve behind the regular worker backlog without
+      // synchronously draining that backlog; segment size and async action
+      // ordering remain unchanged.
+      recordPendingRawBytesLimit,
       serializedRecordData
     )
     if (synchronousEncoderError) {
@@ -1198,6 +1259,7 @@ export function doStartSegmentCollection(
     $rAddBaselineRecords: addBaselineRecords,
     addRecord: function (record) {
       lastAddRecordWasBackpressured = false
+      var isTimeAnchor = isSessionReplayTimeAnchor(record)
       if (state.$rStatus === SegmentCollectionStatus.Stopped) {
         return rejectRecordAdmission()
       }
@@ -1256,7 +1318,10 @@ export function doStartSegmentCollection(
         // publishes any DOM membership carried by the record. Returning false
         // lets it cancel that staged membership, so the existing baseline
         // remains valid and does not need a global reset.
-        if (record.type !== RecordType.IncrementalSnapshot) {
+        if (
+          record.type !== RecordType.IncrementalSnapshot &&
+          !isTimeAnchor
+        ) {
           failBaselineGeneration(
             addResult.$rGeneration,
             record.type === RecordType.FullSnapshot
@@ -1294,7 +1359,10 @@ export function doStartSegmentCollection(
         // See the synchronous incremental rejection rationale above. Full
         // snapshots and non-incremental baseline records retain the existing
         // recovery semantics.
-        if (record.type !== RecordType.IncrementalSnapshot) {
+        if (
+          record.type !== RecordType.IncrementalSnapshot &&
+          !isTimeAnchor
+        ) {
           failBaselineGeneration(
             addResult.$rGeneration,
             record.type === RecordType.FullSnapshot
@@ -1417,11 +1485,8 @@ export function doStartSegmentCollection(
         }
       }
       flushSegment(flushReason || 'stop', undefined, true)
-      // Normal stop/session renewal must not force a potentially large worker
-      // backlog onto the main thread or apply the unload delivery budget. The
-      // encoder queues a reset after each finish, so a restarted recorder can
-      // append a new generation while these old results complete in order.
-      // Only a real unload needs the bounded synchronous drain.
+      // Normal stop/session renewal leaves shared encoder groups to complete
+      // asynchronously. Only a real unload uses the bounded synchronous drain.
       flushPendingSegmentEncodingsForUnload(flushReason)
       unsubscribeLifecycle()
     }
