@@ -30,6 +30,8 @@ import { getSelectorFromElement } from './getSelectorsFromElement'
 // import { getSelectorsFromElement } from './getSelectorsFromElement'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
+import { NodePrivacyLevel } from '../../../constants'
+import { getNodePrivacyLevel } from '../../privacy'
 import {
   CLICK_ACTION_MAX_DURATION,
   updateInteractionSelector
@@ -119,9 +121,17 @@ function processPointerDown(
   domMutationObservable,
   pointerDownEvent
 ) {
+  var target = getEventTarget(pointerDownEvent)
+  var nodePrivacyLevel = configuration.enablePrivacyForActionName
+    ? getNodePrivacyLevel(target, configuration.defaultPrivacyLevel)
+    : NodePrivacyLevel.ALLOW
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+    return
+  }
   var clickActionBase = computeClickActionBase(
     pointerDownEvent,
-    configuration.actionNameAttribute
+    configuration,
+    nodePrivacyLevel
   )
 
   var hadActivityOnPointerDown = false
@@ -214,10 +224,13 @@ function startClickAction(
   })
 }
 
-function computeClickActionBase(event, actionNameAttribute) {
+function computeClickActionBase(event, configuration, nodePrivacyLevel) {
   var target = getEventTarget(event)
   var rect = target.getBoundingClientRect()
-  var selector = getSelectorFromElement(target, actionNameAttribute)
+  var selector = getSelectorFromElement(
+    target,
+    configuration.actionNameAttribute
+  )
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
@@ -234,8 +247,9 @@ function computeClickActionBase(event, actionNameAttribute) {
     },
     name: getActionNameFromElement(
       target,
-      actionNameAttribute,
-      target !== event.target
+      configuration,
+      target !== event.target,
+      nodePrivacyLevel
     )
   }
 }

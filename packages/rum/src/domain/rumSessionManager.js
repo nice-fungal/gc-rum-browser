@@ -43,8 +43,8 @@ export function startRumSessionManager(configuration, lifeCycle) {
     }
   )
 
-  sessionManager.expireObservable.subscribe(function () {
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+  sessionManager.expireObservable.subscribe(function (sessionExpirationTime) {
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED, sessionExpirationTime)
   })
 
   sessionManager.renewObservable.subscribe(function () {

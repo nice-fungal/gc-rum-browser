@@ -11,6 +11,7 @@ import {
   ViewLoadingType,
   LifeCycleEventType,
   PageExitReason,
+  SESSION_TIME_OUT_DELAY,
   isHashAnAnchor,
   getPathFromHash,
   noop,
@@ -43,6 +44,9 @@ export function trackViews(
   recorderApi
 ) {
   var eventBridgeAvailable = canUseEventBridge()
+  var maxViewDuration = eventBridgeAvailable
+    ? Infinity
+    : SESSION_TIME_OUT_DELAY
   var isWebViewActive =
     !eventBridgeAvailable ||
     (document.visibilityState !== 'hidden' && document.hasFocus())
@@ -64,7 +68,8 @@ export function trackViews(
       viewOptions,
       canMatchSoftNavigation,
       fallbackNavigationType,
-      recorderApi
+      recorderApi,
+      maxViewDuration
     )
     activeViews.add(newlyCreatedView)
     newlyCreatedView.stopObservable.subscribe(function () {
@@ -136,9 +141,26 @@ export function trackViews(
     }
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewCurrentView)
 
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, function () {
-      currentView.end({ sessionIsActive: false })
-    })
+    lifeCycle.subscribe(
+      LifeCycleEventType.SESSION_EXPIRED,
+      function (sessionExpirationTime) {
+        var sessionExpirationClocks
+        if (
+          typeof sessionExpirationTime === 'number' &&
+          sessionExpirationTime >= currentView.startClocks.timeStamp
+        ) {
+          const origin = clocksOrigin()
+          sessionExpirationClocks = {
+            relative: elapsed(origin.timeStamp, sessionExpirationTime),
+            timeStamp: sessionExpirationTime
+          }
+        }
+        currentView.end({
+          sessionIsActive: false,
+          endClocks: sessionExpirationClocks
+        })
+      }
+    )
 
     if (eventBridgeAvailable) {
       function updateWebViewLifecycle(event) {
@@ -235,7 +257,8 @@ function newView(
   viewOptions,
   canMatchSoftNavigation,
   fallbackNavigationType,
-  recorderApi
+  recorderApi,
+  maxViewDuration
 ) {
   // Setup initial values
   if (startClocks === undefined) {
@@ -411,7 +434,10 @@ function newView(
       startClocks: startClocks,
       commonViewMetrics: getCommonViewMetrics(),
       initialViewMetrics: initialViewMetrics,
-      duration: elapsed(startClocks.timeStamp, currentEnd),
+      duration: Math.min(
+        elapsed(startClocks.timeStamp, currentEnd),
+        maxViewDuration
+      ),
       isActive: endClocks === undefined,
       sessionIsActive: sessionIsActive,
       eventCounts: eventCounts
@@ -422,6 +448,7 @@ function newView(
     service: service,
     version: version,
     contextManager: contextManager,
+    startClocks: startClocks,
     stopObservable: stopObservable,
     end: function (options) {
       if (endClocks) {

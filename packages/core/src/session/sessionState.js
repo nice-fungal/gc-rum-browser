@@ -1,4 +1,10 @@
-import { isEmptyObject, objectEntries, dateNow, map } from '../helper/tools'
+import {
+  isEmptyObject,
+  objectEntries,
+  dateNow,
+  isNumber,
+  map
+} from '../helper/tools'
 import {
   SESSION_EXPIRATION_DELAY,
   SESSION_TIME_OUT_DELAY
@@ -25,6 +31,32 @@ export function isSessionStarted(session) {
 
 export function isSessionInExpiredState(session) {
   return session.isExpired !== undefined || !isActiveSession(session)
+}
+
+export function getSessionExpirationTime(sessionState) {
+  if (
+    sessionState.isExpired !== undefined ||
+    isActiveSession(sessionState)
+  ) {
+    return undefined
+  }
+
+  const sessionTimeOutTime =
+    sessionState.created === undefined
+      ? Infinity
+      : Number(sessionState.created) + SESSION_TIME_OUT_DELAY
+  const inactivityExpirationTime =
+    sessionState.expire === undefined
+      ? Infinity
+      : Number(sessionState.expire)
+  const sessionExpirationTime = Math.min(
+    sessionTimeOutTime,
+    inactivityExpirationTime
+  )
+
+  return isNumber(sessionExpirationTime)
+    ? sessionExpirationTime
+    : undefined
 }
 
 function isActiveSession(sessionState) {
