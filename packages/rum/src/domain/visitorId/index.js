@@ -4,7 +4,9 @@ import {
   UUID,
   WeakSet,
   addEventListener,
+  canUseEventBridge,
   display,
+  getEventBridge,
   getOrigin,
   initFetchObservable,
   initXhrObservable,
@@ -52,6 +54,53 @@ export function startVisitorId(configuration) {
 }
 
 export function createVisitorIdManager(visitorIdConfiguration, options) {
+  var browserManager = getNativeVisitorId()
+    ? undefined
+    : createBrowserVisitorIdManager(visitorIdConfiguration, options)
+
+  function getBrowserManager() {
+    if (!browserManager) {
+      browserManager = createBrowserVisitorIdManager(visitorIdConfiguration, options)
+    }
+    return browserManager
+  }
+
+  return {
+    getId: function () {
+      return getNativeVisitorId() || getBrowserManager().getId()
+    },
+    reset: function () {
+      // The App owns native identity rotation. A Web-only reset would split it.
+      if (!getNativeVisitorId()) {
+        getBrowserManager().reset()
+      }
+    },
+    stop: function () {
+      if (browserManager) {
+        browserManager.stop()
+      }
+    }
+  }
+}
+
+function getNativeVisitorId() {
+  try {
+    if (canUseEventBridge()) {
+      var id = getEventBridge().getVisitorId()
+      // Preserve the App value exactly, while keeping it safe for HTTP headers.
+      if (
+        typeof id === 'string' && id.length > 0 && id.length <= 256 &&
+        !/[^\x21-\x7e]/.test(id)
+      ) {
+        return id
+      }
+    }
+  } catch (error) {
+    // Older or not-yet-ready native bridges must not break Web collection.
+  }
+}
+
+function createBrowserVisitorIdManager(visitorIdConfiguration, options) {
   if (options === undefined) {
     options = {}
   }

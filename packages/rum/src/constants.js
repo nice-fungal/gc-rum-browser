@@ -1,11 +1,4 @@
-import { DefaultPrivacyLevel } from '@cloudcare/browser-core'
-export var NodePrivacyLevel = {
-  IGNORE: 'ignore',
-  HIDDEN: 'hidden',
-  ALLOW: DefaultPrivacyLevel.ALLOW,
-  MASK: DefaultPrivacyLevel.MASK,
-  MASK_USER_INPUT: DefaultPrivacyLevel.MASK_USER_INPUT
-}
+export { NodePrivacyLevel } from '@cloudcare/browser-core'
 
 export var PRIVACY_ATTR_NAME = 'data-gc-privacy'
 

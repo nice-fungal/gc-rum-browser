@@ -1,6 +1,6 @@
 {
     "name": "@cloudcare/browser-core",
-    "version": "3.3.15",
+    "version": "3.3.16",
     "main": "cjs/index.js",
     "module": "esm/index.js",
     "types": "types/index.d.ts",
@@ -24,5 +24,5 @@
     },
     "author": "dataflux",
     "license": "MIT",
-    "gitHead": "a3f93aed4f6b30826605292d0086fc68a061a217"
+    "gitHead": "c6d2dbe27df774f31227c9ee1631f981d5d8d5de"
 }

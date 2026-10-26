@@ -78,15 +78,17 @@ export function startRumSessionManager(configuration, lifeCycle) {
         return
       }
       const isErrorSession =
-        session.trackingType ===
+        !session.isSessionForced &&
+        (session.trackingType ===
           RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITHOUT_SESSION_REPLAY ||
-        session.trackingType ===
-          RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_SESSION_REPLAY ||
-        session.trackingType ===
-          RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_ERROR_SESSION_REPLAY
+          session.trackingType ===
+            RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_SESSION_REPLAY ||
+          session.trackingType ===
+            RumTrackingType.TRACKED_WITH_ERROR_SESSION_AND_WITH_ERROR_SESSION_REPLAY)
 
       let plan = RumSessionPlan.WITHOUT_SESSION_REPLAY
       if (
+        session.isSessionForced ||
         session.trackingType ===
           RumTrackingType.TRACKED_WITH_SESSION_AND_WITH_SESSION_REPLAY ||
         session.trackingType ===
@@ -113,8 +115,7 @@ export function startRumSessionManager(configuration, lifeCycle) {
         isSessionForced: session.isSessionForced,
         sessionReplayAllowed:
           plan === RumSessionPlan.WITH_SESSION_REPLAY ||
-          plan === RumSessionPlan.WITH_ERROR_SESSION_REPLAY ||
-          session.isSessionForced
+          plan === RumSessionPlan.WITH_ERROR_SESSION_REPLAY
       }
     },
     expire: sessionManager.expire,

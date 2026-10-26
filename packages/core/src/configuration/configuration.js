@@ -14,6 +14,13 @@ export var DefaultPrivacyLevel = {
   MASK: 'mask',
   MASK_USER_INPUT: 'mask-user-input'
 }
+export var NodePrivacyLevel = {
+  IGNORE: 'ignore',
+  HIDDEN: 'hidden',
+  ALLOW: DefaultPrivacyLevel.ALLOW,
+  MASK: DefaultPrivacyLevel.MASK,
+  MASK_USER_INPUT: DefaultPrivacyLevel.MASK_USER_INPUT
+}
 export function validateAndBuildConfiguration(initConfiguration) {
   if (
     initConfiguration.sampleRate !== undefined &&

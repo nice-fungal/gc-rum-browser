@@ -12,7 +12,8 @@ import {
   limitModification,
   display,
   assign,
-  round
+  round,
+  WeakSet
 } from '@cloudcare/browser-core'
 var SessionType = {
   SYNTHETICS: 'synthetics',
@@ -93,6 +94,9 @@ export function startRumAssembly(
     reportError
   )
   var pendingRawEvents = createBoundedBuffer()
+  // Context objects belong to the existing View history. Weak references do
+  // not retain ended Views or require a second history of every collected ID.
+  var collectedViews = new WeakSet()
   var resolvedDeviceInfo
   getDeviceInfoImp(function (deviceInfo) {
     resolvedDeviceInfo = deviceInfo
@@ -248,6 +252,16 @@ export function startRumAssembly(
             LifeCycleEventType.RUM_EVENT_COLLECTED,
             serverRumEvent
           )
+          if (
+            serverRumEvent.type === RumEventType.VIEW &&
+            !collectedViews.has(viewContext)
+          ) {
+            collectedViews.add(viewContext)
+            lifeCycle.notify(
+              LifeCycleEventType.RUM_VIEW_FIRST_COLLECTED,
+              serverRumEvent
+            )
+          }
         }
       }
     }

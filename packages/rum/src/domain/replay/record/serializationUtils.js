@@ -396,7 +396,7 @@ export function switchToAbsoluteUrl(cssText, cssHref) {
     }
   )
 }
-export function getCssRulesString(cssStyleSheet) {
+export function getCssRulesString(cssStyleSheet, maxCharacterCount) {
   if (!cssStyleSheet) {
     return null
   }
@@ -407,13 +407,9 @@ export function getCssRulesString(cssStyleSheet) {
   var serializationState = {
     parts: [],
     visitedStyleSheets: new Set(),
-    ruleCount: 0,
     characterCount: 0,
     characterLimit:
-      STYLESHEET_SERIALIZATION_MAX_CHARACTER_COUNT - 64,
-    deadline:
-      getSerializationTime() + STYLESHEET_SERIALIZATION_MAX_DURATION_MS,
-    exceeded: false
+      typeof maxCharacterCount === 'number' ? maxCharacterCount : Infinity
   }
   var completed = appendStyleSheetRules(
     cssStyleSheet,
@@ -421,9 +417,9 @@ export function getCssRulesString(cssStyleSheet) {
     cssStyleSheet.href,
     rootRules
   )
-  // `_cssText` replaces the stylesheet in the player, so a rule prefix cannot
-  // safely represent the source sheet. Let linked stylesheets fall back to
-  // their href and inline styles fall back to their bounded text child.
+  // `_cssText` replaces the stylesheet in the player, so never publish a
+  // prefix. The caller may bound allocations by the entire snapshot capacity;
+  // CSS has no separate rule-count, character-count, or elapsed-time cutoff.
   if (!completed) {
     return null
   }
@@ -432,7 +428,7 @@ export function getCssRulesString(cssStyleSheet) {
   )
   if (
     styleSheetCssText.length >
-    STYLESHEET_SERIALIZATION_MAX_CHARACTER_COUNT
+    serializationState.characterLimit
   ) {
     return null
   }
@@ -450,9 +446,6 @@ function appendStyleSheetRules(
     serializationState.visitedStyleSheets.has(cssStyleSheet)
   ) {
     return true
-  }
-  if (!hasStyleSheetSerializationBudget(serializationState)) {
-    return false
   }
   serializationState.visitedStyleSheets.add(cssStyleSheet)
   var styleSheetHref = cssStyleSheet.href || inheritedHref
@@ -530,10 +523,8 @@ function appendStyleSheetRuleText(
     return true
   }
   if (
-    !hasStyleSheetSerializationBudget(
-      serializationState,
-      rawRuleText.length
-    )
+    serializationState.characterCount + rawRuleText.length >
+    serializationState.characterLimit
   ) {
     return false
   }
@@ -543,16 +534,11 @@ function appendStyleSheetRuleText(
       : rawRuleText
   ruleText = switchToAbsoluteUrl(ruleText, styleSheetHref)
   if (
-    ruleText.length !== rawRuleText.length &&
-    !hasStyleSheetSerializationBudget(
-      serializationState,
-      ruleText.length - rawRuleText.length,
-      false
-    )
+    serializationState.characterCount + ruleText.length >
+    serializationState.characterLimit
   ) {
     return false
   }
-  serializationState.ruleCount += 1
   serializationState.characterCount += ruleText.length
   serializationState.parts.push(ruleText)
   return true

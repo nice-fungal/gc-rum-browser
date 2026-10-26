@@ -62,6 +62,16 @@ function instrumentOnError(callback) {
     var stackTrace
     if (errorObj instanceof Error) {
       stackTrace = computeStackTrace(errorObj)
+      // Script parse errors can have a message-only stack while onerror still
+      // provides the source location separately.
+      if (stackTrace.stack.length === 0 && url && line > 0) {
+        stackTrace.stack.push({
+          func: '?',
+          url: url,
+          line: line,
+          column: column > 0 ? column : undefined
+        })
+      }
     } else {
       var location = {
         url: url,

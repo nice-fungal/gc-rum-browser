@@ -257,14 +257,20 @@ export function startSessionStore(
   function forceSession() {
     cancelExpandOrRenewSession()
     let shouldRenew
+    let sessionExpirationTime
     processSessionStoreOperations(
       {
         process: function (sessionState) {
-          if (
+          sessionExpirationTime = getSessionExpirationTime(sessionState)
+          const isInactive =
             isSessionInNotStartedState(sessionState) ||
             isSessionInExpiredState(sessionState)
-          ) {
-            shouldRenew = true
+          // Compare before forcing assigns an id to an untracked session.
+          // A different stored session must renew the local history and View.
+          shouldRenew =
+            isInactive ||
+            (hasSessionInCache() && isSessionInCacheOutdated(sessionState))
+          if (isInactive) {
             sessionState = getExpiredSessionState()
           }
           expandOrRenewSessionState(sessionState, { force: true })
@@ -280,10 +286,13 @@ export function startSessionStore(
             })
           } else {
             if (hasSessionInCache()) {
-              expireSessionInCache()
+              expireSessionInCache(
+                sessionExpirationTime === undefined
+                  ? getSessionExpirationTime(sessionCache)
+                  : sessionExpirationTime
+              )
             }
-            sessionCache = sessionState
-            renewObservable.notify()
+            renewSessionInCache(sessionState)
           }
         }
       },

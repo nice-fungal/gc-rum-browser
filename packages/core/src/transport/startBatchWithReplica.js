@@ -18,7 +18,7 @@ export function startBatchWithReplica(
     return batchFactoryImp({
       encoder: batchConfiguration.encoder,
       encoderFallback: batchConfiguration.encoderFallback,
-      request: createHttpRequest(
+      request: batchConfiguration.request || createHttpRequest(
         batchConfiguration.endpoint,
         configuration.batchBytesLimit,
         configuration.retryMaxSize,
@@ -29,7 +29,8 @@ export function startBatchWithReplica(
         bytesLimit: configuration.batchBytesLimit,
         durationLimit: configuration.flushTimeout,
         pageExitObservable: pageExitObservable,
-        sessionExpireObservable: sessionExpireObservable
+        sessionExpireObservable: sessionExpireObservable,
+        flushRequestObservable: batchConfiguration.flushRequestObservable
       }),
       bytesLimit: configuration.batchBytesLimit,
       messageBytesLimit: configuration.messageBytesLimit,
