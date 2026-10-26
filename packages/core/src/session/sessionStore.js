@@ -5,6 +5,7 @@ import { ONE_SECOND, dateNow, throttle, UUID, assign } from '../helper/tools'
 import { selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import {
   getExpiredSessionState,
+  getSessionExpirationTime,
   isSessionInExpiredState,
   isSessionInNotStartedState,
   isSessionStarted
@@ -139,12 +140,17 @@ export function startSessionStore(
   }
 
   function synchronizeSession(sessionState) {
+    const storedSessionExpirationTime = getSessionExpirationTime(sessionState)
     if (isSessionInExpiredState(sessionState)) {
       sessionState = getExpiredSessionState()
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
-        expireSessionInCache()
+        expireSessionInCache(
+          storedSessionExpirationTime === undefined
+            ? getSessionExpirationTime(sessionCache)
+            : storedSessionExpirationTime
+        )
       } else {
         sessionStateUpdateObservable.notify({
           previousState: sessionCache,
@@ -205,9 +211,9 @@ export function startSessionStore(
     )
   }
 
-  function expireSessionInCache() {
+  function expireSessionInCache(sessionExpirationTime) {
     sessionCache = getExpiredSessionState()
-    expireObservable.notify()
+    expireObservable.notify(sessionExpirationTime)
   }
 
   function renewSessionInCache(sessionState) {

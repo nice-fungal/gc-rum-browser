@@ -33,6 +33,7 @@ const modifiableFieldPaths = {
   trackUserInteractions: 'boolean',
   trackInteractions: 'boolean',
   actionNameAttribute: 'string',
+  enablePrivacyForActionName: 'boolean',
   trackViewsManually: 'boolean',
   workerUrl: 'string',
   replayCanvasWorkerUrl: 'string',

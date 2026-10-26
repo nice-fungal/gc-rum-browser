@@ -230,6 +230,10 @@ export function validateAndBuildRumConfiguration(initConfiguration) {
     {
       applicationId: initConfiguration.applicationId,
       actionNameAttribute: initConfiguration.actionNameAttribute,
+      enablePrivacyForActionName: isNullUndefinedDefaultValue(
+        initConfiguration.enablePrivacyForActionName,
+        false
+      ),
       sessionReplaySampleRate: isNullUndefinedDefaultValue(
         initConfiguration.sessionReplaySampleRate,
         100

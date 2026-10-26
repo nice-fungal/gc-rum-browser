@@ -575,8 +575,17 @@ export function record(options) {
     lastReplayTimeAnchorTimestamp = timestamp
     return true
   }
+  function emitPeriodicReplayTimeAnchor() {
+    // Keep the explicit page-exit anchor as the hidden boundary, but do not let
+    // the background timer extend the replay timeline while the Session is no
+    // longer renewed by visible-page activity.
+    if (document.visibilityState !== 'visible') {
+      return
+    }
+    emitReplayTimeAnchor()
+  }
   var replayTimeAnchorIntervalId = setInterval(
-    emitReplayTimeAnchor,
+    emitPeriodicReplayTimeAnchor,
     SESSION_REPLAY_TIME_ANCHOR_INTERVAL
   )
   registerInitializationCleanup(function () {

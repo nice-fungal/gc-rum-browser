@@ -56,7 +56,10 @@ export function startRecording(
   var finalReplayTimeAnchorRequested = false
   var hasSegmentCollection = false
   function emitFinalReplayTimeAnchor() {
-    if (finalReplayTimeAnchorRequested) {
+    if (
+      finalReplayTimeAnchorRequested ||
+      document.visibilityState !== 'visible'
+    ) {
       return true
     }
     var admissionResult = emitReplayTimeAnchor()
@@ -361,7 +364,13 @@ export function startRecording(
         // mutations are never attached to the stale pre-overflow snapshot.
         _record.flushMutations()
         flushCanvasCommands()
-        return emitReplayTimeAnchor()
+        if (
+          pageExitEvent.reason === PageExitReason.HIDDEN ||
+          document.visibilityState === 'visible'
+        ) {
+          return emitReplayTimeAnchor()
+        }
+        return
       }
       if (!flushScheduledFullSnapshot()) {
         // The segment is still writable in this hook. Give a paged raw/shadow

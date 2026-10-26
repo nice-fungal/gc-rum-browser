@@ -42,8 +42,8 @@ export function startSessionManager(
     sessionContextHistory.add(buildSessionContext(), relativeNow())
     renewObservable.notify()
   })
-  sessionStore.expireObservable.subscribe(function () {
-    expireObservable.notify()
+  sessionStore.expireObservable.subscribe(function (sessionExpirationTime) {
+    expireObservable.notify(sessionExpirationTime)
     sessionContextHistory.closeActive(relativeNow())
   })
 

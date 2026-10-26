@@ -7,20 +7,44 @@ import {
   getParentElement,
   isNodeShadowRoot
 } from '@cloudcare/browser-core'
+import {
+  getNodePrivacyLevel,
+  shouldMaskNode
+} from '../../privacy'
 
 export var DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE =
   'data-guance-action-name'
+export var ACTION_NAME_PLACEHOLDER = 'Masked Element'
 
 export function getActionNameFromElement(
   element,
-  userProgrammaticAttribute,
-  shouldIgnoreTextualFallback
+  configuration,
+  shouldIgnoreTextualFallback,
+  nodePrivacyLevel
 ) {
+  configuration = configuration || {}
+  var userProgrammaticAttribute = configuration.actionNameAttribute
+  var nodePrivacyLevelCache = new Map()
+  var explicitActionName = getExplicitActionName(
+    element,
+    userProgrammaticAttribute
+  )
+
+  if (explicitActionName) {
+    return explicitActionName
+  }
+  if (
+    configuration.enablePrivacyForActionName &&
+    shouldMaskNode(configuration, element, nodePrivacyLevel)
+  ) {
+    return ACTION_NAME_PLACEHOLDER
+  }
+
   return (
-    getExplicitActionName(element, userProgrammaticAttribute) ||
     getActionNameFromElementForStrategies(
       element,
-      userProgrammaticAttribute,
+      configuration,
+      nodePrivacyLevelCache,
       shouldIgnoreTextualFallback
         ? shadowDomPriorityStrategies
         : priorityStrategies
@@ -28,7 +52,8 @@ export function getActionNameFromElement(
     (!shouldIgnoreTextualFallback &&
       getActionNameFromElementForStrategies(
         element,
-        userProgrammaticAttribute,
+        configuration,
+        nodePrivacyLevelCache,
         fallbackStrategies
       )) ||
     ''
@@ -74,12 +99,16 @@ function getActionNameFromElementProgrammatically(
 
 var priorityStrategies = [
   // associated LABEL text
-  function (element, userProgrammaticAttribute) {
+  function (element, configuration, nodePrivacyLevelCache) {
     // IE does not support element.labels, so we fallback to a CSS selector based on the element id
     // instead
     if (supportsLabelProperty()) {
       if ('labels' in element && element.labels && element.labels.length > 0) {
-        return getTextualContent(element.labels[0], userProgrammaticAttribute)
+        return getTextualContent(
+          element.labels[0],
+          configuration,
+          nodePrivacyLevelCache
+        )
       }
     } else if (element.id) {
       var label =
@@ -87,7 +116,9 @@ var priorityStrategies = [
         find(element.ownerDocument.querySelectorAll('label'), function (label) {
           return label.htmlFor === element.id
         })
-      return label && getTextualContent(label, userProgrammaticAttribute)
+      return (
+        label && getTextualContent(label, configuration, nodePrivacyLevelCache)
+      )
     }
   },
   // INPUT button (and associated) value
@@ -101,20 +132,20 @@ var priorityStrategies = [
     }
   },
   // BUTTON, LABEL or button-like element text
-  function (element, userProgrammaticAttribute) {
+  function (element, configuration, nodePrivacyLevelCache) {
     if (
       element.nodeName === 'BUTTON' ||
       element.nodeName === 'LABEL' ||
       element.getAttribute('role') === 'button'
     ) {
-      return getTextualContent(element, userProgrammaticAttribute)
+      return getTextualContent(element, configuration, nodePrivacyLevelCache)
     }
   },
   function (element) {
     return element.getAttribute('aria-label')
   },
   // associated element text designated by the aria-labelledby attribute
-  function (element, userProgrammaticAttribute) {
+  function (element, configuration, nodePrivacyLevelCache) {
     var labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
       labelledByAttribute = labelledByAttribute.split(/\s+/)
@@ -125,7 +156,7 @@ var priorityStrategies = [
         return Boolean(label)
       })
       labelledByAttribute = map(labelledByAttribute, function (ele) {
-        return getTextualContent(ele, userProgrammaticAttribute)
+        return getTextualContent(ele, configuration, nodePrivacyLevelCache)
       })
       return labelledByAttribute.join(' ')
     }
@@ -143,24 +174,28 @@ var priorityStrategies = [
     return element.getAttribute('placeholder')
   },
   // SELECT first OPTION text
-  function (element, userProgrammaticAttribute) {
+  function (element, configuration, nodePrivacyLevelCache) {
     if ('options' in element && element.options.length > 0) {
-      return getTextualContent(element.options[0], userProgrammaticAttribute)
+      return getTextualContent(
+        element.options[0],
+        configuration,
+        nodePrivacyLevelCache
+      )
     }
   }
 ]
 
 var shadowDomPriorityStrategies = priorityStrategies.concat([
-  function (element, userProgrammaticAttribute) {
+  function (element, configuration, nodePrivacyLevelCache) {
     if (element.nodeName === 'A' && element.hasAttribute('href')) {
-      return getTextualContent(element, userProgrammaticAttribute)
+      return getTextualContent(element, configuration, nodePrivacyLevelCache)
     }
   }
 ])
 
 var fallbackStrategies = [
-  function (element, userProgrammaticAttribute) {
-    return getTextualContent(element, userProgrammaticAttribute)
+  function (element, configuration, nodePrivacyLevelCache) {
+    return getTextualContent(element, configuration, nodePrivacyLevelCache)
   }
 ]
 
@@ -171,7 +206,8 @@ var fallbackStrategies = [
 var MAX_PARENTS_TO_CONSIDER = 10
 function getActionNameFromElementForStrategies(
   targetElement,
-  userProgrammaticAttribute,
+  configuration,
+  nodePrivacyLevelCache,
   strategies
 ) {
   var element = targetElement
@@ -183,9 +219,19 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HTML' &&
     element.nodeName !== 'HEAD'
   ) {
+    if (configuration.enablePrivacyForActionName) {
+      var privacyLevel = getNodePrivacyLevel(
+        element,
+        configuration.defaultPrivacyLevel,
+        nodePrivacyLevelCache
+      )
+      if (shouldMaskNode(configuration, element, privacyLevel)) {
+        return ACTION_NAME_PLACEHOLDER
+      }
+    }
     for (var i = 0; i < strategies.length; i++) {
       var strategy = strategies[i]
-      var name = strategy(element, userProgrammaticAttribute)
+      var name = strategy(element, configuration, nodePrivacyLevelCache)
       if (typeof name === 'string') {
         var trimmedName = name.trim()
         if (trimmedName) {
@@ -231,11 +277,31 @@ function getElementById(refElement, id) {
     : null
 }
 
-function getTextualContent(element, userProgrammaticAttribute) {
+function getTextualContent(element, configuration, nodePrivacyLevelCache) {
   if (element.isContentEditable) {
     return
   }
 
+  if (configuration.enablePrivacyForActionName) {
+    var privacyLevel = getNodePrivacyLevel(
+      element,
+      configuration.defaultPrivacyLevel,
+      nodePrivacyLevelCache
+    )
+    if (shouldMaskNode(configuration, element, privacyLevel)) {
+      return
+    }
+    return getPrivacyAwareTextualContent(
+      element,
+      configuration,
+      nodePrivacyLevelCache
+    )
+  }
+
+  return getLegacyTextualContent(element, configuration.actionNameAttribute)
+}
+
+function getLegacyTextualContent(element, userProgrammaticAttribute) {
   if ('innerText' in element) {
     var text = element.innerText
 
@@ -271,6 +337,67 @@ function getTextualContent(element, userProgrammaticAttribute) {
   }
 
   return element.textContent
+}
+
+function getPrivacyAwareTextualContent(
+  element,
+  configuration,
+  nodePrivacyLevelCache
+) {
+  var ownerDocument = element.ownerDocument || document
+  var ownerWindow = ownerDocument.defaultView || window
+  var nodeFilter = ownerWindow.NodeFilter || NodeFilter
+  var walker = ownerDocument.createTreeWalker(
+    element,
+    nodeFilter.SHOW_ELEMENT | nodeFilter.SHOW_TEXT,
+    function (node) {
+      var privacyLevel = getNodePrivacyLevel(
+        node,
+        configuration.defaultPrivacyLevel,
+        nodePrivacyLevelCache
+      )
+      if (shouldMaskNode(configuration, node, privacyLevel)) {
+        return nodeFilter.FILTER_REJECT
+      }
+      if (node.nodeType === node.ELEMENT_NODE) {
+        if (
+          node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
+          (configuration.actionNameAttribute &&
+            node.hasAttribute(configuration.actionNameAttribute))
+        ) {
+          return nodeFilter.FILTER_REJECT
+        }
+        var style = ownerWindow.getComputedStyle(node)
+        if (
+          style.visibility !== 'visible' ||
+          style.display === 'none' ||
+          (style.contentVisibility && style.contentVisibility !== 'visible')
+        ) {
+          return nodeFilter.FILTER_REJECT
+        }
+      }
+      return nodeFilter.FILTER_ACCEPT
+    }
+  )
+  var text = ''
+  while (walker.nextNode()) {
+    var node = walker.currentNode
+    if (node.nodeType === node.ELEMENT_NODE) {
+      var style = ownerWindow.getComputedStyle(node)
+      if (
+        node.nodeName === 'BR' ||
+        node.nodeName === 'P' ||
+        ['block', 'flex', 'grid', 'list-item', 'table', 'table-caption'].indexOf(
+          style.display
+        ) !== -1
+      ) {
+        text += ' '
+      }
+    } else {
+      text += node.textContent || ''
+    }
+  }
+  return normalizeWhitespace(text).trim()
 }
 
 /**
