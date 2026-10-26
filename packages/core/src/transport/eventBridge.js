@@ -11,6 +11,11 @@ export function getEventBridge() {
   }
 
   return {
+    getVisitorId() {
+      if (typeof eventBridgeGlobal.getVisitorid === 'function') {
+        return eventBridgeGlobal.getVisitorid()
+      }
+    },
     getCapabilities() {
       return JSON.parse(
         (eventBridgeGlobal.getCapabilities &&

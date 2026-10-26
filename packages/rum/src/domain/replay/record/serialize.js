@@ -64,6 +64,9 @@ export var SERIALIZATION_TRUNCATION_MARK = '…'
 // enters the asynchronous encoder. Keep that unavoidable main-thread step
 // well below the segment collection's 4 MiB backlog watermark.
 export var SERIALIZATION_MAX_APPROX_BYTES = 1024 * 1024
+// Reserve segment metadata below the existing 4 MiB pending-raw budget.
+export var FULL_SNAPSHOT_SERIALIZATION_MAX_APPROX_BYTES =
+  SERIALIZATION_MAX_APPROX_BYTES * 4 - 64 * 1024
 var serializedNodeApproxBytes = new WeakMap()
 
 export function serializeDocument(
@@ -677,7 +680,18 @@ function estimateSerializedNodeShallowBytes(serializedNode) {
             return
           }
           approxBytes += estimateJsonStringBytes(key) + 2
-          pendingValues.push(value[key])
+          if (
+            value === serializedNode.attributes &&
+            (serializedNode.tagName === 'link' || serializedNode.tagName === 'style') &&
+            key === '_cssText' &&
+            typeof value[key] === 'string'
+          ) {
+            // Inline CSS belongs to the whole snapshot budget, not the
+            // ordinary attribute-string limit. Count JSON escapes as usual.
+            approxBytes += estimateJsonStringBytes(value[key], true)
+          } else {
+            pendingValues.push(value[key])
+          }
         })
       }
     } else {
@@ -687,8 +701,8 @@ function estimateSerializedNodeShallowBytes(serializedNode) {
   return approxBytes
 }
 
-function estimateJsonStringBytes(value) {
-  if (value.length > SERIALIZATION_MAX_STRING_LENGTH) {
+function estimateJsonStringBytes(value, isCssText) {
+  if (!isCssText && value.length > SERIALIZATION_MAX_STRING_LENGTH) {
     return SERIALIZATION_MAX_APPROX_BYTES + 1
   }
   var bytes = 4
@@ -941,7 +955,10 @@ function getAttributesForPrivacyLevel(element, nodePrivacyLevel, options) {
       doc,
       element.href
     )
-    var cssText = getCssRulesString(stylesheet)
+    var cssText = getCssRulesString(
+      stylesheet,
+      FULL_SNAPSHOT_SERIALIZATION_MAX_APPROX_BYTES / 2
+    )
     if (cssText && stylesheet) {
       safeAttrs._cssText = cssText
     }
@@ -949,7 +966,10 @@ function getAttributesForPrivacyLevel(element, nodePrivacyLevel, options) {
 
   // dynamic stylesheet
   if (tagName === 'style' && element.sheet) {
-    var cssText = getCssRulesString(element.sheet)
+    var cssText = getCssRulesString(
+      element.sheet,
+      FULL_SNAPSHOT_SERIALIZATION_MAX_APPROX_BYTES / 2
+    )
     if (cssText) {
       safeAttrs._cssText = cssText
     }

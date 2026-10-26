@@ -566,7 +566,7 @@ function sendMessagesBuffer(
   }
   send({
     data: data,
-    type: sendContentTypeByJson ? 'application/json;UTF-8' : undefined,
+    type: sendContentTypeByJson ? 'application/json;charset=UTF-8' : undefined,
     bytesCount: messagesBytesCount
   })
 }
@@ -589,7 +589,7 @@ function formatPayloadFromEncoder(encoderResult, sendContentTypeByJson) {
 
   return {
     data: data,
-    type: sendContentTypeByJson ? 'application/json;UTF-8' : undefined,
+    type: sendContentTypeByJson ? 'application/json;charset=UTF-8' : undefined,
     bytesCount: encoderResult.outputBytesCount,
     encoding: encoderResult.encoding
   }

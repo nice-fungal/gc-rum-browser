@@ -1,7 +1,7 @@
 import { Observable } from '../helper/observable'
 import { clearTimeout, setTimeout } from '../helper/timer'
 
-// type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
+// type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire' | 'view_created'
 
 /**
  * Returns a "flush controller", responsible of notifying when flushing a pool of pending data needs
@@ -13,7 +13,8 @@ export function createFlushController({
   bytesLimit,
   durationLimit,
   pageExitObservable,
-  sessionExpireObservable
+  sessionExpireObservable,
+  flushRequestObservable
 }) {
   var pageExitSubscription = pageExitObservable.subscribe(function (event) {
     // An asynchronous encoder can still own raw journals from an earlier
@@ -26,10 +27,15 @@ export function createFlushController({
       return flush('session_expire')
     }
   )
+  var flushRequestSubscription =
+    flushRequestObservable && flushRequestObservable.subscribe(flush)
   var flushObservable = new Observable(function () {
     return function () {
       pageExitSubscription.unsubscribe()
       sessionExpireSubscription.unsubscribe()
+      if (flushRequestSubscription) {
+        flushRequestSubscription.unsubscribe()
+      }
     }
   })
 

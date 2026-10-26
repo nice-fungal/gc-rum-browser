@@ -238,14 +238,18 @@ export function startRecording(
       if (isRecordErrorSessionReplay) {
         var sessionStateUpdateSubscription =
           sessionManager.sessionStateUpdateObservable.subscribe(
-            ({ previousState, newState }) => {
-              if (!previousState.hasError && newState.hasError) {
+            ({ newState }) => {
+              if (
+                isRecordErrorSessionReplay &&
+                (newState.hasError || newState.forcedSession)
+              ) {
                 isRecordErrorSessionReplay = false
                 replayTimeAnchorsEnabled = true
                 unlockSegment()
                 // Error-only recordings do not need periodic anchor-only
                 // segments while their buffer is locked. Establish the live
-                // timeline immediately when the first error unlocks it.
+                // timeline immediately when an error or forced session
+                // unlocks it.
                 emitReplayTimeAnchor()
               }
             }

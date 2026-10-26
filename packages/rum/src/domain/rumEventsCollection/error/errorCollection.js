@@ -26,15 +26,17 @@ export function startErrorCollection(
   trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
   trackReportError(configuration, errorObservable)
-  var session = sessionManager.findTrackedSession()
-  let hasError = shouldMarkSessionOnError(session) && session.sessionHasError
-  if (shouldMarkSessionOnError(session)) {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, function () {
-      hasError = false
-    })
-  }
+  let hasError = false
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, function () {
+    hasError = false
+  })
   var markSessionOnError = function () {
-    if (shouldMarkSessionOnError(session) && !hasError) {
+    const session = sessionManager.findTrackedSession()
+    if (
+      shouldMarkSessionOnError(session) &&
+      !hasError &&
+      !session.sessionHasError
+    ) {
       sessionManager.setErrorForSession()
       hasError = true
     }
