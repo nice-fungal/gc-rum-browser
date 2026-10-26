@@ -254,7 +254,7 @@ export function startSessionStore(
     )
   }
 
-  function forceSession() {
+  function forceSession(onComplete) {
     cancelExpandOrRenewSession()
     let shouldRenew
     let sessionExpirationTime
@@ -277,8 +277,9 @@ export function startSessionStore(
           return sessionState
         },
         after: function (sessionState) {
+          let previousState
           if (!shouldRenew && hasSessionInCache()) {
-            const previousState = sessionCache
+            previousState = sessionCache
             sessionCache = sessionState
             sessionStateUpdateObservable.notify({
               previousState,
@@ -293,6 +294,11 @@ export function startSessionStore(
               )
             }
             renewSessionInCache(sessionState)
+          }
+          // Run only after persistence and history synchronization succeed.
+          // A renewed session has no previous active state.
+          if (onComplete) {
+            onComplete(previousState)
           }
         }
       },
