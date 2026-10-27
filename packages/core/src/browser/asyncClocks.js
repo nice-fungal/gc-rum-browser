@@ -14,6 +14,7 @@ function applyRemoteClocks(serverTimestamp, rtt, start) {
   const estimatedClientTime =
     performance.timing.navigationStart + start + rtt / 2
 
+  // 计算时间偏移
   const offset = serverTimestamp - estimatedClientTime
   return offset
 }
@@ -44,6 +45,7 @@ export function buildEndpoint(configuration) {
     configuration.datakitUrl ||
     configuration.site
   if (url.indexOf('/') === 0) {
+    // 绝对路径这种 /xxx
     url = location.origin + trim(url)
   }
   var endpoint = url
@@ -52,6 +54,7 @@ export function buildEndpoint(configuration) {
   } else {
     endpoint = trim(url) + '/v1/env_variable'
   }
+  // 这里需要加上token和app_id
   endpoint += '?app_id=' + configuration.applicationId
   //testing-openway.dataflux.cn/v1/env_variable?token=a47fb0cdddaa4561a90d941317cdbc0b&app_id=d1b454d0_22eb_11ef_9b66_95ca11aa2c6c&to_headless=true
   if (configuration.site && configuration.clientToken) {

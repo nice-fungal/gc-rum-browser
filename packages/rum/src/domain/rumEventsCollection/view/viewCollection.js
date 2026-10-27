@@ -58,7 +58,7 @@ function computePerformanceViewDetails(navigationTimings) {
     responseEnd > fetchStart
   ) {
     details.fpt = toServerDuration(responseEnd - fetchStart)
-    var apdexLevel = parseInt((responseEnd - fetchStart) / 1000)
+    var apdexLevel = parseInt((responseEnd - fetchStart) / 1000) // 秒数取整
     details.apdexLevel = apdexLevel > 9 ? 9 : apdexLevel
   }
   if (

@@ -88,7 +88,7 @@ export function validateAndBuildConfiguration(initConfiguration) {
       messageBytesLimit: 256 * ONE_KIBI_BYTE,
       resourceUrlLimit: 5 * ONE_KIBI_BYTE,
       storeContextsToLocal: !!initConfiguration.storeContextsToLocal,
-      // localstorage key ，default auto gen
+      // 存储到localstorage key ，默认不填，自动生成
       storeContextsKey: initConfiguration.storeContextsKey,
       sendContentTypeByJson: !!initConfiguration.sendContentTypeByJson,
       retryMaxSize: isNullUndefinedDefaultValue(

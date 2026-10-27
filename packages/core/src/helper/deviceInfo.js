@@ -96,13 +96,17 @@ var VariableLibrary = {
     device: ['Mobile', 'Tablet', 'iPad']
   }
 }
+// 方法库
 var MethodLibrary = {
+  // 获取匹配库
   getMatchMap: monitor(function (u) {
     return {
+      // 内核
       Trident: u.indexOf('Trident') > -1 || u.indexOf('NET CLR') > -1,
       Presto: u.indexOf('Presto') > -1,
       WebKit: u.indexOf('AppleWebKit') > -1,
       Gecko: u.indexOf('Gecko/') > -1,
+      // 浏览器
       Safari: u.indexOf('Safari') > -1,
       Chrome: u.indexOf('Chrome') > -1 || u.indexOf('CriOS') > -1,
       IE: u.indexOf('MSIE') > -1 || u.indexOf('Trident') > -1,
@@ -145,6 +149,7 @@ var MethodLibrary = {
       Douban: u.indexOf('com.douban.frodo') > -1,
       Suning: u.indexOf('SNEBUY-APP') > -1,
       iQiYi: u.indexOf('IqiyiApp') > -1,
+      // 系统或平台
       Windows: u.indexOf('Windows') > -1,
       Linux: u.indexOf('Linux') > -1 || u.indexOf('X11') > -1,
       'Mac OS': u.indexOf('Macintosh') > -1,
@@ -164,6 +169,7 @@ var MethodLibrary = {
       iOS: u.indexOf('like Mac OS X') > -1,
       'Chrome OS': u.indexOf('CrOS') > -1,
       WebOS: u.indexOf('hpwOS') > -1,
+      // 设备
       Mobile:
         u.indexOf('Mobi') > -1 ||
         u.indexOf('iPh') > -1 ||
@@ -196,6 +202,7 @@ var MethodLibrary = {
     var u = getUserAgent()
     _this.osVersion = ''
     _this.osMajor = ''
+    // 系统版本信息
     var osVersion = {
       Windows: function () {
         var v = u.replace(/^.*Windows NT ([\d.]+);.*$/, '$1')
@@ -257,6 +264,7 @@ var MethodLibrary = {
     MethodLibrary.matchInfoMap(_this)
     return _this.device
   }),
+  // 获取网络状态
   getNetwork: monitor(function () {
     var browserWindow = getBrowserWindow()
     if (!browserWindow || !browserWindow.navigator) {
@@ -381,22 +389,22 @@ var MethodLibrary = {
     if (browserWindow && (match['IE'] || match['Edge'])) {
       var navigator_top = browserWindow.screenTop - browserWindow.screenY
       switch (navigator_top) {
-        case 71:
+        case 71: // 无收藏栏,贴边
           break
-        case 74:
+        case 74: // 无收藏栏,非贴边
           break
-        case 99:
+        case 99: // 有收藏栏,贴边
           break
-        case 102:
+        case 102: // 有收藏栏,非贴边
           match['360EE'] = true
           break
-        case 75:
+        case 75: // 无收藏栏,贴边
           break
-        case 74:
+        case 74: // 无收藏栏,非贴边
           break
-        case 105:
+        case 105: // 有收藏栏,贴边
           break
-        case 104:
+        case 104: // 有收藏栏,非贴边
           match['360SE'] = true
           break
         default:
@@ -620,9 +628,11 @@ var MethodLibrary = {
     navigator &&
       navigator.geolocation &&
       navigator.geolocation.getCurrentPosition(
+        // 位置获取成功
         function (position) {
           callback(position)
         },
+        // 位置获取失败
         function (error) {
           display.warn(error)
         }
