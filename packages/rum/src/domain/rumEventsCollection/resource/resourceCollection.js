@@ -55,19 +55,19 @@ export function startResourceCollection(
     })
   }
   var requestResourceEntryMatcher = createRequestResourceEntryMatcher()
-  var webSocketSubscription = lifeCycle.subscribe(
-    LifeCycleEventType.WEBSOCKET_COMPLETED,
-    function (event) {
-      try {
-        lifeCycle.notify(
-          LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-          processWebSocket(event)
-        )
-      } catch (error) {
-        addTelemetryError(error)
-      }
-    }
-  )
+  // var webSocketSubscription = lifeCycle.subscribe(
+  //   LifeCycleEventType.WEBSOCKET_COMPLETED,
+  //   function (event) {
+  //     try {
+  //       lifeCycle.notify(
+  //         LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+  //         processWebSocket(event)
+  //       )
+  //     } catch (error) {
+  //       addTelemetryError(error)
+  //     }
+  //   }
+  // )
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, function (request) {
     handleResource(function () {
       return processRequest(request, pageStateHistory, requestResourceEntryMatcher)
@@ -126,7 +126,7 @@ export function startResourceCollection(
   }
   return {
     stop: function () {
-      webSocketSubscription.unsubscribe()
+      // webSocketSubscription.unsubscribe()
       performanceResourceSubscription.unsubscribe()
     },
     addResource: (resource, savedCommonContext) => {
