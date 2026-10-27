@@ -2,7 +2,7 @@ import {
   DOM_EVENT,
   ONE_HOUR,
   UUID,
-  WeakSet,
+  // WeakSet,
   addEventListener,
   canUseEventBridge,
   display,

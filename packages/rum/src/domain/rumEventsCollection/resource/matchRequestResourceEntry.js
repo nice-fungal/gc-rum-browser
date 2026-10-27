@@ -2,7 +2,7 @@ import {
   hasValidResourceEntryDuration,
   hasValidResourceEntryTimings
 } from './resourceUtils'
-import { filter, addDuration, WeakSet } from '@cloudcare/browser-core'
+import { filter, addDuration /*, WeakSet */ } from '@cloudcare/browser-core'
 
 /**
  * Look for corresponding timing in resource timing buffer

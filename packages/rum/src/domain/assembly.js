@@ -13,7 +13,7 @@ import {
   display,
   assign,
   round,
-  WeakSet
+  // WeakSet
 } from '@cloudcare/browser-core'
 var SessionType = {
   SYNTHETICS: 'synthetics',
