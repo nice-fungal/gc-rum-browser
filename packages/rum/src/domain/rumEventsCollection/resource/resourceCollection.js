@@ -13,7 +13,7 @@ import {
   LifeCycleEventType,
   toServerDuration,
   createTaskQueue,
-  addTelemetryError
+  // addTelemetryError
 } from '@cloudcare/browser-core'
 import { createRequestResourceEntryMatcher } from './matchRequestResourceEntry'
 import {
@@ -120,7 +120,7 @@ export function startResourceCollection(
           lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
         }
       } catch (error) {
-        addTelemetryError(error)
+        // addTelemetryError(error)
       }
     })
   }

@@ -86,9 +86,9 @@ export function startRumBatch(
     LifeCycleEventType.RUM_VIEW_FORCED_COLLECTED,
     event => sendImmediateView(event, 'session_forced')
   )
-  const telemetrySubscription = telemetryEventObservable.subscribe(function (event) {
-    batch.add(event)
-  })
+  // const telemetrySubscription = telemetryEventObservable.subscribe(function (event) {
+  //   batch.add(event)
+  // })
   return {
     flushObservable: batch.flushObservable,
     add: batch.add,
@@ -97,7 +97,7 @@ export function startRumBatch(
       rumEventSubscription.unsubscribe()
       initialViewSubscription.unsubscribe()
       forcedViewSubscription.unsubscribe()
-      telemetrySubscription.unsubscribe()
+      // telemetrySubscription.unsubscribe()
       batch.stop()
       if (immediateViewBatch) {
         immediateViewBatch.stop()

@@ -8,7 +8,7 @@ import {
   timeStampNow,
   clocksNow,
   assign,
-  addTelemetryConfiguration,
+  // addTelemetryConfiguration,
   initFetchObservable,
   deepClone,
   // fetchAndApplyRemoteConfiguration,
@@ -16,7 +16,7 @@ import {
   // getType
 } from '@cloudcare/browser-core'
 import { validateAndBuildRumConfiguration } from '../domain/configuration'
-import { getPluginsTelemetry, validatePlugins } from '../domain/plugins'
+import { /* getPluginsTelemetry, */ validatePlugins } from '../domain/plugins'
 
 export function createPreStartStrategy(
   rumPublicApiOptions,
@@ -88,13 +88,13 @@ export function createPreStartStrategy(
       displayAlreadyInitializedError('DATAFLUX_RUM', initConfiguration)
       return
     }
-    var telemetryConfiguration = deepClone(initConfiguration)
-    if (initConfiguration.plugins) {
-      telemetryConfiguration.plugins = getPluginsTelemetry(
-        initConfiguration.plugins
-      )
-    }
-    addTelemetryConfiguration(telemetryConfiguration)
+    // var telemetryConfiguration = deepClone(initConfiguration)
+    // if (initConfiguration.plugins) {
+    //   telemetryConfiguration.plugins = getPluginsTelemetry(
+    //     initConfiguration.plugins
+    //   )
+    // }
+    // addTelemetryConfiguration(telemetryConfiguration)
     var configuration = validateAndBuildRumConfiguration(initConfiguration)
     if (!configuration) {
       initializationPending = false

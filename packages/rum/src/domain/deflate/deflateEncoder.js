@@ -1,7 +1,7 @@
 import {
   addEventListener,
   concatBuffers,
-  addTelemetryDebug,
+  // addTelemetryDebug,
   assign,
   clearTimeout,
   ONE_SECOND,
@@ -320,7 +320,7 @@ export function createDeflateEncoder(worker, streamId, onTerminalError) {
           nextPendingAction.writeCallback(workerResponse.result.byteLength)
         }
       } else if (nextPendingAction.id < workerResponse.id) {
-        addTelemetryDebug('Worker responses received out of order.')
+        // addTelemetryDebug('Worker responses received out of order.')
         handleStreamError(
           new Error(
             'Worker responses received out of order for stream ' + streamId

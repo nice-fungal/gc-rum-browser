@@ -1,5 +1,5 @@
 import { SDKMap } from '@cloudcare/browser-core'
-import { UUID, assign, deepClone, addTelemetryError } from '@cloudcare/browser-core'
+import { UUID, assign, deepClone /*, addTelemetryError */ } from '@cloudcare/browser-core'
 
 var RESOURCE_TRACKER_HEADER = 'x-rum-resource-id'
 var RESOURCE_TRACKER_TIMEOUT_MS = 30 * 1000
@@ -137,7 +137,7 @@ export function createResourceTrackerManager() {
         domainContext: tracker.domainContext
       })
     } catch (error) {
-      addTelemetryError(error)
+      // addTelemetryError(error)
     } finally {
       scheduleTrackerClear(tracker)
     }

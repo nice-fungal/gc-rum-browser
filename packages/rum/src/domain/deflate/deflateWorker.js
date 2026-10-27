@@ -4,7 +4,7 @@ import {
   setTimeout,
   clearTimeout,
   addEventListener,
-  addTelemetryError,
+  // addTelemetryError,
   ONE_SECOND
 } from '@cloudcare/browser-core'
 
