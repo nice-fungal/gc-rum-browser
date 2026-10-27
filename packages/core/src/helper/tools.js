@@ -3,7 +3,7 @@ import { display } from './display'
 import { setTimeout, clearTimeout } from './timer'
 import { computeNavigationStart } from './navigationStart'
 var ArrayProto = Array.prototype
-var FuncProto = Function.prototype
+// var FuncProto = Function.prototype
 var ObjProto = Object.prototype
 var slice = ArrayProto.slice
 var toString = ObjProto.toString
@@ -333,16 +333,16 @@ export var safeJSONParse = function (str) {
   return val
 }
 
-export var encodeDates = function (obj) {
-  each(obj, function (v, k) {
-    if (isDate(v)) {
-      obj[k] = formatDate(v)
-    } else if (isObject(v)) {
-      obj[k] = encodeDates(v)
-    }
-  })
-  return obj
-}
+// export var encodeDates = function (obj) {
+//   each(obj, function (v, k) {
+//     if (isDate(v)) {
+//       obj[k] = formatDate(v)
+//     } else if (isObject(v)) {
+//       obj[k] = encodeDates(v)
+//     }
+//   })
+//   return obj
+// }
 export var mediaQueriesSupported = function () {
   return (
     typeof window.matchMedia !== 'undefined' ||
@@ -427,68 +427,61 @@ export var hashCode = function (str) {
   }
   return hash
 }
-export var formatDate = function (d) {
-  function pad(n) {
-    return n < 10 ? '0' + n : n
-  }
+// export var formatDate = function (d) {
+//   function pad(n) {
+//     return n < 10 ? '0' + n : n
+//   }
 
-  return (
-    d.getFullYear() +
-    '-' +
-    pad(d.getMonth() + 1) +
-    '-' +
-    pad(d.getDate()) +
-    ' ' +
-    pad(d.getHours()) +
-    ':' +
-    pad(d.getMinutes()) +
-    ':' +
-    pad(d.getSeconds()) +
-    '.' +
-    pad(d.getMilliseconds())
-  )
-}
-export var searchObjDate = function (o) {
-  if (isObject(o)) {
-    each(o, function (a, b) {
-      if (isObject(a)) {
-        searchObjDate(o[b])
-      } else {
-        if (isDate(a)) {
-          o[b] = formatDate(a)
-        }
-      }
-    })
-  }
-}
-export var formatJsonString = function (obj) {
-  try {
-    return JSON.stringify(obj, null, '  ')
-  } catch (e) {
-    return JSON.stringify(obj)
-  }
-}
-// export var formatString = function (str) {
-//   if (str.length > MAX_STRING_LENGTH) {
-//     sd.log('字符串长度超过限制，已经做截取--' + str)
-//     return str.slice(0, MAX_STRING_LENGTH)
-//   } else {
-//     return str
+//   return (
+//     d.getFullYear() +
+//     '-' +
+//     pad(d.getMonth() + 1) +
+//     '-' +
+//     pad(d.getDate()) +
+//     ' ' +
+//     pad(d.getHours()) +
+//     ':' +
+//     pad(d.getMinutes()) +
+//     ':' +
+//     pad(d.getSeconds()) +
+//     '.' +
+//     pad(d.getMilliseconds())
+//   )
+// }
+// export var searchObjDate = function (o) {
+//   if (isObject(o)) {
+//     each(o, function (a, b) {
+//       if (isObject(a)) {
+//         searchObjDate(o[b])
+//       } else {
+//         if (isDate(a)) {
+//           o[b] = formatDate(a)
+//         }
+//       }
+//     })
 //   }
 // }
-export var searchObjString = function (o) {
-  if (isObject(o)) {
-    each(o, function (a, b) {
-      if (isObject(a)) {
-        searchObjString(o[b])
-      } else {
-        if (isString(a)) {
-          o[b] = formatString(a)
-        }
-      }
-    })
-  }
-}
+// export var formatJsonString = function (obj) {
+//   try {
+//     return JSON.stringify(obj, null, '  ')
+//   } catch (e) {
+//     return JSON.stringify(obj)
+//   }
+// }
+
+// export var searchObjString = function (o) {
+//   if (isObject(o)) {
+//     each(o, function (a, b) {
+//       if (isObject(a)) {
+//         searchObjString(o[b])
+//       } else {
+//         if (isString(a)) {
+//           o[b] = formatString(a)
+//         }
+//       }
+//     })
+//   }
+// }
 export var unique = function (ar) {
   var temp,
     n = [],
@@ -623,7 +616,7 @@ export function UUID(placeholder) {
 
 /**
  * 替换url包含数字的路由, e.g.
- * 
+ *
  * /authors/345             ->  /authors/?
  * /authors/abc             ->  /authors/abc
  * /authors/a4c             ->  /authors/?
@@ -737,77 +730,111 @@ export function elementMatches(element, selector) {
   return false
 }
 
-export var localStorage = {
-  get: function (name) {
-    return window.localStorage.getItem(name)
-  },
+// export var localStorage = {
+//   get: function (name) {
+//     return window.localStorage.getItem(name)
+//   },
 
-  parse: function (name) {
-    var storedValue
-    try {
-      storedValue = JSON.parse(localStorage.get(name)) || null
-    } catch (err) {
-      sd.log(err)
-    }
-    return storedValue
-  },
+//   parse: function (name) {
+//     var storedValue
+//     try {
+//       storedValue = JSON.parse(localStorage.get(name)) || null
+//     } catch (err) {
+//       sd.log(err)
+//     }
+//     return storedValue
+//   },
 
-  set: function (name, value) {
-    window.localStorage.setItem(name, value)
-  },
+//   set: function (name, value) {
+//     window.localStorage.setItem(name, value)
+//   },
 
-  remove: function (name) {
-    window.localStorage.removeItem(name)
-  },
+//   remove: function (name) {
+//     window.localStorage.removeItem(name)
+//   },
 
-  isSupport: function () {
-    var supported = true
-    try {
-      var key = '__sensorsdatasupport__'
-      var val = 'testIsSupportStorage'
-      localStorage.set(key, val)
-      if (localStorage.get(key) !== val) {
-        supported = false
-      }
-      localStorage.remove(key)
-    } catch (err) {
-      supported = false
-    }
-    return supported
-  }
-}
-export var sessionStorage = {
-  isSupport: function () {
-    var supported = true
+//   isSupport: function () {
+//     var supported = true
+//     try {
+//       var key = '__sensorsdatasupport__'
+//       var val = 'testIsSupportStorage'
+//       localStorage.set(key, val)
+//       if (localStorage.get(key) !== val) {
+//         supported = false
+//       }
+//       localStorage.remove(key)
+//     } catch (err) {
+//       supported = false
+//     }
+//     return supported
+//   }
+// }
+// export var sessionStorage = {
+//   isSupport: function () {
+//     var supported = true
 
-    var key = '__sensorsdatasupport__'
-    var val = 'testIsSupportStorage'
-    try {
-      if (window.sessionStorage && window.sessionStorage.setItem) {
-        window.sessionStorage.setItem(key, val)
-        window.sessionStorage.removeItem(key, val)
-        supported = true
-      } else {
-        supported = false
-      }
-    } catch (e) {
-      supported = false
-    }
-    return supported
-  }
-}
-export var isSupportCors = function () {
-  if (typeof window.XMLHttpRequest === 'undefined') {
-    return false
-  }
-  if ('withCredentials' in new XMLHttpRequest()) {
-    return true
-  } else if (typeof XDomainRequest !== 'undefined') {
-    return true
-  } else {
-    return false
-  }
-}
+//     return storedValue
+//   },
+
+//   set: function (name, value) {
+//     window.localStorage.setItem(name, value)
+//   },
+
+//   remove: function (name) {
+//     window.localStorage.removeItem(name)
+//   },
+
+//   isSupport: function () {
+//     var supported = true
+//     try {
+//       var key = '__sensorsdatasupport__'
+//       var val = 'testIsSupportStorage'
+//       localStorage.set(key, val)
+//       if (localStorage.get(key) !== val) {
+//         supported = false
+//       }
+//       localStorage.remove(key)
+//     } catch (err) {
+//       supported = false
+//     }
+//     return supported
+//   }
+// }
+
+// export var sessionStorage = {
+//   isSupport: function () {
+//     var supported = true
+
+//     var key = '__sensorsdatasupport__'
+//     var val = 'testIsSupportStorage'
+//     try {
+//       if (window.sessionStorage && window.sessionStorage.setItem) {
+//         window.sessionStorage.setItem(key, val)
+//         window.sessionStorage.removeItem(key, val)
+//         supported = true
+//       } else {
+//         supported = false
+//       }
+//     } catch (e) {
+//       supported = false
+//     }
+//     return supported
+//   }
+// }
+
+// export var isSupportCors = function () {
+//   if (typeof window.XMLHttpRequest === 'undefined') {
+//     return false
+//   }
+//   if ('withCredentials' in new XMLHttpRequest()) {
+//     return true
+//   } else if (typeof XDomainRequest !== 'undefined') {
+//     return true
+//   } else {
+//     return false
+//   }
+// }
+
 export var xhr = function (cors) {
   if (cors) {
     if (
@@ -930,47 +957,47 @@ export var ajax = function (para) {
 
   g.send(para.data || null)
 }
-export var loadScript = function (para) {
-  para = extend(
-    {
-      success: function () {},
-      error: function () {},
-      appendCall: function (g) {
-        document.getElementsByTagName('head')[0].appendChild(g)
-      }
-    },
-    para
-  )
+// export var loadScript = function (para) {
+//   para = extend(
+//     {
+//       success: function () {},
+//       error: function () {},
+//       appendCall: function (g) {
+//         document.getElementsByTagName('head')[0].appendChild(g)
+//       }
+//     },
+//     para
+//   )
 
-  var g = null
-  if (para.type === 'css') {
-    g = document.createElement('link')
-    g.rel = 'stylesheet'
-    g.href = para.url
-  }
-  if (para.type === 'js') {
-    g = document.createElement('script')
-    g.async = 'async'
-    g.setAttribute('charset', 'UTF-8')
-    g.src = para.url
-    g.type = 'text/javascript'
-  }
-  g.onload = g.onreadystatechange = function () {
-    if (
-      !this.readyState ||
-      this.readyState === 'loaded' ||
-      this.readyState === 'complete'
-    ) {
-      para.success()
-      g.onload = g.onreadystatechange = null
-    }
-  }
-  g.onerror = function () {
-    para.error()
-    g.onerror = null
-  }
-  para.appendCall(g)
-}
+//   var g = null
+//   if (para.type === 'css') {
+//     g = document.createElement('link')
+//     g.rel = 'stylesheet'
+//     g.href = para.url
+//   }
+//   if (para.type === 'js') {
+//     g = document.createElement('script')
+//     g.async = 'async'
+//     g.setAttribute('charset', 'UTF-8')
+//     g.src = para.url
+//     g.type = 'text/javascript'
+//   }
+//   g.onload = g.onreadystatechange = function () {
+//     if (
+//       !this.readyState ||
+//       this.readyState === 'loaded' ||
+//       this.readyState === 'complete'
+//     ) {
+//       para.success()
+//       g.onload = g.onreadystatechange = null
+//     }
+//   }
+//   g.onerror = function () {
+//     para.error()
+//     g.onerror = null
+//   }
+//   para.appendCall(g)
+// }
 export var getHostname = function (url, defaultValue) {
   if (!defaultValue || typeof defaultValue !== 'string') {
     defaultValue = 'hostname解析异常'
@@ -1187,49 +1214,49 @@ export var autoExeQueue = function () {
   }
   return queue
 }
-export var strip_sa_properties = function (p) {
-  if (!isObject(p)) {
-    return p
-  }
-  each(p, function (v, k) {
-    if (isArray(v)) {
-      var temp = []
-      each(v, function (arrv) {
-        if (isString(arrv)) {
-          temp.push(arrv)
-        } else {
-          console.log(
-            '您的数据-',
-            k,
-            v,
-            '的数组里的值必须是字符串,已经将其删除'
-          )
-        }
-      })
-      if (temp.length !== 0) {
-        p[k] = temp
-      } else {
-        delete p[k]
-        console.log('已经删除空的数组')
-      }
-    }
-    if (
-      !(
-        isString(v) ||
-        isNumber(v) ||
-        isDate(v) ||
-        isBoolean(v) ||
-        isArray(v) ||
-        isFunction(v) ||
-        k === '$option'
-      )
-    ) {
-      console.log('您的数据-', k, v, '-格式不满足要求，我们已经将其删除')
-      delete p[k]
-    }
-  })
-  return p
-}
+// export var strip_sa_properties = function (p) {
+//   if (!isObject(p)) {
+//     return p
+//   }
+//   each(p, function (v, k) {
+//     if (isArray(v)) {
+//       var temp = []
+//       each(v, function (arrv) {
+//         if (isString(arrv)) {
+//           temp.push(arrv)
+//         } else {
+//           console.log(
+//             '您的数据-',
+//             k,
+//             v,
+//             '的数组里的值必须是字符串,已经将其删除'
+//           )
+//         }
+//       })
+//       if (temp.length !== 0) {
+//         p[k] = temp
+//       } else {
+//         delete p[k]
+//         console.log('已经删除空的数组')
+//       }
+//     }
+//     if (
+//       !(
+//         isString(v) ||
+//         isNumber(v) ||
+//         isDate(v) ||
+//         isBoolean(v) ||
+//         isArray(v) ||
+//         isFunction(v) ||
+//         k === '$option'
+//       )
+//     ) {
+//       console.log('您的数据-', k, v, '-格式不满足要求，我们已经将其删除')
+//       delete p[k]
+//     }
+//   })
+//   return p
+// }
 
 export var searchConfigData = function (data) {
   if (typeof data === 'object' && data.$option) {
