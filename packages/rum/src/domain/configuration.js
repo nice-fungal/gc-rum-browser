@@ -451,27 +451,27 @@ export function validateAndBuildVisitorIdConfiguration(visitorId) {
   if (visitorId.enabled !== true) {
     return { enabled: false }
   }
-  if (!isValidVisitorIdHeader(visitorId.header)) {
-    display.error(
-      'Visitor ID header should be a lowercase, writable HTTP header name and must not overlap authentication, CSRF, signature, tracing, or SDK resource tracking headers'
-    )
-    return
-  }
-  if (
-    !isArray(visitorId.match) ||
-    visitorId.match.length === 0 ||
-    visitorId.match.some(function (matchOption) {
-      return (
-        !isMatchOption(matchOption) ||
-        (isString(matchOption) && matchOption.length === 0)
-      )
-    })
-  ) {
-    display.error(
-      'Visitor ID match should be a non-empty array of strings, RegExp values, or functions'
-    )
-    return
-  }
+  // if (!isValidVisitorIdHeader(visitorId.header)) {
+  //   display.error(
+  //     'Visitor ID header should be a lowercase, writable HTTP header name and must not overlap authentication, CSRF, signature, tracing, or SDK resource tracking headers'
+  //   )
+  //   return
+  // }
+  // if (
+  //   !isArray(visitorId.match) ||
+  //   visitorId.match.length === 0 ||
+  //   visitorId.match.some(function (matchOption) {
+  //     return (
+  //       !isMatchOption(matchOption) ||
+  //       (isString(matchOption) && matchOption.length === 0)
+  //     )
+  //   })
+  // ) {
+  //   display.error(
+  //     'Visitor ID match should be a non-empty array of strings, RegExp values, or functions'
+  //   )
+  //   return
+  // }
   if (
     visitorId.ttlHours !== undefined &&
     (!isNumber(visitorId.ttlHours) ||
@@ -484,8 +484,8 @@ export function validateAndBuildVisitorIdConfiguration(visitorId) {
 
   return {
     enabled: true,
-    header: visitorId.header,
-    match: visitorId.match.slice(),
+    // header: visitorId.header,
+    // match: visitorId.match.slice(),
     ttlHours: isNullUndefinedDefaultValue(
       visitorId.ttlHours,
       DEFAULT_VISITOR_ID_TTL_HOURS
@@ -493,30 +493,30 @@ export function validateAndBuildVisitorIdConfiguration(visitorId) {
   }
 }
 
-function isValidVisitorIdHeader(header) {
-  if (
-    !isString(header) ||
-    header !== header.toLowerCase() ||
-    !HTTP_HEADER_NAME_PATTERN.test(header)
-  ) {
-    return false
-  }
-  if (
-    header.indexOf('proxy-') === 0 ||
-    header.indexOf('sec-') === 0 ||
-    header.indexOf('x-datadog-') === 0 ||
-    header.indexOf('x-b3-') === 0 ||
-    FORBIDDEN_VISITOR_ID_HEADER_FRAGMENTS.some(function (fragment) {
-      return header.indexOf(fragment) !== -1
-    })
-  ) {
-    return false
-  }
-  return (
-    FORBIDDEN_REQUEST_HEADERS.indexOf(header) === -1 &&
-    FORBIDDEN_VISITOR_ID_HEADERS.indexOf(header) === -1
-  )
-}
+// function isValidVisitorIdHeader(header) {
+//   if (
+//     !isString(header) ||
+//     header !== header.toLowerCase() ||
+//     !HTTP_HEADER_NAME_PATTERN.test(header)
+//   ) {
+//     return false
+//   }
+//   if (
+//     header.indexOf('proxy-') === 0 ||
+//     header.indexOf('sec-') === 0 ||
+//     header.indexOf('x-datadog-') === 0 ||
+//     header.indexOf('x-b3-') === 0 ||
+//     FORBIDDEN_VISITOR_ID_HEADER_FRAGMENTS.some(function (fragment) {
+//       return header.indexOf(fragment) !== -1
+//     })
+//   ) {
+//     return false
+//   }
+//   return (
+//     FORBIDDEN_REQUEST_HEADERS.indexOf(header) === -1 &&
+//     FORBIDDEN_VISITOR_ID_HEADERS.indexOf(header) === -1
+//   )
+// }
 
 /**
  * Handles allowedTracingUrls and processes legacy allowedTracingOrigins
